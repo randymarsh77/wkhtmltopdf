@@ -1,0 +1,282 @@
+[
+  {
+    "id": "1",
+    "description": "Audit existing C++/Qt codebase: catalog all major subsystems (PDF rendering, image rendering, CLI argument parsing, settings, headers/footers, TOC generation, JS evaluation, network handling) and document their interfaces and dependencies.",
+    "status": "pending"
+  },
+  {
+    "id": "2",
+    "description": "Research Rust ecosystem equivalents: identify crates for HTML/CSS rendering (e.g. servo/webrender), PDF generation (e.g. printpdf, lopdf), image output (e.g. image crate), headless browser automation (e.g. chromiumoxide, headless_chrome), CLI parsing (clap), HTTP client (reqwest), and JS execution.",
+    "status": "pending"
+  },
+  {
+    "id": "3",
+    "description": "Define Rust workspace layout: create a Cargo workspace with crates for `core` (rendering engine abstraction), `pdf` (PDF output), `image` (image output), `cli` (command-line interface), `settings` (configuration/settings structs), and `tests` (integration/regression tests).",
+    "status": "pending",
+    "phase": 2,
+    "depends_on": [
+      "1",
+      "2"
+    ]
+  },
+  {
+    "id": "4",
+    "description": "Port settings and configuration system to Rust: implement all global, page-object, header/footer, margin, crop, TOC, and outline settings as strongly-typed Rust structs with serde support for config file loading.",
+    "status": "pending",
+    "phase": 3,
+    "depends_on": [
+      "3"
+    ]
+  },
+  {
+    "id": "5",
+    "description": "Implement CLI argument parsing in Rust using clap: replicate all wkhtmltopdf and wkhtmltoimage command-line flags, options, and sub-commands with full help text.",
+    "status": "pending",
+    "phase": 3,
+    "depends_on": [
+      "3"
+    ]
+  },
+  {
+    "id": "6",
+    "description": "Implement headless rendering abstraction layer in the `core` crate: define a trait-based renderer interface that accepts HTML input (URL or file) and produces a rendered page representation, with an initial implementation backed by a headless Chromium/WebKit engine.",
+    "status": "pending",
+    "phase": 3,
+    "depends_on": [
+      "3"
+    ]
+  },
+  {
+    "id": "7",
+    "description": "Implement PDF output pipeline in the `pdf` crate: convert rendered pages to PDF with support for multi-page documents, page size/orientation, margins, DPI, compression, metadata (title/author/subject), and PDF/A compliance.",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "6"
+    ]
+  },
+  {
+    "id": "8",
+    "description": "Implement image output pipeline in the `image` crate: support PNG, JPG, BMP, SVG, and other formats with configurable width, quality, crop settings, and DPI.",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "6"
+    ]
+  },
+  {
+    "id": "9",
+    "description": "Implement header and footer rendering: support HTML-based headers/footers with template variable substitution ([page], [toPage], [date], [title], [url]), spacing, line options, and font settings.",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "7"
+    ]
+  },
+  {
+    "id": "10",
+    "description": "Implement Table of Contents (TOC) generation: auto-generate TOC from heading elements with configurable depth, XSLT-based styling, dotted lines, and page number references.",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "7"
+    ]
+  },
+  {
+    "id": "11",
+    "description": "Implement outline/bookmarks support: generate PDF bookmarks from document headings with configurable depth and nesting.",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "7"
+    ]
+  },
+  {
+    "id": "12",
+    "description": "Implement JavaScript execution support: allow enabling/disabling JS, setting JS delay, and executing custom JS before rendering.",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "6"
+    ]
+  },
+  {
+    "id": "13",
+    "description": "Implement network/proxy support: handle HTTP authentication, cookies (file and string), custom headers, SSL peer/host verification settings, and proxy configuration.",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "6"
+    ]
+  },
+  {
+    "id": "14",
+    "description": "Implement C-compatible shared library API (libwkhtmltox replacement): expose a C ABI with the same function signatures as the original libwkhtmltox for drop-in compatibility with existing bindings.",
+    "status": "pending",
+    "phase": 5,
+    "depends_on": [
+      "7",
+      "8"
+    ]
+  },
+  {
+    "id": "15",
+    "description": "Build regression test harness: create a test framework in the `tests` crate that renders a set of reference HTML fixtures with both the old wkhtmltopdf binary (if available) and the new Rust implementation, producing output files for comparison.",
+    "status": "pending",
+    "phase": 3,
+    "depends_on": [
+      "3"
+    ]
+  },
+  {
+    "id": "16",
+    "description": "Create comprehensive HTML test fixtures covering: basic text/layout, tables, images, CSS (flexbox, grid, print media), page breaks, headers/footers, multi-page documents, TOC, JavaScript-rendered content, external resources, Unicode/RTL, and edge cases.",
+    "status": "pending",
+    "phase": 3,
+    "depends_on": [
+      "3"
+    ]
+  },
+  {
+    "id": "17",
+    "description": "Implement visual diffing tool: integrate perceptual image diffing (e.g. using the `dssim` or `image` crate with pixel diff) to compare PDF-rendered-to-image output between reference and new implementation, reporting diff percentage and generating annotated diff images.",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "15",
+      "16"
+    ]
+  },
+  {
+    "id": "18",
+    "description": "Implement PDF structural diffing: compare PDF metadata, page count, text content (via pdf-extract or similar), and outline structure between reference and Rust output beyond just visual comparison.",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "15",
+      "16"
+    ]
+  },
+  {
+    "id": "19",
+    "description": "Write unit tests for all settings parsing, CLI argument handling, and configuration validation.",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "4",
+      "5"
+    ]
+  },
+  {
+    "id": "20",
+    "description": "Write integration tests for PDF and image rendering pipelines covering all major feature flags and option combinations.",
+    "status": "pending",
+    "phase": 5,
+    "depends_on": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13"
+    ]
+  },
+  {
+    "id": "21",
+    "description": "Update Cargo.toml dependencies to latest stable versions; audit for security advisories using `cargo audit`; pin MSRV (Minimum Supported Rust Version) compatible with Ubuntu 25's packaged Rust toolchain.",
+    "status": "pending",
+    "phase": 5,
+    "depends_on": [
+      "7",
+      "8"
+    ]
+  },
+  {
+    "id": "22",
+    "description": "Add Ubuntu 25 (Plucky Piculet) build support: update packaging scripts, verify Qt/WebKit or Chromium headless library availability on Ubuntu 25, and document any required system dependencies.",
+    "status": "pending",
+    "phase": 5,
+    "depends_on": [
+      "7",
+      "8"
+    ]
+  },
+  {
+    "id": "23",
+    "description": "Update GitHub Actions workflow for CI: create a matrix build across Ubuntu 22, Ubuntu 24, Ubuntu 25, macOS, and Windows; run `cargo build`, `cargo test`, clippy lints, and `cargo audit` on each platform.",
+    "status": "pending",
+    "phase": 6,
+    "depends_on": [
+      "20",
+      "22"
+    ]
+  },
+  {
+    "id": "24",
+    "description": "Add GHA workflow for visual regression testing: run the regression test harness on PRs, store diff images as artifacts, and fail the build if any fixture exceeds a configurable visual diff threshold.",
+    "status": "pending",
+    "phase": 6,
+    "depends_on": [
+      "17",
+      "18",
+      "23"
+    ]
+  },
+  {
+    "id": "25",
+    "description": "Add GHA workflow for release packaging: build release binaries for Linux (x86_64, aarch64), macOS, and Windows; produce .deb packages for Ubuntu 22/24/25; publish artifacts on tagged releases.",
+    "status": "pending",
+    "phase": 6,
+    "depends_on": [
+      "23"
+    ]
+  },
+  {
+    "id": "26",
+    "description": "Update README.md and documentation: rewrite build instructions, document new Rust-based architecture, list system dependencies per OS, describe the visual regression test suite, and update the project status to active.",
+    "status": "pending",
+    "phase": 6,
+    "depends_on": [
+      "20",
+      "22"
+    ]
+  },
+  {
+    "id": "27",
+    "description": "Port or replace the libwkhtmltox C API documentation (currently Doxygen) to Rust doc comments with `cargo doc`; generate and publish HTML docs via GitHub Pages.",
+    "status": "pending",
+    "phase": 6,
+    "depends_on": [
+      "14"
+    ]
+  },
+  {
+    "id": "28",
+    "description": "Performance benchmarking: measure rendering throughput (pages/second) and memory usage for the Rust implementation vs the original C++ baseline on a standard fixture set; document results and optimize hot paths.",
+    "status": "pending",
+    "phase": 7,
+    "depends_on": [
+      "20"
+    ]
+  },
+  {
+    "id": "29",
+    "description": "Security hardening: enable sandbox isolation for the headless renderer subprocess, audit all file path handling for path traversal, validate all network inputs, and add a security policy document.",
+    "status": "pending",
+    "phase": 7,
+    "depends_on": [
+      "20"
+    ]
+  },
+  {
+    "id": "30",
+    "description": "Create CHANGELOG entry and version bump for the first Rust-based release; draft a GitHub release with migration notes for users of the old C++ binary and libwkhtmltox API.",
+    "status": "pending",
+    "phase": 7,
+    "depends_on": [
+      "26",
+      "27"
+    ]
+  }
+]
