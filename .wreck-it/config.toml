@@ -1,0 +1,7 @@
+state_branch = "wreck-it-state"
+state_root = ".wreck-it"
+
+[[ralphs]]
+name = "revival"
+task_file = "revival-tasks.json"
+state_file = ".revival-state.json"

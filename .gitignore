@@ -22,3 +22,5 @@ Makefile.*
 *.o
 moc_*.*
 .qmake*
+
+./wreck-it/state

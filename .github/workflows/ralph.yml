@@ -1,0 +1,26 @@
+name: wreck-it loop
+
+on:
+  schedule:
+    - cron: "*/30 * * * *" # every 30 minutes
+  workflow_dispatch: # allow manual triggers
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  models: read
+
+jobs:
+  wreck-it:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.WRECK_IT_TOKEN }}
+          fetch-depth: 0 # needed to access the state branch
+
+      - name: Run wreck-it
+        uses: randymarsh77/wreck-it/action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.WRECK_IT_TOKEN }}
