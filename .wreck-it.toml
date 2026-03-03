@@ -1,0 +1,6 @@
+# wreck-it headless configuration
+# This file lives on the state branch (wreck-it-state).
+
+task_file = "tasks.json"
+state_file = ".wreck-it-state.json"
+max_iterations = 100

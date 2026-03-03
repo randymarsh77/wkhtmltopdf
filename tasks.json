@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1",
+    "description": "First task - implement feature X",
+    "status": "pending"
+  },
+  {
+    "id": "2",
+    "description": "Second task - add tests for feature X",
+    "status": "pending"
+  },
+  {
+    "id": "3",
+    "description": "Third task - update documentation",
+    "status": "pending",
+    "phase": 2,
+    "depends_on": [
+      "1",
+      "2"
+    ]
+  }
+]
