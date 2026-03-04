@@ -1,9 +1,9 @@
 {
   "phase": "agent_working",
-  "iteration": 26,
-  "current_task_id": "26",
-  "issue_number": 51,
-  "last_prompt": "Update README.md and documentation: rewrite build instructions, document new Rust-based architecture, list system dependencies per OS, describe the visual regression test suite, and update the project status to active.",
+  "iteration": 27,
+  "current_task_id": "27",
+  "issue_number": 53,
+  "last_prompt": "Port or replace the libwkhtmltox C API documentation (currently Doxygen) to Rust doc comments with `cargo doc`; generate and publish HTML docs via GitHub Pages.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -108,6 +108,10 @@
     "iteration 25: agent created PR #50 for task Some(\"25\")",
     "iteration 25: marked PR #50 as ready for review",
     "iteration 25: merged PR #50 for task Some(\"25\")",
-    "iteration 26: triggered cloud agent for task 26 (issue #51)"
+    "iteration 26: triggered cloud agent for task 26 (issue #51)",
+    "iteration 26: agent created PR #52 for task Some(\"26\")",
+    "iteration 26: marked PR #52 as ready for review",
+    "iteration 26: merged PR #52 for task Some(\"26\")",
+    "iteration 27: triggered cloud agent for task 27 (issue #53)"
   ]
 }

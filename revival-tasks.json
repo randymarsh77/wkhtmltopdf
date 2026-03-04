@@ -236,17 +236,18 @@
   {
     "id": "26",
     "description": "Update README.md and documentation: rewrite build instructions, document new Rust-based architecture, list system dependencies per OS, describe the visual regression test suite, and update the project status to active.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 6,
     "depends_on": [
       "20",
       "22"
-    ]
+    ],
+    "last_attempt_at": 1772659859
   },
   {
     "id": "27",
     "description": "Port or replace the libwkhtmltox C API documentation (currently Doxygen) to Rust doc comments with `cargo doc`; generate and publish HTML docs via GitHub Pages.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 6,
     "depends_on": [
       "14"
