@@ -6,3 +6,4 @@ description = "Rendering engine abstraction for wkhtmltopdf"
 
 [dependencies]
 thiserror = "1"
+headless_chrome = "1"
