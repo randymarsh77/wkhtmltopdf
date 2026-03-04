@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 17,
   "current_task_id": "17",
   "issue_number": 33,
+  "pr_number": 34,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/34",
   "last_prompt": "Implement visual diffing tool: integrate perceptual image diffing (e.g. using the `dssim` or `image` crate with pixel diff) to compare PDF-rendered-to-image output between reference and new implementation, reporting diff percentage and generating annotated diff images.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -70,6 +72,15 @@
     "iteration 16: agent created PR #32 for task Some(\"16\")",
     "iteration 16: marked PR #32 as ready for review",
     "advance: merged PR #32",
-    "iteration 17: triggered cloud agent for task 17 (issue #33)"
+    "iteration 17: triggered cloud agent for task 17 (issue #33)",
+    "iteration 17: agent created PR #34 for task Some(\"17\")",
+    "iteration 17: marked PR #34 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 34,
+      "task_id": "17",
+      "issue_number": 33
+    }
   ]
 }
