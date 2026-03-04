@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 15,
   "current_task_id": "15",
   "issue_number": 29,
+  "pr_number": 30,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/30",
   "last_prompt": "Build regression test harness: create a test framework in the `tests` crate that renders a set of reference HTML fixtures with both the old wkhtmltopdf binary (if available) and the new Rust implementation, producing output files for comparison.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -62,6 +64,15 @@
     "iteration 14: agent created PR #28 for task Some(\"14\")",
     "iteration 14: marked PR #28 as ready for review",
     "advance: merged PR #28",
-    "iteration 15: triggered cloud agent for task 15 (issue #29)"
+    "iteration 15: triggered cloud agent for task 15 (issue #29)",
+    "iteration 15: agent created PR #30 for task Some(\"15\")",
+    "iteration 15: marked PR #30 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 30,
+      "task_id": "15",
+      "issue_number": 29
+    }
   ]
 }
