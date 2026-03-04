@@ -3,6 +3,8 @@
   "iteration": 28,
   "current_task_id": "28",
   "issue_number": 55,
+  "pr_number": 56,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/56",
   "last_prompt": "Performance benchmarking: measure rendering throughput (pages/second) and memory usage for the Rust implementation vs the original C++ baseline on a standard fixture set; document results and optimize hot paths.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -116,6 +118,14 @@
     "iteration 27: agent created PR #54 for task Some(\"27\")",
     "iteration 27: marked PR #54 as ready for review",
     "iteration 27: merged PR #54 for task Some(\"27\")",
-    "iteration 28: triggered cloud agent for task 28 (issue #55)"
+    "iteration 28: triggered cloud agent for task 28 (issue #55)",
+    "iteration 28: agent opened PR #56 for task Some(\"28\") (still working)"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 56,
+      "task_id": "28",
+      "issue_number": 55
+    }
   ]
 }
