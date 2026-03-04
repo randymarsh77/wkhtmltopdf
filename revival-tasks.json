@@ -267,16 +267,17 @@
   {
     "id": "29",
     "description": "Security hardening: enable sandbox isolation for the headless renderer subprocess, audit all file path handling for path traversal, validate all network inputs, and add a security policy document.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 7,
     "depends_on": [
       "20"
-    ]
+    ],
+    "last_attempt_at": 1772663571
   },
   {
     "id": "30",
     "description": "Create CHANGELOG entry and version bump for the first Rust-based release; draft a GitHub release with migration notes for users of the old C++ binary and libwkhtmltox API.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 7,
     "depends_on": [
       "26",
