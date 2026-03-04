@@ -194,3 +194,63 @@ fn regression_styled() {
 fn regression_headings() {
     run_fixture("headings");
 }
+
+#[test]
+fn regression_tables() {
+    run_fixture("tables");
+}
+
+#[test]
+fn regression_images() {
+    run_fixture("images");
+}
+
+#[test]
+fn regression_flexbox() {
+    run_fixture("flexbox");
+}
+
+#[test]
+fn regression_grid() {
+    run_fixture("grid");
+}
+
+#[test]
+fn regression_print_media() {
+    run_fixture("print_media");
+}
+
+#[test]
+fn regression_page_breaks() {
+    run_fixture("page_breaks");
+}
+
+#[test]
+fn regression_header_footer() {
+    run_fixture("header_footer");
+}
+
+#[test]
+fn regression_multi_page() {
+    run_fixture("multi_page");
+}
+
+#[test]
+fn regression_toc() {
+    run_fixture("toc");
+}
+
+#[test]
+fn regression_javascript() {
+    run_fixture("javascript");
+}
+
+#[test]
+fn regression_unicode_rtl() {
+    run_fixture("unicode_rtl");
+}
+
+#[test]
+fn regression_edge_cases() {
+    run_fixture("edge_cases");
+}

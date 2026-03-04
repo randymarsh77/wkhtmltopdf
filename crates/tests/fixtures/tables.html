@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tables</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
+    td, th { border: 1px solid #999; padding: 8px 12px; }
+    th { background: #ddd; font-weight: bold; }
+    caption { font-size: 1.1em; font-weight: bold; margin-bottom: 6px; }
+    .nested td { background: #f9f9f9; }
+    .colspan-table td[colspan] { background: #e0f0ff; text-align: center; }
+    .rowspan-table td[rowspan] { background: #ffe0e0; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <h1>Table Fixtures</h1>
+
+  <h2>Basic Table with Header</h2>
+  <table>
+    <caption>Product Inventory</caption>
+    <thead>
+      <tr><th>ID</th><th>Product</th><th>Qty</th><th>Price</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Widget A</td><td>100</td><td>$9.99</td></tr>
+      <tr><td>2</td><td>Widget B</td><td>50</td><td>$19.99</td></tr>
+      <tr><td>3</td><td>Gadget X</td><td>200</td><td>$4.99</td></tr>
+    </tbody>
+    <tfoot>
+      <tr><td colspan="2"><strong>Total</strong></td><td>350</td><td>$34.97</td></tr>
+    </tfoot>
+  </table>
+
+  <h2>Colspan and Rowspan</h2>
+  <table class="colspan-table">
+    <tr>
+      <th colspan="3">Quarterly Sales Report</th>
+    </tr>
+    <tr>
+      <th>Region</th><th>Q1</th><th>Q2</th>
+    </tr>
+    <tr>
+      <td>North</td><td>120</td><td>150</td>
+    </tr>
+    <tr>
+      <td>South</td><td>80</td><td>95</td>
+    </tr>
+  </table>
+
+  <table class="rowspan-table">
+    <tr>
+      <td rowspan="2">Merged</td>
+      <td>Row 1, Col 2</td>
+    </tr>
+    <tr>
+      <td>Row 2, Col 2</td>
+    </tr>
+  </table>
+
+  <h2>Nested Tables</h2>
+  <table>
+    <tr>
+      <th>Outer Column A</th>
+      <th>Outer Column B</th>
+    </tr>
+    <tr>
+      <td>
+        <table class="nested">
+          <tr><td>Inner 1-1</td><td>Inner 1-2</td></tr>
+          <tr><td>Inner 2-1</td><td>Inner 2-2</td></tr>
+        </table>
+      </td>
+      <td>Outer data</td>
+    </tr>
+  </table>
+</body>
+</html>

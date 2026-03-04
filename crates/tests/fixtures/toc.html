@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Table of Contents</title>
+  <style>
+    body { font-family: Georgia, serif; margin: 60px; line-height: 1.7; }
+
+    /* TOC styles */
+    .toc {
+      border: 1px solid #ccc;
+      background: #fafafa;
+      padding: 20px 30px;
+      margin-bottom: 40px;
+      max-width: 500px;
+    }
+    .toc h2 { margin-top: 0; font-size: 1.2em; border-bottom: 1px solid #ccc; padding-bottom: 8px; }
+    .toc ol { padding-left: 20px; margin: 0; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #4a90d9; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc .sub { padding-left: 20px; list-style-type: lower-alpha; }
+
+    h1 { font-size: 1.8em; margin-top: 40px; }
+    h2 { font-size: 1.3em; margin-top: 32px; color: #333; }
+    h3 { font-size: 1.1em; margin-top: 24px; color: #555; }
+    p  { text-align: justify; }
+
+    .page-break { page-break-after: always; }
+  </style>
+</head>
+<body>
+
+  <h1>Technical Reference Manual</h1>
+
+  <!-- Manual TOC for the fixture (wkhtmltopdf can generate this automatically) -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#ch1">Introduction</a>
+        <ol class="sub">
+          <li><a href="#ch1-1">Purpose</a></li>
+          <li><a href="#ch1-2">Scope</a></li>
+        </ol>
+      </li>
+      <li><a href="#ch2">Installation</a>
+        <ol class="sub">
+          <li><a href="#ch2-1">Prerequisites</a></li>
+          <li><a href="#ch2-2">Setup Steps</a></li>
+        </ol>
+      </li>
+      <li><a href="#ch3">Configuration</a></li>
+      <li><a href="#ch4">Usage</a></li>
+      <li><a href="#ch5">Troubleshooting</a></li>
+    </ol>
+  </div>
+
+  <div class="page-break">
+    <h1 id="ch1">1. Introduction</h1>
+    <p>This document provides comprehensive technical guidance for the software system.
+    It covers installation, configuration, and usage in sufficient detail to allow
+    administrators and developers to deploy and operate the system effectively.</p>
+
+    <h2 id="ch1-1">1.1 Purpose</h2>
+    <p>The purpose of this manual is to serve as a definitive reference for all aspects
+    of the system. It supplements quick-start guides and online documentation with
+    detailed specifications and procedures.</p>
+
+    <h2 id="ch1-2">1.2 Scope</h2>
+    <p>This manual applies to version 3.0 and later releases. References to earlier
+    versions are explicitly noted where behaviour has changed.</p>
+  </div>
+
+  <div class="page-break">
+    <h1 id="ch2">2. Installation</h1>
+    <p>The installation process is straightforward on all supported platforms. Follow
+    the steps in this chapter carefully to avoid common configuration errors.</p>
+
+    <h2 id="ch2-1">2.1 Prerequisites</h2>
+    <p>Before installing, ensure that your system meets the minimum requirements:
+    a 64-bit operating system, at least 4 GB of RAM, and 10 GB of available disk space.</p>
+
+    <h2 id="ch2-2">2.2 Setup Steps</h2>
+    <p>Download the installer from the official distribution channel. Run the installer
+    as an administrator and follow the on-screen prompts to complete the installation.</p>
+  </div>
+
+  <div>
+    <h1 id="ch3">3. Configuration</h1>
+    <p>After installation, open the configuration file located in the <code>config/</code>
+    directory. The file uses TOML syntax and is self-documented with inline comments.</p>
+
+    <h1 id="ch4">4. Usage</h1>
+    <p>Start the application from the command line or using the provided system service.
+    Refer to the command-line reference for a full list of available options and flags.</p>
+
+    <h1 id="ch5">5. Troubleshooting</h1>
+    <p>If you encounter problems, consult the log files in <code>logs/</code> and
+    compare against the known issues list in Appendix A. Most common issues are resolved
+    by verifying configuration values and restarting the service.</p>
+  </div>
+
+</body>
+</html>

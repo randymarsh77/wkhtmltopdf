@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Multi-Page Document</title>
+  <style>
+    body { font-family: Georgia, serif; margin: 60px; line-height: 1.7; }
+
+    h1 { font-size: 2em; margin-bottom: 0.2em; }
+    h2 { font-size: 1.4em; margin-top: 1.5em; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    p  { margin-bottom: 1em; text-align: justify; }
+
+    blockquote {
+      border-left: 4px solid #4a90d9;
+      margin: 16px 0;
+      padding: 8px 16px;
+      background: #f0f7ff;
+      font-style: italic;
+    }
+
+    .page-break { page-break-after: always; }
+
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    td, th { border: 1px solid #ccc; padding: 10px; }
+    th { background: #333; color: white; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+  </style>
+</head>
+<body>
+
+  <!-- Page 1 -->
+  <div class="page-break">
+    <h1>The History of Computing</h1>
+    <h2>Chapter 1: Origins</h2>
+    <p>The history of computing stretches back thousands of years to the development of
+    counting tools and mechanical calculation devices. The abacus, dating back to ancient
+    Babylon, represents one of the earliest computational aids available to humanity.</p>
+
+    <p>In the 17th century, Blaise Pascal invented the Pascaline, a mechanical calculator
+    capable of performing addition and subtraction. Later, Gottfried Leibniz improved upon
+    this design to include multiplication and division.</p>
+
+    <blockquote>
+      "The analytical engine has no pretensions whatever to originate anything.
+      It can do whatever we know how to order it to perform." — Ada Lovelace
+    </blockquote>
+
+    <p>Charles Babbage's design for the Analytical Engine in the 1830s laid the conceptual
+    groundwork for the modern programmable computer. Ada Lovelace's notes on this machine
+    are widely regarded as the first computer program ever written.</p>
+  </div>
+
+  <!-- Page 2 -->
+  <div class="page-break">
+    <h2>Chapter 2: The Electronic Era</h2>
+    <p>The 20th century saw an explosion in computing technology. The ENIAC, completed in
+    1945, was one of the first general-purpose electronic computers. It occupied 1,800
+    square feet, weighed 30 tons, and consumed 150 kilowatts of electricity.</p>
+
+    <p>Transistors replaced vacuum tubes in the late 1950s, dramatically reducing size and
+    power consumption while increasing reliability. Integrated circuits followed in the
+    1960s, packing multiple transistors onto a single chip.</p>
+
+    <h2>Key Milestones</h2>
+    <table>
+      <tr><th>Year</th><th>Event</th><th>Significance</th></tr>
+      <tr><td>1945</td><td>ENIAC operational</td><td>First general-purpose electronic computer</td></tr>
+      <tr><td>1958</td><td>Integrated circuit</td><td>Multiple transistors on one chip</td></tr>
+      <tr><td>1971</td><td>Intel 4004</td><td>First commercially available microprocessor</td></tr>
+      <tr><td>1981</td><td>IBM PC</td><td>Personal computing revolution begins</td></tr>
+      <tr><td>1991</td><td>World Wide Web</td><td>Global information network launched</td></tr>
+    </table>
+  </div>
+
+  <!-- Page 3 -->
+  <div>
+    <h2>Chapter 3: The Modern Age</h2>
+    <p>Today's computers are billions of times more powerful than their predecessors while
+    fitting in the palm of your hand. Moore's Law — the observation that transistor density
+    doubles roughly every two years — has driven exponential growth in computing power for
+    over five decades.</p>
+
+    <p>Cloud computing, artificial intelligence, and quantum computing represent the current
+    frontiers of the field. These technologies promise to reshape industries, accelerate
+    scientific discovery, and fundamentally change how humans interact with information.</p>
+
+    <h2>Looking Forward</h2>
+    <p>The future of computing is likely to be defined by the convergence of artificial
+    intelligence with ubiquitous connectivity. Edge computing will bring processing power
+    closer to data sources, reducing latency and enabling real-time applications that were
+    previously impossible.</p>
+
+    <p>Quantum computers, leveraging the principles of superposition and entanglement, may
+    eventually solve problems that would take classical computers longer than the age of the
+    universe to complete. The coming decades promise to be as transformative as the last
+    century of technological advancement.</p>
+  </div>
+
+</body>
+</html>

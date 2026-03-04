@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Header and Footer Content</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+
+    /* Simulated header band (used when rendered as standalone page) */
+    .page-header {
+      border-bottom: 2px solid #333;
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .page-header .logo { font-size: 1.4em; font-weight: bold; color: #4a90d9; }
+    .page-header .meta { font-size: 0.85em; color: #666; text-align: right; }
+
+    /* Simulated footer band */
+    .page-footer {
+      border-top: 2px solid #333;
+      padding-top: 12px;
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8em;
+      color: #666;
+    }
+
+    h2 { margin-top: 32px; }
+    p { line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <div class="logo">ACME Corp.</div>
+    <div class="meta">
+      <div>Report Date: 2024-01-15</div>
+      <div>Page 1 of 3</div>
+    </div>
+  </div>
+
+  <h1>Annual Performance Report</h1>
+  <p>This document demonstrates header and footer content as rendered within the page body.
+  When processed by wkhtmltopdf with <code>--header-html</code> or <code>--footer-html</code> flags,
+  separate HTML files provide the header and footer bands.</p>
+
+  <h2>Section 1: Executive Summary</h2>
+  <p>The organization achieved record results in the reporting period. Key highlights include
+  a 24% increase in throughput, a 15% reduction in operational costs, and successful
+  delivery of all major milestones.</p>
+
+  <h2>Section 2: Financial Overview</h2>
+  <p>Revenue grew by 18% year-over-year, driven primarily by expansion into new markets
+  and improvement in existing product lines. Operating margins improved to 22%, up from
+  19% in the prior year.</p>
+
+  <h2>Section 3: Operational Metrics</h2>
+  <p>Customer satisfaction scores reached an all-time high of 4.7/5.0. Incident response
+  times decreased by 30%, and the team successfully completed 97% of planned deliverables
+  within scope and budget.</p>
+
+  <h2>Section 4: Outlook</h2>
+  <p>The coming year presents significant opportunities for growth. The strategic plan focuses
+  on three pillars: innovation, customer success, and operational excellence.</p>
+
+  <div class="page-footer">
+    <div>ACME Corporation — Confidential</div>
+    <div>Page 1 of 3</div>
+    <div>© 2024 ACME Corp. All rights reserved.</div>
+  </div>
+
+</body>
+</html>

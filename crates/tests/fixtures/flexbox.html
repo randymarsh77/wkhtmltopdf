@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flexbox Layout</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h2 { margin-top: 32px; }
+
+    /* Row flex container */
+    .flex-row {
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      border: 2px solid #aaa;
+      padding: 12px;
+      margin-bottom: 20px;
+    }
+    .flex-row .item {
+      background: #4a90d9;
+      color: white;
+      padding: 16px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .flex-row .item.grow { flex-grow: 1; }
+    .flex-row .item.shrink { flex-shrink: 2; min-width: 50px; }
+
+    /* Column flex container */
+    .flex-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border: 2px solid #aaa;
+      padding: 12px;
+      margin-bottom: 20px;
+      height: 200px;
+    }
+    .flex-col .item {
+      background: #7ed321;
+      color: white;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    /* Justify content */
+    .flex-justify {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      border: 2px solid #aaa;
+      padding: 12px;
+      margin-bottom: 20px;
+    }
+    .flex-justify .box {
+      width: 60px;
+      height: 60px;
+      background: #f5a623;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      border-radius: 4px;
+    }
+
+    /* Wrap */
+    .flex-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      border: 2px solid #aaa;
+      padding: 12px;
+      margin-bottom: 20px;
+    }
+    .flex-wrap .chip {
+      background: #d0021b;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>CSS Flexbox Fixtures</h1>
+
+  <h2>Row Direction (with flex-grow)</h2>
+  <div class="flex-row">
+    <div class="item">Fixed</div>
+    <div class="item grow">Grow 1</div>
+    <div class="item grow">Grow 2</div>
+    <div class="item shrink">Shrink</div>
+  </div>
+
+  <h2>Column Direction</h2>
+  <div class="flex-col">
+    <div class="item">Top</div>
+    <div class="item" style="flex-grow:1;">Middle (grows)</div>
+    <div class="item">Bottom</div>
+  </div>
+
+  <h2>Justify Content: space-between</h2>
+  <div class="flex-justify">
+    <div class="box">A</div>
+    <div class="box">B</div>
+    <div class="box">C</div>
+    <div class="box">D</div>
+  </div>
+
+  <h2>Flex Wrap</h2>
+  <div class="flex-wrap">
+    <span class="chip">Alpha</span>
+    <span class="chip">Beta</span>
+    <span class="chip">Gamma</span>
+    <span class="chip">Delta</span>
+    <span class="chip">Epsilon</span>
+    <span class="chip">Zeta</span>
+    <span class="chip">Eta</span>
+    <span class="chip">Theta</span>
+    <span class="chip">Iota</span>
+    <span class="chip">Kappa</span>
+  </div>
+</body>
+</html>

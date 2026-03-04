@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Page Breaks</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+
+    .chapter {
+      page-break-after: always;
+      padding-bottom: 20px;
+    }
+    .chapter:last-child {
+      page-break-after: auto;
+    }
+
+    .no-break {
+      page-break-inside: avoid;
+      border: 2px solid #4a90d9;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .break-before {
+      page-break-before: always;
+    }
+
+    h1 { page-break-after: avoid; }
+    h2 { page-break-after: avoid; }
+
+    table { border-collapse: collapse; width: 100%; page-break-inside: avoid; }
+    td, th { border: 1px solid #ccc; padding: 8px; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+
+  <div class="chapter">
+    <h1>Chapter 1: Introduction</h1>
+    <p>This chapter always ends with a forced page break.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+    incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+    exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+
+    <div class="no-break">
+      <h3>Keep Together Block</h3>
+      <p>This entire block is kept on one page using <code>page-break-inside: avoid</code>.</p>
+      <table>
+        <tr><th>Item</th><th>Qty</th><th>Price</th></tr>
+        <tr><td>Widget</td><td>10</td><td>$5.00</td></tr>
+        <tr><td>Gadget</td><td>5</td><td>$15.00</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="chapter">
+    <h1>Chapter 2: Development</h1>
+    <p>This chapter begins on a new page due to the previous chapter's page-break-after.</p>
+    <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+    fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
+    qui officia deserunt mollit anim id est laborum.</p>
+
+    <h2>Section 2.1</h2>
+    <p>The heading and this paragraph should stay together because of the heading's
+    page-break-after: avoid declaration.</p>
+
+    <h2>Section 2.2</h2>
+    <p>Another section with normal flow content.</p>
+  </div>
+
+  <div class="chapter">
+    <h1>Chapter 3: Conclusion</h1>
+    <p>This chapter also starts on a fresh page.</p>
+
+    <div class="break-before">
+      <h2>Forced Break Before This Section</h2>
+      <p>This section uses <code>page-break-before: always</code> to start on a new page.</p>
+    </div>
+  </div>
+
+</body>
+</html>
