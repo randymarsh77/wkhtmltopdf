@@ -9,3 +9,4 @@ wkhtmltopdf-core = { path = "../core" }
 wkhtmltopdf-pdf = { path = "../pdf" }
 wkhtmltopdf-image = { path = "../image" }
 wkhtmltopdf-settings = { path = "../settings" }
+serde_json = "1"
