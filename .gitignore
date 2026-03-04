@@ -24,3 +24,6 @@ moc_*.*
 .qmake*
 
 ./wreck-it/state
+
+# Rust build artifacts
+target/

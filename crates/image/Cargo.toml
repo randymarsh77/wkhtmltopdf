@@ -1,0 +1,10 @@
+[package]
+name = "wkhtmltopdf-image"
+version = "0.1.0"
+edition = "2021"
+description = "Image output for wkhtmltopdf"
+
+[dependencies]
+wkhtmltopdf-core = { path = "../core" }
+wkhtmltopdf-settings = { path = "../settings" }
+thiserror = "1"
