@@ -257,6 +257,10 @@ pub struct LoadPage {
     pub print_media_type: bool,
     /// Local directory to use as a browser disk cache.
     pub cache_dir: Option<String>,
+    /// Verify the server's SSL certificate chain.
+    pub ssl_verify_peer: bool,
+    /// Verify that the server's SSL certificate matches its hostname.
+    pub ssl_verify_host: bool,
 }
 
 impl Default for LoadPage {
@@ -286,6 +290,8 @@ impl Default for LoadPage {
             proxy_hostname_lookup: false,
             print_media_type: false,
             cache_dir: None,
+            ssl_verify_peer: true,
+            ssl_verify_host: true,
         }
     }
 }

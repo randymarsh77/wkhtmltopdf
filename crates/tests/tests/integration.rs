@@ -391,3 +391,34 @@ fn pdf_converter_pdf_a_conformance() {
     assert!(result.unwrap().starts_with(b"%PDF-"));
 }
 
+
+// ---------------------------------------------------------------------------
+// Network / proxy settings
+// ---------------------------------------------------------------------------
+
+#[test]
+fn load_page_default_ssl_verify_enabled() {
+    let lp = LoadPage::default();
+    assert!(lp.ssl_verify_peer, "ssl_verify_peer should default to true");
+    assert!(lp.ssl_verify_host, "ssl_verify_host should default to true");
+}
+
+#[test]
+fn load_page_ssl_verify_can_be_disabled() {
+    let mut lp = LoadPage::default();
+    lp.ssl_verify_peer = false;
+    lp.ssl_verify_host = false;
+    assert!(!lp.ssl_verify_peer);
+    assert!(!lp.ssl_verify_host);
+}
+
+#[test]
+fn load_page_ssl_verify_roundtrips_via_json() {
+    let mut lp = LoadPage::default();
+    lp.ssl_verify_peer = false;
+
+    let json = serde_json::to_string(&lp).expect("serialize");
+    let restored: LoadPage = serde_json::from_str(&json).expect("deserialize");
+    assert!(!restored.ssl_verify_peer);
+    assert!(restored.ssl_verify_host);
+}

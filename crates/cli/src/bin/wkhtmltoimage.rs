@@ -105,6 +105,22 @@ pub struct Cli {
     #[arg(long, value_name = "proxy")]
     pub proxy: Option<String>,
 
+    /// Verify the SSL peer certificate [default: enabled].
+    #[arg(long = "ssl-verify-peer", overrides_with = "no_ssl_verify_peer")]
+    pub ssl_verify_peer: bool,
+
+    /// Do not verify the SSL peer certificate (insecure).
+    #[arg(long = "no-ssl-verify-peer", overrides_with = "ssl_verify_peer")]
+    pub no_ssl_verify_peer: bool,
+
+    /// Verify the SSL certificate hostname [default: enabled].
+    #[arg(long = "ssl-verify-host", overrides_with = "no_ssl_verify_host")]
+    pub ssl_verify_host: bool,
+
+    /// Do not verify the SSL certificate hostname (insecure).
+    #[arg(long = "no-ssl-verify-host", overrides_with = "ssl_verify_host")]
+    pub no_ssl_verify_host: bool,
+
     /// Wait some milliseconds for JavaScript to finish [default: 200].
     #[arg(long, value_name = "msec")]
     pub javascript_delay: Option<u32>,
@@ -207,6 +223,15 @@ fn main() {
             settings.load_page.custom_headers.push((pair[0].clone(), pair[1].clone()));
         }
     }
+    if let Some(ref proxy_str) = cli.proxy {
+        settings.load_page.proxy = parse_proxy_url(proxy_str);
+    }
+    if cli.no_ssl_verify_peer {
+        settings.load_page.ssl_verify_peer = false;
+    }
+    if cli.no_ssl_verify_host {
+        settings.load_page.ssl_verify_host = false;
+    }
 
     let converter = ImageConverter::new(settings);
     let bytes = match converter.convert() {
@@ -221,6 +246,61 @@ fn main() {
         eprintln!("error writing output file '{}': {e}", cli.output);
         std::process::exit(1);
     }
+}
+
+/// Parse a proxy URL string (e.g., `"http://user:pass@host:8080"` or
+/// `"socks5://host:1080"`) into a [`Proxy`] settings struct.
+fn parse_proxy_url(url: &str) -> wkhtmltopdf_settings::Proxy {
+    use wkhtmltopdf_settings::{Proxy, ProxyType};
+    let (proxy_type, rest) = if let Some(r) = url.strip_prefix("socks5://") {
+        (ProxyType::Socks5, r)
+    } else if let Some(r) = url.strip_prefix("https://") {
+        (ProxyType::Http, r)
+    } else if let Some(r) = url.strip_prefix("http://") {
+        (ProxyType::Http, r)
+    } else {
+        return Proxy::default();
+    };
+
+    let (auth_str, host_str) = if let Some(at_pos) = rest.rfind('@') {
+        (&rest[..at_pos], &rest[at_pos + 1..])
+    } else {
+        ("", rest)
+    };
+
+    let (username, password) = if !auth_str.is_empty() {
+        if let Some(colon) = auth_str.find(':') {
+            (
+                Some(auth_str[..colon].to_string()),
+                Some(auth_str[colon + 1..].to_string()),
+            )
+        } else {
+            (Some(auth_str.to_string()), None)
+        }
+    } else {
+        (None, None)
+    };
+
+    // Split host and port.  IPv6 addresses are enclosed in brackets
+    // (e.g., "[::1]:8080"), so we strip the brackets first.
+    let (host, port) = if host_str.starts_with('[') {
+        if let Some(close) = host_str.find(']') {
+            let ipv6_host = &host_str[1..close];
+            let port = host_str[close + 1..]
+                .strip_prefix(':')
+                .and_then(|p| p.parse::<u16>().ok());
+            (Some(ipv6_host.to_string()), port)
+        } else {
+            (Some(host_str.to_string()), None)
+        }
+    } else if let Some(colon) = host_str.rfind(':') {
+        let port = host_str[colon + 1..].parse::<u16>().ok();
+        (Some(host_str[..colon].to_string()), port)
+    } else {
+        (Some(host_str.to_string()), None)
+    };
+
+    Proxy { proxy_type, host, port, username, password }
 }
 
 #[cfg(test)]
@@ -293,5 +373,28 @@ mod tests {
     #[test]
     fn missing_output_fails() {
         assert!(Cli::try_parse_from(["wkhtmltoimage", "input.html"]).is_err());
+    }
+
+    #[test]
+    fn no_ssl_verify_peer_flag() {
+        let cli = parse(&["wkhtmltoimage", "--no-ssl-verify-peer", "in.html", "out.png"]);
+        assert!(cli.no_ssl_verify_peer);
+    }
+
+    #[test]
+    fn no_ssl_verify_host_flag() {
+        let cli = parse(&["wkhtmltoimage", "--no-ssl-verify-host", "in.html", "out.png"]);
+        assert!(cli.no_ssl_verify_host);
+    }
+
+    #[test]
+    fn proxy_flag() {
+        let cli = parse(&["wkhtmltoimage", "--proxy", "http://proxy:3128", "in.html", "out.png"]);
+        assert_eq!(cli.proxy.as_deref(), Some("http://proxy:3128"));
+        let proxy = parse_proxy_url(cli.proxy.as_deref().unwrap());
+        use wkhtmltopdf_settings::ProxyType;
+        assert!(matches!(proxy.proxy_type, ProxyType::Http));
+        assert_eq!(proxy.host.as_deref(), Some("proxy"));
+        assert_eq!(proxy.port, Some(3128));
     }
 }
