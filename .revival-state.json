@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 7,
   "current_task_id": "7",
   "issue_number": 13,
+  "pr_number": 14,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/14",
   "last_prompt": "Implement PDF output pipeline in the `pdf` crate: convert rendered pages to PDF with support for multi-page documents, page size/orientation, margins, DPI, compression, metadata (title/author/subject), and PDF/A compliance.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -30,6 +32,15 @@
     "iteration 6: agent created PR #12 for task Some(\"6\")",
     "iteration 6: marked PR #12 as ready for review",
     "advance: merged PR #12",
-    "iteration 7: triggered cloud agent for task 7 (issue #13)"
+    "iteration 7: triggered cloud agent for task 7 (issue #13)",
+    "iteration 7: agent created PR #14 for task Some(\"7\")",
+    "iteration 7: marked PR #14 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 14,
+      "task_id": "7",
+      "issue_number": 13
+    }
   ]
 }
