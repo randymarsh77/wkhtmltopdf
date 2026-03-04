@@ -1,0 +1,103 @@
+[
+  {
+    "id": "1",
+    "description": "Audit the codebase: identify all Chrome headless dependencies, usages, and any headless browser integration points across all Cargo.toml files and source files",
+    "status": "pending"
+  },
+  {
+    "id": "2",
+    "description": "Research and select the appropriate Qt Rust wrapper for WebKit (e.g. qmetaobject-rs, qt-rust, or ritual-generated bindings) — confirm latest Qt6 + WebKit compatibility and crate availability on crates.io",
+    "status": "pending"
+  },
+  {
+    "id": "3",
+    "description": "Replace the LICENSE file content with the full LGPL-3.0 license text",
+    "status": "pending"
+  },
+  {
+    "id": "4",
+    "description": "Update the license field in every Cargo.toml (workspace root, cli/, core/, worker/) from 'MIT' to 'LGPL-3.0'",
+    "status": "pending"
+  },
+  {
+    "id": "5",
+    "description": "Remove all Chrome/headless-browser crate dependencies (e.g. headless_chrome, chromiumoxide, fantoccini) from Cargo.toml files",
+    "status": "pending",
+    "phase": 2,
+    "depends_on": [
+      "1",
+      "2"
+    ]
+  },
+  {
+    "id": "6",
+    "description": "Add the selected Qt WebKit Rust wrapper crate(s) to the appropriate Cargo.toml(s) with the latest compatible versions",
+    "status": "pending",
+    "phase": 2,
+    "depends_on": [
+      "1",
+      "2"
+    ]
+  },
+  {
+    "id": "7",
+    "description": "Replace Chrome headless browser initialization and page-loading code with equivalent Qt WebKit API calls (QWebEngineView or WebKitWebView), preserving all existing public interfaces",
+    "status": "pending",
+    "phase": 3,
+    "depends_on": [
+      "5",
+      "6"
+    ]
+  },
+  {
+    "id": "8",
+    "description": "Replace Chrome headless screenshot, DOM query, and JavaScript evaluation calls with the corresponding Qt WebKit equivalents",
+    "status": "pending",
+    "phase": 3,
+    "depends_on": [
+      "7"
+    ]
+  },
+  {
+    "id": "9",
+    "description": "Update README.md, IMPLEMENTATION.md, and any inline code comments to reflect the WebKit/Qt stack and LGPL-3.0 license",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "3",
+      "4",
+      "7",
+      "8"
+    ]
+  },
+  {
+    "id": "10",
+    "description": "Run the full build and test suite (cargo build --workspace && cargo test --workspace) and fix any compilation or test failures introduced by the browser engine swap",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "7",
+      "8"
+    ]
+  },
+  {
+    "id": "11",
+    "description": "Verify the Dockerfile in action/ correctly installs Qt6 + WebKit system libraries required at runtime and update it if needed",
+    "status": "pending",
+    "phase": 4,
+    "depends_on": [
+      "7",
+      "8"
+    ]
+  },
+  {
+    "id": "12",
+    "description": "Run cargo clippy --workspace and cargo fmt --check; resolve any new warnings or formatting issues",
+    "status": "pending",
+    "phase": 5,
+    "depends_on": [
+      "10",
+      "11"
+    ]
+  }
+]
