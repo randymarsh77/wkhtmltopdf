@@ -1,7 +1,13 @@
 //! Rendering engine abstraction for wkhtmltopdf.
 //!
 //! This crate defines the `Converter` trait and shared conversion types that
-//! both the `pdf` and `image` output crates implement.
+//! both the `pdf` and `image` output crates implement.  It also provides the
+//! [`renderer`] module, which contains the [`renderer::Renderer`] trait and
+//! the [`renderer::HeadlessRenderer`] initial implementation backed by a
+//! headless Chromium/WebKit browser.
+
+pub mod renderer;
+pub use renderer::{HeadlessRenderer, HtmlInput, RenderError, RenderedPage, Renderer};
 
 use thiserror::Error;
 
