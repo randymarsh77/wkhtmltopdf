@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 9,
   "current_task_id": "9",
   "issue_number": 17,
+  "pr_number": 18,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/18",
   "last_prompt": "Implement header and footer rendering: support HTML-based headers/footers with template variable substitution ([page], [toPage], [date], [title], [url]), spacing, line options, and font settings.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -38,6 +40,15 @@
     "iteration 8: agent created PR #16 for task Some(\"8\")",
     "iteration 8: marked PR #16 as ready for review",
     "advance: merged PR #16",
-    "iteration 9: triggered cloud agent for task 9 (issue #17)"
+    "iteration 9: triggered cloud agent for task 9 (issue #17)",
+    "iteration 9: agent created PR #18 for task Some(\"9\")",
+    "iteration 9: marked PR #18 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 18,
+      "task_id": "9",
+      "issue_number": 17
+    }
   ]
 }
