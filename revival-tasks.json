@@ -150,7 +150,7 @@
   {
     "id": "18",
     "description": "Implement PDF structural diffing: compare PDF metadata, page count, text content (via pdf-extract or similar), and outline structure between reference and Rust output beyond just visual comparison.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 4,
     "depends_on": [
       "15",
@@ -160,7 +160,7 @@
   {
     "id": "19",
     "description": "Write unit tests for all settings parsing, CLI argument handling, and configuration validation.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 4,
     "depends_on": [
       "4",
