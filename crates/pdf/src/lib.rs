@@ -13,6 +13,7 @@
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use lopdf::Bookmark as LopdfBookmark;
 use printpdf::{
     conformance::PdfConformance, deserialize::PdfWarnMsg, GeneratePdfOptions, PdfDocument,
     serialize::PdfSaveOptions,
@@ -131,8 +132,11 @@ impl Converter for PdfConverter {
             Vec::new()
         };
 
-        // Render each page object.
+        // Render each page object.  While doing so, track (0-based first page,
+        // headings) for objects that participate in the PDF outline.
         let mut combined: Option<PdfDocument> = None;
+        let mut outline_entries: Vec<(usize, Vec<HeadingEntry>)> = Vec::new();
+
         for (object, pre_html) in self.objects.iter().zip(fetched.iter()) {
             let html = if object.is_table_of_content {
                 // Generate the TOC HTML from the collected headings.
@@ -166,6 +170,19 @@ impl Converter for PdfConverter {
             } else {
                 html
             };
+
+            // Record the first page index of this object (0-based) for outline use.
+            let page_offset = combined.as_ref().map(|c| c.page_count()).unwrap_or(0);
+
+            // Collect headings for the PDF outline from non-TOC objects that opt in.
+            if self.global.outline && object.include_in_outline && !object.is_table_of_content {
+                if let Some(html_src) = pre_html {
+                    let headings = extract_headings(html_src, self.global.outline_depth);
+                    if !headings.is_empty() {
+                        outline_entries.push((page_offset, headings));
+                    }
+                }
+            }
 
             let mut warnings = Vec::new();
             let doc = PdfDocument::from_html(
@@ -208,7 +225,39 @@ impl Converter for PdfConverter {
             image_optimization: None,
         };
         let mut save_warnings: Vec<PdfWarnMsg> = Vec::new();
-        Ok(doc.save(&save_opts, &mut save_warnings))
+        let pdf_bytes = doc.save(&save_opts, &mut save_warnings);
+
+        // -----------------------------------------------------------------------
+        // Outline / bookmarks: embed hierarchical PDF bookmarks when enabled.
+        // -----------------------------------------------------------------------
+        if self.global.outline && !outline_entries.is_empty() {
+            // Re-parse the PDF with lopdf so we can embed a proper outline tree.
+            let mut lopdf_doc = lopdf::Document::load_mem(&pdf_bytes)
+                .map_err(|e| ConvertError::Render(format!("failed to re-parse PDF for outline: {e}")))?;
+
+            add_outline_to_lopdf(&mut lopdf_doc, &outline_entries);
+
+            // Write XML dump if requested.
+            if let Some(ref outline_path) = self.global.dump_outline {
+                let xml = build_outline_xml(&outline_entries);
+                std::fs::write(outline_path, xml).map_err(ConvertError::Io)?;
+            }
+
+            // Re-serialize (lopdf preserves existing streams; no extra compression needed).
+            let mut buf: Vec<u8> = Vec::new();
+            lopdf_doc
+                .save_to(&mut std::io::Cursor::new(&mut buf))
+                .map_err(|e| ConvertError::Render(format!("failed to save PDF with outline: {e}")))?;
+            return Ok(buf);
+        }
+
+        // No outline: also write dump XML if requested (empty outline).
+        if let Some(ref outline_path) = self.global.dump_outline {
+            let xml = build_outline_xml(&[]);
+            std::fs::write(outline_path, xml).map_err(ConvertError::Io)?;
+        }
+
+        Ok(pdf_bytes)
     }
 }
 
@@ -868,7 +917,129 @@ fn escape_html_attr(s: &str) -> String {
     s.replace('&', "&amp;").replace('"', "&quot;")
 }
 
-#[cfg(test)]
+// ---------------------------------------------------------------------------
+// PDF outline / bookmark helpers
+// ---------------------------------------------------------------------------
+
+/// Embed a hierarchical PDF outline (bookmarks) into `lopdf_doc`.
+///
+/// `outline_entries` is a list of `(first_page_0indexed, headings)` pairs, one
+/// entry per rendered page-object that participates in the outline.  Each
+/// heading in the list is mapped to a lopdf [`Bookmark`] with the correct
+/// parent so that the hierarchy mirrors the HTML heading levels (H1 → H2 →
+/// H3, etc.).  After all bookmarks have been added, [`Document::build_outline`]
+/// is called to build the PDF outline dictionary.
+pub fn add_outline_to_lopdf(
+    lopdf_doc: &mut lopdf::Document,
+    outline_entries: &[(usize, Vec<HeadingEntry>)],
+) {
+    // Build a BTreeMap of 1-based page number → lopdf ObjectId.
+    let pages: std::collections::BTreeMap<u32, lopdf::ObjectId> = lopdf_doc.get_pages();
+
+    // A stack of `(heading_level, lopdf_bookmark_id)` used to determine the
+    // parent of each new bookmark.
+    let mut level_stack: Vec<(u32, u32)> = Vec::new();
+
+    for (page_offset, headings) in outline_entries {
+        for heading in headings {
+            // Convert 0-based page_offset to 1-based lopdf page number.
+            let page_num = (*page_offset as u32) + 1;
+            let page_obj_id = match pages.get(&page_num) {
+                Some(&id) => id,
+                None => continue,
+            };
+
+            // Pop any stack entries at the same or deeper level so we find the
+            // correct parent.
+            while level_stack.last().map_or(false, |(l, _)| *l >= heading.level) {
+                level_stack.pop();
+            }
+
+            let parent_id = level_stack.last().map(|(_, id)| *id);
+
+            let bookmark = LopdfBookmark::new(
+                heading.text.clone(),
+                [0.0, 0.0, 0.0], // black
+                0,               // normal (non-bold, non-italic)
+                page_obj_id,
+            );
+            let bm_id = lopdf_doc.add_bookmark(bookmark, parent_id);
+            level_stack.push((heading.level, bm_id));
+        }
+    }
+
+    lopdf_doc.build_outline();
+}
+
+/// Build an XML string describing the PDF outline, compatible with the format
+/// expected by the wkhtmltopdf XSL stylesheet (`default_toc_xsl()`).
+///
+/// The XML uses the `outline` namespace and produces nested
+/// `<outline:item>` elements that mirror the heading hierarchy.
+pub fn build_outline_xml(outline_entries: &[(usize, Vec<HeadingEntry>)]) -> String {
+    let mut xml = String::from(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
+         <outline xmlns:outline=\"http://wkhtmltopdf.org/outline\">\n",
+    );
+
+    // Collect all entries into a flat list of (level, title, page, anchor).
+    let flat: Vec<(u32, &str, usize, &str)> = outline_entries
+        .iter()
+        .flat_map(|(page_offset, headings)| {
+            headings
+                .iter()
+                .map(move |h| (h.level, h.text.as_str(), page_offset + 1, h.anchor.as_str()))
+        })
+        .collect();
+
+    // Write nested XML by tracking an indent stack.
+    let mut open_levels: Vec<u32> = Vec::new();
+
+    for (level, title, page, anchor) in &flat {
+        // Close any open levels deeper than the current heading level.
+        while open_levels.last().map_or(false, |l| *l >= *level) {
+            let indent = "  ".repeat(open_levels.len());
+            xml.push_str(&format!("{}</outline:item>\n", indent));
+            open_levels.pop();
+        }
+
+        let indent = "  ".repeat(open_levels.len() + 1);
+        xml.push_str(&format!(
+            "{}<outline:item title=\"{}\" page=\"{}\" link=\"#{}\">",
+            indent,
+            escape_xml_attr(title),
+            page,
+            escape_xml_attr(anchor),
+        ));
+
+        open_levels.push(*level);
+
+        // Peek at the next item: if it's a child, leave this tag open.
+        // Otherwise close it immediately (we'll close via the stack above on
+        // the next iteration).
+        xml.push('\n');
+    }
+
+    // Close any remaining open levels.
+    while !open_levels.is_empty() {
+        open_levels.pop();
+        let indent = "  ".repeat(open_levels.len() + 1);
+        xml.push_str(&format!("{}</outline:item>\n", indent));
+    }
+
+    xml.push_str("</outline>\n");
+    xml
+}
+
+/// XML-attribute-safe escaping (subset needed for outline XML output).
+fn escape_xml_attr(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
+}
+
 mod tests {
     use super::*;
     use wkhtmltopdf_settings::{UnitReal, Unit, PageSize, Orientation};
@@ -1374,5 +1545,85 @@ mod tests {
     #[test]
     fn escape_html_escapes_special_chars() {
         assert_eq!(escape_html("<b>Hello & \"World\"</b>"), "&lt;b&gt;Hello &amp; &quot;World&quot;&lt;/b&gt;");
+    }
+
+    // -----------------------------------------------------------------------
+    // PDF outline / bookmark helper tests
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn build_outline_xml_empty() {
+        let xml = build_outline_xml(&[]);
+        assert!(xml.contains("<?xml"), "should start with XML declaration");
+        assert!(xml.contains("<outline"), "should contain outline element");
+        assert!(xml.contains("</outline>"), "should close outline element");
+        assert!(!xml.contains("outline:item"), "no items for empty input");
+    }
+
+    #[test]
+    fn build_outline_xml_flat_entries() {
+        let entries = vec![(
+            0,
+            vec![
+                HeadingEntry { level: 1, text: "Chapter 1".into(), anchor: "chapter-1".into() },
+                HeadingEntry { level: 1, text: "Chapter 2".into(), anchor: "chapter-2".into() },
+            ],
+        )];
+        let xml = build_outline_xml(&entries);
+        assert!(xml.contains("title=\"Chapter 1\""));
+        assert!(xml.contains("title=\"Chapter 2\""));
+        assert!(xml.contains("link=\"#chapter-1\""));
+        assert!(xml.contains("page=\"1\""));
+    }
+
+    #[test]
+    fn build_outline_xml_nested_entries() {
+        let entries = vec![(
+            0,
+            vec![
+                HeadingEntry { level: 1, text: "Ch1".into(), anchor: "ch1".into() },
+                HeadingEntry { level: 2, text: "Sec1".into(), anchor: "sec1".into() },
+                HeadingEntry { level: 1, text: "Ch2".into(), anchor: "ch2".into() },
+            ],
+        )];
+        let xml = build_outline_xml(&entries);
+        // All three titles should appear.
+        assert!(xml.contains("title=\"Ch1\""));
+        assert!(xml.contains("title=\"Sec1\""));
+        assert!(xml.contains("title=\"Ch2\""));
+        // Sec1 should appear after Ch1 (nested inside).
+        let ch1_pos = xml.find("title=\"Ch1\"").unwrap();
+        let sec1_pos = xml.find("title=\"Sec1\"").unwrap();
+        let ch2_pos = xml.find("title=\"Ch2\"").unwrap();
+        assert!(ch1_pos < sec1_pos);
+        assert!(sec1_pos < ch2_pos);
+    }
+
+    #[test]
+    fn build_outline_xml_escapes_special_chars() {
+        let entries = vec![(
+            0,
+            vec![HeadingEntry {
+                level: 1,
+                text: "Title & <More>".into(),
+                anchor: "title-more".into(),
+            }],
+        )];
+        let xml = build_outline_xml(&entries);
+        assert!(xml.contains("&amp;"), "ampersand should be escaped");
+        assert!(xml.contains("&lt;"), "< should be escaped");
+        assert!(xml.contains("&gt;"), "> should be escaped");
+    }
+
+    #[test]
+    fn build_outline_xml_page_numbers_offset_by_object() {
+        // Two objects: first starts at page 0, second at page 5.
+        let entries = vec![
+            (0, vec![HeadingEntry { level: 1, text: "A".into(), anchor: "a".into() }]),
+            (5, vec![HeadingEntry { level: 1, text: "B".into(), anchor: "b".into() }]),
+        ];
+        let xml = build_outline_xml(&entries);
+        assert!(xml.contains("page=\"1\""), "first object page should be 1");
+        assert!(xml.contains("page=\"6\""), "second object page should be 6");
     }
 }

@@ -9,4 +9,5 @@ wkhtmltopdf-core = { path = "../core" }
 wkhtmltopdf-settings = { path = "../settings" }
 thiserror = "1"
 printpdf = "0.9.1"
+lopdf = "0.39.0"
 ureq = "3.2.0"
