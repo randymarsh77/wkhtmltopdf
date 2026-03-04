@@ -99,6 +99,12 @@ pub trait Renderer {
 pub struct HeadlessRenderer {
     /// When `true` the browser window is hidden (the normal operating mode).
     pub headless: bool,
+    /// When `true` the browser subprocess runs inside the OS sandbox
+    /// (Chrome's built-in sandbox).  Defaults to `true`.  Only set this to
+    /// `false` when running as root in an environment where the kernel
+    /// namespaces required by Chrome's sandbox are unavailable (e.g. some
+    /// container runtimes); doing so is not recommended in production.
+    pub sandbox: bool,
     /// When `false`, JavaScript execution is disabled in the rendered page.
     pub enable_javascript: bool,
     /// Milliseconds to wait after page load before capturing the screenshot.
@@ -108,10 +114,11 @@ pub struct HeadlessRenderer {
 }
 
 impl HeadlessRenderer {
-    /// Create a new `HeadlessRenderer` with headless mode enabled.
+    /// Create a new `HeadlessRenderer` with headless mode and sandbox enabled.
     pub fn new() -> Self {
         Self {
             headless: true,
+            sandbox: true,
             enable_javascript: true,
             js_delay: 200,
             run_scripts: Vec::new(),
@@ -126,6 +133,7 @@ impl HeadlessRenderer {
     ) -> Self {
         Self {
             headless: true,
+            sandbox: true,
             enable_javascript,
             js_delay,
             run_scripts,
@@ -144,10 +152,20 @@ impl Renderer for HeadlessRenderer {
         use headless_chrome::{Browser, LaunchOptions};
         use headless_chrome::protocol::cdp::{Emulation, Page};
 
+        // Validate that network URLs use an allowed scheme (http or https).
+        if let HtmlInput::Url(url) = input {
+            if !url.starts_with("http://") && !url.starts_with("https://") {
+                return Err(RenderError::RenderFailed(format!(
+                    "unsupported URL scheme; only http:// and https:// are allowed: {url}"
+                )));
+            }
+        }
+
         let url = input.to_url_string();
 
         let launch_options = LaunchOptions {
             headless: self.headless,
+            sandbox: self.sandbox,
             ..Default::default()
         };
 
@@ -234,6 +252,7 @@ mod tests {
     fn headless_renderer_default_is_headless() {
         let renderer = HeadlessRenderer::default();
         assert!(renderer.headless);
+        assert!(renderer.sandbox);
         assert!(renderer.enable_javascript);
         assert_eq!(renderer.js_delay, 200);
         assert!(renderer.run_scripts.is_empty());
@@ -243,6 +262,7 @@ mod tests {
     fn headless_renderer_new_is_headless() {
         let renderer = HeadlessRenderer::new();
         assert!(renderer.headless);
+        assert!(renderer.sandbox);
         assert!(renderer.enable_javascript);
         assert_eq!(renderer.js_delay, 200);
         assert!(renderer.run_scripts.is_empty());
@@ -255,9 +275,31 @@ mod tests {
             500,
             vec!["console.log('test')".to_string()],
         );
+        assert!(renderer.sandbox);
         assert!(!renderer.enable_javascript);
         assert_eq!(renderer.js_delay, 500);
         assert_eq!(renderer.run_scripts, vec!["console.log('test')"]);
+    }
+
+    #[test]
+    fn headless_renderer_sandbox_can_be_disabled() {
+        let mut renderer = HeadlessRenderer::new();
+        renderer.sandbox = false;
+        assert!(!renderer.sandbox);
+    }
+
+    #[test]
+    fn render_rejects_non_http_url_scheme() {
+        let renderer = HeadlessRenderer::new();
+        let result = renderer.render(&HtmlInput::Url("ftp://example.com/file.html".into()));
+        assert!(matches!(result, Err(RenderError::RenderFailed(_))));
+    }
+
+    #[test]
+    fn render_rejects_javascript_url_scheme() {
+        let renderer = HeadlessRenderer::new();
+        let result = renderer.render(&HtmlInput::Url("javascript:alert(1)".into()));
+        assert!(matches!(result, Err(RenderError::RenderFailed(_))));
     }
 
     /// Verify that `HeadlessRenderer` implements `Renderer`.

@@ -239,6 +239,7 @@ impl Converter for PdfConverter {
 
             // Write XML dump if requested.
             if let Some(ref outline_path) = self.global.dump_outline {
+                validate_local_path(outline_path)?;
                 let xml = build_outline_xml(&outline_entries);
                 std::fs::write(outline_path, xml).map_err(ConvertError::Io)?;
             }
@@ -253,6 +254,7 @@ impl Converter for PdfConverter {
 
         // No outline: also write dump XML if requested (empty outline).
         if let Some(ref outline_path) = self.global.dump_outline {
+            validate_local_path(outline_path)?;
             let xml = build_outline_xml(&[]);
             std::fs::write(outline_path, xml).map_err(ConvertError::Io)?;
         }
@@ -264,6 +266,22 @@ impl Converter for PdfConverter {
 // ---------------------------------------------------------------------------
 // Helper functions
 // ---------------------------------------------------------------------------
+
+/// Validate that a local file path does not contain path traversal components.
+///
+/// Returns an error if the path contains any `..` (parent-directory) component,
+/// which could be used to escape the intended working directory.
+fn validate_local_path(path: &str) -> Result<(), ConvertError> {
+    use std::path::{Component, Path};
+    for component in Path::new(path).components() {
+        if matches!(component, Component::ParentDir) {
+            return Err(ConvertError::Render(format!(
+                "path traversal detected in file path: {path}"
+            )));
+        }
+    }
+    Ok(())
+}
 
 /// Fetch HTML content from a local file path or an HTTP/HTTPS URL,
 /// applying the per-page network settings (proxy, auth, cookies, headers,
@@ -305,6 +323,7 @@ fn fetch_html(source: &str, load: &LoadPage) -> Result<String, ConvertError> {
             .read_to_string()
             .map_err(|e| ConvertError::Render(format!("failed to read HTTP response: {e}")))
     } else {
+        validate_local_path(source)?;
         std::fs::read_to_string(source).map_err(ConvertError::Io)
     }
 }
@@ -1709,5 +1728,19 @@ mod tests {
         let xml = build_outline_xml(&entries);
         assert!(xml.contains("page=\"1\""), "first object page should be 1");
         assert!(xml.contains("page=\"6\""), "second object page should be 6");
+    }
+
+    #[test]
+    fn validate_local_path_accepts_normal_paths() {
+        assert!(validate_local_path("/tmp/output.pdf").is_ok());
+        assert!(validate_local_path("relative/dir/file.html").is_ok());
+        assert!(validate_local_path("file.html").is_ok());
+    }
+
+    #[test]
+    fn validate_local_path_rejects_parent_dir() {
+        assert!(validate_local_path("../sensitive/file.txt").is_err());
+        assert!(validate_local_path("/tmp/../outside/file.txt").is_err());
+        assert!(validate_local_path("safe/../../escape.html").is_err());
     }
 }
