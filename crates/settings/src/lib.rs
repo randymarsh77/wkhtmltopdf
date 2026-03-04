@@ -329,6 +329,8 @@ pub struct TableOfContent {
     pub indentation: String,
     /// Font scale factor applied per TOC nesting level.
     pub font_scale: f32,
+    /// Maximum heading depth to include in the TOC (1–6).
+    pub depth: u32,
 }
 
 impl Default for TableOfContent {
@@ -340,6 +342,7 @@ impl Default for TableOfContent {
             back_links: true,
             indentation: "1em".into(),
             font_scale: 0.8,
+            depth: 3,
         }
     }
 }
