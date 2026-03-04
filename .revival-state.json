@@ -1,11 +1,9 @@
 {
-  "phase": "needs_verification",
-  "iteration": 19,
-  "current_task_id": "19",
-  "issue_number": 37,
-  "pr_number": 38,
-  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/38",
-  "last_prompt": "Write unit tests for all settings parsing, CLI argument handling, and configuration validation.",
+  "phase": "agent_working",
+  "iteration": 20,
+  "current_task_id": "20",
+  "issue_number": 39,
+  "last_prompt": "Write integration tests for PDF and image rendering pipelines covering all major feature flags and option combinations.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -82,13 +80,8 @@
     "advance: merged PR #36",
     "iteration 19: triggered cloud agent for task 19 (issue #37)",
     "iteration 19: agent created PR #38 for task Some(\"19\")",
-    "iteration 19: marked PR #38 as ready for review"
-  ],
-  "tracked_prs": [
-    {
-      "pr_number": 38,
-      "task_id": "19",
-      "issue_number": 37
-    }
+    "iteration 19: marked PR #38 as ready for review",
+    "advance: merged PR #38",
+    "iteration 20: triggered cloud agent for task 20 (issue #39)"
   ]
 }

@@ -160,7 +160,7 @@
   {
     "id": "19",
     "description": "Write unit tests for all settings parsing, CLI argument handling, and configuration validation.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 4,
     "depends_on": [
       "4",
@@ -170,7 +170,7 @@
   {
     "id": "20",
     "description": "Write integration tests for PDF and image rendering pipelines covering all major feature flags and option combinations.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 5,
     "depends_on": [
       "7",
