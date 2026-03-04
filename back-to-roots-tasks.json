@@ -2,7 +2,7 @@
   {
     "id": "1",
     "description": "Audit the codebase: identify all Chrome headless dependencies, usages, and any headless browser integration points across all Cargo.toml files and source files",
-    "status": "pending"
+    "status": "inprogress"
   },
   {
     "id": "2",
