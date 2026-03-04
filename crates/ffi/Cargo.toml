@@ -2,6 +2,7 @@
 name = "wkhtmltox"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.80"
 description = "C-compatible shared library API for wkhtmltopdf (libwkhtmltox replacement)"
 
 [lib]
