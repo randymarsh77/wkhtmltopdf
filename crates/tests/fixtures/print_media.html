@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Print Media Queries</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background: #f0f4f8; }
+
+    .screen-only {
+      background: #4a90d9;
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .print-only {
+      display: none;
+      border: 2px solid #333;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .color-box {
+      background: #7ed321;
+      color: white;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    nav {
+      background: #333;
+      padding: 12px;
+      margin-bottom: 20px;
+    }
+    nav a { color: white; margin-right: 16px; text-decoration: none; }
+
+    @media print {
+      body {
+        background: white;
+        margin: 0;
+        font-size: 11pt;
+      }
+
+      nav {
+        display: none;
+      }
+
+      .screen-only {
+        display: none;
+      }
+
+      .print-only {
+        display: block;
+      }
+
+      .color-box {
+        background: white;
+        color: black;
+        border: 2px solid black;
+      }
+
+      a::after {
+        content: " (" attr(href) ")";
+        font-size: 0.8em;
+        color: #555;
+      }
+
+      h1, h2 {
+        page-break-after: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="#section1">Section 1</a>
+    <a href="#section2">Section 2</a>
+    <a href="#section3">Section 3</a>
+  </nav>
+
+  <h1>Print Media Query Fixtures</h1>
+
+  <div class="screen-only">
+    <p>This box is visible on screen but hidden when printing.</p>
+  </div>
+
+  <div class="print-only">
+    <p>This box only appears in the printed output.</p>
+  </div>
+
+  <div class="color-box">
+    <p>This box has a green background on screen but renders as a bordered box when printed.</p>
+  </div>
+
+  <h2 id="section1">Section 1: Content</h2>
+  <p>This paragraph contains a <a href="https://example.com">link to example.com</a> which will show the URL when printed.</p>
+  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+
+  <h2 id="section2">Section 2: More Content</h2>
+  <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+
+  <h2 id="section3">Section 3: Final Content</h2>
+  <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Unicode and RTL Text</title>
+  <style>
+    body { font-family: "DejaVu Sans", Arial, sans-serif; margin: 40px; line-height: 1.8; }
+    h2 { margin-top: 32px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+
+    .rtl-block {
+      direction: rtl;
+      text-align: right;
+      background: #f0f7ff;
+      border: 1px solid #b3d4f5;
+      padding: 16px;
+      margin-bottom: 16px;
+      border-radius: 4px;
+    }
+
+    .unicode-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .unicode-grid .cell {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: center;
+      font-size: 1.4em;
+    }
+
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    td, th { border: 1px solid #ccc; padding: 8px 12px; }
+    th { background: #eee; }
+    .rtl-td { direction: rtl; text-align: right; }
+  </style>
+</head>
+<body>
+
+  <h1>Unicode and RTL Text Fixtures</h1>
+
+  <h2>Latin Extended Characters</h2>
+  <p>Ünïcödé têxt with dïacrïtïcs: café, naïve, résumé, piñata, Zürich, Ångström.</p>
+  <p>Eastern European: Česky, Ελληνικά, Ñoño, Ważny, Žabí.</p>
+
+  <h2>Greek and Cyrillic</h2>
+  <p>Greek: Αλφάβητο, Ελλάδα, φιλοσοφία, μαθηματικά.</p>
+  <p>Cyrillic: Привет мир, Кириллица, Россия, Украïна, Беларусь.</p>
+
+  <h2>CJK Characters</h2>
+  <p>Chinese (Simplified): 你好世界，这是一个测试文档。</p>
+  <p>Chinese (Traditional): 你好世界，這是一個測試文件。</p>
+  <p>Japanese: こんにちは世界。テスト文書。日本語のサポート。</p>
+  <p>Korean: 안녕하세요 세계. 테스트 문서입니다.</p>
+
+  <h2>Arabic (RTL)</h2>
+  <div class="rtl-block" lang="ar">
+    <p>مرحبا بالعالم. هذا نص عربي يُكتب من اليمين إلى اليسار.</p>
+    <p>اختبار تخطيط النص العربي في مستندات PDF.</p>
+  </div>
+
+  <h2>Hebrew (RTL)</h2>
+  <div class="rtl-block" lang="he">
+    <p>שלום עולם. זהו טקסט עברי הנכתב מימין לשמאל.</p>
+    <p>בדיקת תמיכה בכיווניות טקסט ימין לשמאל.</p>
+  </div>
+
+  <h2>Emoji and Symbols</h2>
+  <div class="unicode-grid">
+    <div class="cell">😀</div>
+    <div class="cell">🌍</div>
+    <div class="cell">🎉</div>
+    <div class="cell">🔥</div>
+    <div class="cell">✓</div>
+    <div class="cell">★</div>
+    <div class="cell">→</div>
+    <div class="cell">©</div>
+  </div>
+
+  <h2>Mixed Directionality Table</h2>
+  <table>
+    <tr>
+      <th>English</th>
+      <th>Arabic</th>
+      <th>Hebrew</th>
+    </tr>
+    <tr>
+      <td>Hello World</td>
+      <td class="rtl-td" lang="ar">مرحبا بالعالم</td>
+      <td class="rtl-td" lang="he">שלום עולם</td>
+    </tr>
+    <tr>
+      <td>Test</td>
+      <td class="rtl-td" lang="ar">اختبار</td>
+      <td class="rtl-td" lang="he">בדיקה</td>
+    </tr>
+  </table>
+
+  <h2>Mathematical Symbols</h2>
+  <p>∀x ∈ ℝ, ∃y : x² + y² = 1 ⟹ |x| ≤ 1 ∧ |y| ≤ 1</p>
+  <p>∫₀^∞ e^(−x²) dx = √π / 2</p>
+  <p>α + β = γ, where α ≈ 0.5, β ≈ 0.5, γ ≈ 1.0</p>
+
+</body>
+</html>

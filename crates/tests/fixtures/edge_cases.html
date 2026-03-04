@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Edge Cases</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h2 { margin-top: 32px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+
+    /* Zero-height / collapsed margin edge cases */
+    .empty-div { /* intentionally empty */ }
+    .zero-height { height: 0; overflow: hidden; }
+
+    /* Very long unbreakable word */
+    .overflow-word {
+      width: 200px;
+      border: 1px solid red;
+      overflow-wrap: break-word;
+      word-break: break-all;
+      padding: 4px;
+      margin-bottom: 12px;
+    }
+
+    /* Deep nesting */
+    .deep-nest { padding-left: 20px; }
+
+    /* Transparent and overlapping */
+    .positioned {
+      position: relative;
+      height: 80px;
+      margin-bottom: 12px;
+    }
+    .positioned .back {
+      position: absolute;
+      top: 0; left: 0;
+      width: 120px; height: 60px;
+      background: rgba(74, 144, 217, 0.5);
+    }
+    .positioned .front {
+      position: absolute;
+      top: 20px; left: 40px;
+      width: 120px; height: 60px;
+      background: rgba(126, 211, 33, 0.7);
+    }
+
+    /* Very small and very large text */
+    .tiny  { font-size: 6px; }
+    .huge  { font-size: 48px; }
+
+    /* White-space edge cases */
+    .preformatted {
+      white-space: pre;
+      font-family: monospace;
+      background: #f5f5f5;
+      padding: 12px;
+      border: 1px solid #ddd;
+    }
+
+    table { border-collapse: collapse; margin-bottom: 16px; }
+    td, th { border: 1px solid #ccc; padding: 6px 10px; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+  <h1>Edge Cases</h1>
+
+  <h2>Empty Elements</h2>
+  <p>Before empty div:</p>
+  <div class="empty-div"></div>
+  <p>After empty div (should be adjacent with no gap).</p>
+  <div class="zero-height"><span>Hidden zero-height content</span></div>
+  <p>After zero-height div.</p>
+
+  <h2>Long Unbreakable Word</h2>
+  <div class="overflow-word">
+    supercalifragilisticexpialidocious-pneumonoultramicroscopicsilicovolcanoconiosis
+  </div>
+  <p>Normal text continues here after the long word container.</p>
+
+  <h2>Deeply Nested Elements</h2>
+  <div class="deep-nest">Level 1
+    <div class="deep-nest">Level 2
+      <div class="deep-nest">Level 3
+        <div class="deep-nest">Level 4
+          <div class="deep-nest">Level 5 — <em>deeply nested content</em></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Overlapping Positioned Elements</h2>
+  <div class="positioned">
+    <div class="back">Back layer</div>
+    <div class="front">Front layer</div>
+  </div>
+
+  <h2>Font Size Extremes</h2>
+  <p class="tiny">This text is 6px — very small and may be hard to read.</p>
+  <p class="huge">Big text</p>
+  <p>Normal text after extremes.</p>
+
+  <h2>White-Space Preservation</h2>
+  <div class="preformatted">
+function hello(name) {
+    console.log("Hello, " + name + "!");
+    return true;
+}
+  </div>
+
+  <h2>Empty Table Cells</h2>
+  <table>
+    <tr><th>A</th><th>B</th><th>C</th></tr>
+    <tr><td></td><td>Data</td><td></td></tr>
+    <tr><td>Data</td><td></td><td>Data</td></tr>
+    <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+  </table>
+
+  <h2>Special HTML Entities</h2>
+  <p>&lt;html&gt; &amp; &quot;quotes&quot; &apos;apostrophe&apos; &copy; &reg; &trade; &mdash; &ndash; &hellip;</p>
+
+  <h2>Inline vs Block Display Edge Cases</h2>
+  <p>Inline: <span style="display:inline-block; width:100px; height:30px; background:#ddd; vertical-align:middle;">Inline-block</span> continues here.</p>
+  <p>Float: <span style="float:right; width:80px; background:#ffe; border:1px solid #ccc; padding:4px;">Right float</span>This text wraps around the floated element on the left side of the container.</p>
+  <div style="clear:both;"></div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CSS Grid Layout</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h2 { margin-top: 32px; }
+
+    /* Basic 3-column grid */
+    .grid-basic {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .grid-basic .cell {
+      background: #4a90d9;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 4px;
+    }
+
+    /* Named areas grid */
+    .grid-areas {
+      display: grid;
+      grid-template-areas:
+        "header header header"
+        "sidebar main    main"
+        "footer  footer  footer";
+      grid-template-columns: 150px 1fr 1fr;
+      grid-template-rows: 60px 1fr 40px;
+      gap: 8px;
+      height: 280px;
+      margin-bottom: 24px;
+    }
+    .grid-areas .header  { grid-area: header;  background: #333; color: white; display: flex; align-items: center; justify-content: center; }
+    .grid-areas .sidebar { grid-area: sidebar; background: #7ed321; color: white; display: flex; align-items: center; justify-content: center; }
+    .grid-areas .main    { grid-area: main;    background: #e8f4fd; padding: 12px; }
+    .grid-areas .footer  { grid-area: footer;  background: #555; color: white; display: flex; align-items: center; justify-content: center; }
+
+    /* Auto-fill grid */
+    .grid-auto {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .grid-auto .card {
+      background: #f5a623;
+      color: white;
+      padding: 14px;
+      text-align: center;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    /* Spanning cells */
+    .grid-span {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .grid-span .cell {
+      background: #d0021b;
+      color: white;
+      padding: 14px;
+      text-align: center;
+      border-radius: 4px;
+    }
+    .grid-span .span2 { grid-column: span 2; background: #9b59b6; }
+    .grid-span .span4 { grid-column: span 4; background: #2c3e50; }
+  </style>
+</head>
+<body>
+  <h1>CSS Grid Fixtures</h1>
+
+  <h2>Basic 3-Column Grid</h2>
+  <div class="grid-basic">
+    <div class="cell">Cell 1</div>
+    <div class="cell">Cell 2</div>
+    <div class="cell">Cell 3</div>
+    <div class="cell">Cell 4</div>
+    <div class="cell">Cell 5</div>
+    <div class="cell">Cell 6</div>
+  </div>
+
+  <h2>Named Grid Areas (Page Layout)</h2>
+  <div class="grid-areas">
+    <div class="header">Header</div>
+    <div class="sidebar">Sidebar</div>
+    <div class="main">
+      <p>Main content area spanning two columns.</p>
+      <p>Grid template areas make complex layouts readable.</p>
+    </div>
+    <div class="footer">Footer</div>
+  </div>
+
+  <h2>Auto-Fill with minmax()</h2>
+  <div class="grid-auto">
+    <div class="card">1</div>
+    <div class="card">2</div>
+    <div class="card">3</div>
+    <div class="card">4</div>
+    <div class="card">5</div>
+    <div class="card">6</div>
+    <div class="card">7</div>
+    <div class="card">8</div>
+  </div>
+
+  <h2>Column Spanning</h2>
+  <div class="grid-span">
+    <div class="cell">1</div>
+    <div class="cell">2</div>
+    <div class="cell">3</div>
+    <div class="cell">4</div>
+    <div class="cell span2">Span 2</div>
+    <div class="cell">3</div>
+    <div class="cell">4</div>
+    <div class="cell span4">Span all 4</div>
+  </div>
+</body>
+</html>

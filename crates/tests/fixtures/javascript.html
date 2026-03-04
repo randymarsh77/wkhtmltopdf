@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JavaScript Rendered Content</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    #dynamic-list { padding: 0; }
+    #dynamic-list li { padding: 6px 0; border-bottom: 1px solid #eee; }
+    #clock { font-size: 1.5em; font-weight: bold; color: #4a90d9; margin: 16px 0; }
+    #computed-sum { font-size: 1.2em; color: #7ed321; }
+    .card {
+      border: 1px solid #ccc;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .card.visible { display: block; }
+    #status { font-style: italic; color: #999; }
+  </style>
+</head>
+<body>
+  <h1>JavaScript Rendered Content</h1>
+
+  <h2>Dynamically Generated List</h2>
+  <p id="status">Generating…</p>
+  <ul id="dynamic-list"></ul>
+
+  <h2>Computed Values</h2>
+  <p>Sum of squares from 1 to 10: <span id="computed-sum">calculating…</span></p>
+
+  <h2>Timestamp</h2>
+  <p>Page rendered at: <span id="clock">…</span></p>
+
+  <h2>Conditionally Shown Cards</h2>
+  <div id="card1" class="card">
+    <strong>Card A</strong>
+    <p>This card is shown because a condition was met.</p>
+  </div>
+  <div id="card2" class="card">
+    <strong>Card B</strong>
+    <p>This card is also shown by JavaScript.</p>
+  </div>
+  <div id="card3" class="card">
+    <strong>Card C (hidden)</strong>
+    <p>This card remains hidden because its condition was not met.</p>
+  </div>
+
+  <script>
+    // Dynamically populate list
+    var items = ["Apple", "Banana", "Cherry", "Date", "Elderberry"];
+    var list = document.getElementById("dynamic-list");
+    items.forEach(function(name, idx) {
+      var li = document.createElement("li");
+      li.textContent = (idx + 1) + ". " + name;
+      list.appendChild(li);
+    });
+    document.getElementById("status").textContent = "Generated " + items.length + " items.";
+
+    // Compute sum of squares
+    var sum = 0;
+    for (var i = 1; i <= 10; i++) { sum += i * i; }
+    document.getElementById("computed-sum").textContent = sum;
+
+    // Set timestamp
+    document.getElementById("clock").textContent = new Date().toISOString();
+
+    // Show cards conditionally
+    var showCards = [true, true, false];
+    ["card1", "card2", "card3"].forEach(function(id, idx) {
+      if (showCards[idx]) {
+        document.getElementById(id).classList.add("visible");
+      }
+    });
+  </script>
+</body>
+</html>
