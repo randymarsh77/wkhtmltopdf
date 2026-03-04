@@ -1,4 +1,5 @@
 use wkhtmltopdf_core::Converter;
+use wkhtmltopdf_diff::{diff_images, DiffError, DiffOptions};
 use wkhtmltopdf_image::ImageConverter;
 use wkhtmltopdf_pdf::PdfConverter;
 use wkhtmltopdf_settings::{
@@ -421,4 +422,116 @@ fn load_page_ssl_verify_roundtrips_via_json() {
     let restored: LoadPage = serde_json::from_str(&json).expect("deserialize");
     assert!(!restored.ssl_verify_peer);
     assert!(restored.ssl_verify_host);
+}
+
+// ---------------------------------------------------------------------------
+// Visual diffing tool
+// ---------------------------------------------------------------------------
+
+/// Encode a solid-colour 8×8 RGBA image as PNG bytes.
+fn make_solid_png(r: u8, g: u8, b: u8) -> Vec<u8> {
+    use image::{DynamicImage, ImageFormat, Rgba, RgbaImage};
+    use std::io::Cursor;
+    let mut img = RgbaImage::new(8, 8);
+    for px in img.pixels_mut() {
+        *px = Rgba([r, g, b, 255]);
+    }
+    let dyn_img = DynamicImage::ImageRgba8(img);
+    let mut buf = Vec::new();
+    dyn_img
+        .write_to(&mut Cursor::new(&mut buf), ImageFormat::Png)
+        .expect("encode PNG");
+    buf
+}
+
+#[test]
+fn visual_diff_identical_images_reports_zero_percent() {
+    let png = make_solid_png(128, 64, 32);
+    let result = diff_images(&png, &png, DiffOptions::default()).unwrap();
+    assert_eq!(result.different_pixels(), 0);
+    assert!((result.diff_percentage() - 0.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn visual_diff_completely_different_images_reports_nonzero() {
+    let ref_png = make_solid_png(0, 0, 0);
+    let act_png = make_solid_png(255, 255, 255);
+    let opts = DiffOptions {
+        threshold: 0,
+        ..Default::default()
+    };
+    let result = diff_images(&ref_png, &act_png, opts).unwrap();
+    assert!(result.different_pixels() > 0);
+    assert!(result.diff_percentage() > 0.0);
+}
+
+#[test]
+fn visual_diff_total_pixels_equals_image_area() {
+    let png = make_solid_png(10, 20, 30);
+    let result = diff_images(&png, &png, DiffOptions::default()).unwrap();
+    assert_eq!(result.total_pixels(), 8 * 8);
+}
+
+#[test]
+fn visual_diff_produces_valid_png_diff_image() {
+    let ref_png = make_solid_png(0, 0, 0);
+    let act_png = make_solid_png(200, 200, 200);
+    let opts = DiffOptions {
+        threshold: 0,
+        ..Default::default()
+    };
+    let result = diff_images(&ref_png, &act_png, opts).unwrap();
+    // The diff image must start with the PNG magic bytes.
+    assert!(result.diff_image().starts_with(b"\x89PNG"));
+}
+
+#[test]
+fn visual_diff_size_mismatch_returns_error_by_default() {
+    let ref_png = make_solid_png(0, 0, 0); // 8×8
+    // Build a 4×4 PNG manually.
+    use image::{DynamicImage, ImageFormat, Rgba, RgbaImage};
+    use std::io::Cursor;
+    let small = DynamicImage::ImageRgba8({
+        let mut img = RgbaImage::new(4, 4);
+        for px in img.pixels_mut() {
+            *px = Rgba([0, 0, 0, 255]);
+        }
+        img
+    });
+    let mut act_png = Vec::new();
+    small
+        .write_to(&mut Cursor::new(&mut act_png), ImageFormat::Png)
+        .unwrap();
+
+    let err = diff_images(&ref_png, &act_png, DiffOptions::default()).unwrap_err();
+    assert!(matches!(err, DiffError::SizeMismatch { .. }));
+}
+
+#[test]
+fn visual_diff_allow_size_mismatch_compares_overlap() {
+    let ref_png = make_solid_png(0, 0, 0); // 8×8 black
+    // 4×4 black image
+    use image::{DynamicImage, ImageFormat, Rgba, RgbaImage};
+    use std::io::Cursor;
+    let small = DynamicImage::ImageRgba8({
+        let mut img = RgbaImage::new(4, 4);
+        for px in img.pixels_mut() {
+            *px = Rgba([0, 0, 0, 255]);
+        }
+        img
+    });
+    let mut act_png = Vec::new();
+    small
+        .write_to(&mut Cursor::new(&mut act_png), ImageFormat::Png)
+        .unwrap();
+
+    let opts = DiffOptions {
+        require_same_size: false,
+        threshold: 0,
+        ..Default::default()
+    };
+    let result = diff_images(&ref_png, &act_png, opts).unwrap();
+    // Overlap is 4×4 = 16 pixels, all identical (black vs black).
+    assert_eq!(result.total_pixels(), 16);
+    assert_eq!(result.different_pixels(), 0);
 }
