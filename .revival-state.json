@@ -1,9 +1,6 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_trigger",
   "iteration": 30,
-  "current_task_id": "30",
-  "issue_number": 59,
-  "last_prompt": "Create CHANGELOG entry and version bump for the first Rust-based release; draft a GitHub release with migration notes for users of the old C++ binary and libwkhtmltox API.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -125,6 +122,9 @@
     "iteration 29: agent created PR #58 for task Some(\"29\")",
     "iteration 29: marked PR #58 as ready for review",
     "iteration 29: merged PR #58 for task Some(\"29\")",
-    "iteration 30: triggered cloud agent for task 30 (issue #59)"
+    "iteration 30: triggered cloud agent for task 30 (issue #59)",
+    "iteration 30: agent created PR #60 for task Some(\"30\")",
+    "iteration 30: marked PR #60 as ready for review",
+    "iteration 30: merged PR #60 for task Some(\"30\")"
   ]
 }

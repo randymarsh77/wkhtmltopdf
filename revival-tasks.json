@@ -277,11 +277,12 @@
   {
     "id": "30",
     "description": "Create CHANGELOG entry and version bump for the first Rust-based release; draft a GitHub release with migration notes for users of the old C++ binary and libwkhtmltox API.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 7,
     "depends_on": [
       "26",
       "27"
-    ]
+    ],
+    "last_attempt_at": 1772664662
   }
 ]
