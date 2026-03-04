@@ -40,7 +40,7 @@
   {
     "id": "6",
     "description": "Implement headless rendering abstraction layer in the `core` crate: define a trait-based renderer interface that accepts HTML input (URL or file) and produces a rendered page representation, with an initial implementation backed by a headless Chromium/WebKit engine.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 3,
     "depends_on": [
       "3"
@@ -49,7 +49,7 @@
   {
     "id": "7",
     "description": "Implement PDF output pipeline in the `pdf` crate: convert rendered pages to PDF with support for multi-page documents, page size/orientation, margins, DPI, compression, metadata (title/author/subject), and PDF/A compliance.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 4,
     "depends_on": [
       "6"
