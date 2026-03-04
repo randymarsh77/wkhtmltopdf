@@ -2788,6 +2788,7 @@ version = "0.1.0"
 dependencies = [
  "printpdf",
  "thiserror 1.0.69",
+ "ureq",
  "wkhtmltopdf-core",
  "wkhtmltopdf-settings",
 ]
@@ -2805,6 +2806,7 @@ name = "wkhtmltopdf-tests"
 version = "0.1.0"
 dependencies = [
  "serde_json",
+ "tempfile",
  "wkhtmltopdf-core",
  "wkhtmltopdf-image",
  "wkhtmltopdf-pdf",
