@@ -1,0 +1,248 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux-x86_64:
+    name: Build Linux x86_64
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config \
+            libssl-dev \
+            ca-certificates
+      - name: Build release binaries
+        run: cargo build --release -p wkhtmltopdf-cli
+      - name: Package binaries
+        run: |
+          mkdir -p dist
+          cp target/release/wkhtmltopdf dist/wkhtmltopdf-linux-x86_64
+          cp target/release/wkhtmltoimage dist/wkhtmltoimage-linux-x86_64
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x86_64
+          path: dist/
+
+  build-linux-aarch64:
+    name: Build Linux aarch64
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config \
+            libssl-dev \
+            ca-certificates
+      - name: Install cross
+        run: cargo install --locked cross
+      - name: Add aarch64 Rust target
+        run: rustup target add aarch64-unknown-linux-gnu
+      - name: Build release binaries (aarch64)
+        run: cross build --release -p wkhtmltopdf-cli --target aarch64-unknown-linux-gnu
+      - name: Package binaries
+        run: |
+          mkdir -p dist
+          cp target/aarch64-unknown-linux-gnu/release/wkhtmltopdf dist/wkhtmltopdf-linux-aarch64
+          cp target/aarch64-unknown-linux-gnu/release/wkhtmltoimage dist/wkhtmltoimage-linux-aarch64
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-aarch64
+          path: dist/
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Build release binaries
+        run: cargo build --release -p wkhtmltopdf-cli
+      - name: Package binaries
+        run: |
+          mkdir -p dist
+          cp target/release/wkhtmltopdf dist/wkhtmltopdf-macos
+          cp target/release/wkhtmltoimage dist/wkhtmltoimage-macos
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Build release binaries
+        run: cargo build --release -p wkhtmltopdf-cli
+      - name: Package binaries
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item target/release/wkhtmltopdf.exe dist/wkhtmltopdf-windows.exe
+          Copy-Item target/release/wkhtmltoimage.exe dist/wkhtmltoimage-windows.exe
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/
+
+  package-deb-ubuntu22:
+    name: Package .deb (Ubuntu 22)
+    runs-on: ubuntu-22.04
+    needs: build-linux-x86_64
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Download x86_64 binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-x86_64
+          path: dist/
+      - name: Build .deb package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PKG=wkhtmltopdf_${VERSION}_ubuntu22_amd64
+          mkdir -p ${PKG}/usr/bin ${PKG}/DEBIAN
+          cp dist/wkhtmltopdf-linux-x86_64 ${PKG}/usr/bin/wkhtmltopdf
+          cp dist/wkhtmltoimage-linux-x86_64 ${PKG}/usr/bin/wkhtmltoimage
+          chmod 755 ${PKG}/usr/bin/wkhtmltopdf ${PKG}/usr/bin/wkhtmltoimage
+          cat > ${PKG}/DEBIAN/control <<EOF
+          Package: wkhtmltopdf
+          Version: ${VERSION}
+          Architecture: amd64
+          Maintainer: wkhtmltopdf contributors
+          Description: Command-line tool to render HTML into PDF and various image formats
+          EOF
+          dpkg-deb --build ${PKG}
+          mv ${PKG}.deb dist/
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-ubuntu22
+          path: dist/*.deb
+
+  package-deb-ubuntu24:
+    name: Package .deb (Ubuntu 24)
+    runs-on: ubuntu-24.04
+    needs: build-linux-x86_64
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Download x86_64 binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-x86_64
+          path: dist/
+      - name: Build .deb package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PKG=wkhtmltopdf_${VERSION}_ubuntu24_amd64
+          mkdir -p ${PKG}/usr/bin ${PKG}/DEBIAN
+          cp dist/wkhtmltopdf-linux-x86_64 ${PKG}/usr/bin/wkhtmltopdf
+          cp dist/wkhtmltoimage-linux-x86_64 ${PKG}/usr/bin/wkhtmltoimage
+          chmod 755 ${PKG}/usr/bin/wkhtmltopdf ${PKG}/usr/bin/wkhtmltoimage
+          cat > ${PKG}/DEBIAN/control <<EOF
+          Package: wkhtmltopdf
+          Version: ${VERSION}
+          Architecture: amd64
+          Maintainer: wkhtmltopdf contributors
+          Description: Command-line tool to render HTML into PDF and various image formats
+          EOF
+          dpkg-deb --build ${PKG}
+          mv ${PKG}.deb dist/
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-ubuntu24
+          path: dist/*.deb
+
+  package-deb-ubuntu25:
+    name: Package .deb (Ubuntu 25)
+    runs-on: ubuntu-latest
+    needs: build-linux-x86_64
+    container:
+      image: ubuntu:25.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            dpkg \
+            ca-certificates
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Download x86_64 binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-x86_64
+          path: dist/
+      - name: Build .deb package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PKG=wkhtmltopdf_${VERSION}_ubuntu25_amd64
+          mkdir -p ${PKG}/usr/bin ${PKG}/DEBIAN
+          cp dist/wkhtmltopdf-linux-x86_64 ${PKG}/usr/bin/wkhtmltopdf
+          cp dist/wkhtmltoimage-linux-x86_64 ${PKG}/usr/bin/wkhtmltoimage
+          chmod 755 ${PKG}/usr/bin/wkhtmltopdf ${PKG}/usr/bin/wkhtmltoimage
+          cat > ${PKG}/DEBIAN/control <<EOF
+          Package: wkhtmltopdf
+          Version: ${VERSION}
+          Architecture: amd64
+          Maintainer: wkhtmltopdf contributors
+          Description: Command-line tool to render HTML into PDF and various image formats
+          EOF
+          dpkg-deb --build ${PKG}
+          mv ${PKG}.deb dist/
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-ubuntu25
+          path: dist/*.deb
+
+  publish-release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs:
+      - build-linux-x86_64
+      - build-linux-aarch64
+      - build-macos
+      - build-windows
+      - package-deb-ubuntu22
+      - package-deb-ubuntu24
+      - package-deb-ubuntu25
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/linux-x86_64/*
+            artifacts/linux-aarch64/*
+            artifacts/macos/*
+            artifacts/windows/*
+            artifacts/deb-ubuntu22/*.deb
+            artifacts/deb-ubuntu24/*.deb
+            artifacts/deb-ubuntu25/*.deb
