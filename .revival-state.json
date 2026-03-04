@@ -1,11 +1,9 @@
 {
-  "phase": "needs_verification",
-  "iteration": 9,
-  "current_task_id": "9",
-  "issue_number": 17,
-  "pr_number": 18,
-  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/18",
-  "last_prompt": "Implement header and footer rendering: support HTML-based headers/footers with template variable substitution ([page], [toPage], [date], [title], [url]), spacing, line options, and font settings.",
+  "phase": "agent_working",
+  "iteration": 10,
+  "current_task_id": "10",
+  "issue_number": 19,
+  "last_prompt": "Implement Table of Contents (TOC) generation: auto-generate TOC from heading elements with configurable depth, XSLT-based styling, dotted lines, and page number references.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -42,13 +40,8 @@
     "advance: merged PR #16",
     "iteration 9: triggered cloud agent for task 9 (issue #17)",
     "iteration 9: agent created PR #18 for task Some(\"9\")",
-    "iteration 9: marked PR #18 as ready for review"
-  ],
-  "tracked_prs": [
-    {
-      "pr_number": 18,
-      "task_id": "9",
-      "issue_number": 17
-    }
+    "iteration 9: marked PR #18 as ready for review",
+    "advance: merged PR #18",
+    "iteration 10: triggered cloud agent for task 10 (issue #19)"
   ]
 }

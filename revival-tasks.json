@@ -67,7 +67,7 @@
   {
     "id": "9",
     "description": "Implement header and footer rendering: support HTML-based headers/footers with template variable substitution ([page], [toPage], [date], [title], [url]), spacing, line options, and font settings.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 4,
     "depends_on": [
       "7"
@@ -76,7 +76,7 @@
   {
     "id": "10",
     "description": "Implement Table of Contents (TOC) generation: auto-generate TOC from heading elements with configurable depth, XSLT-based styling, dotted lines, and page number references.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 4,
     "depends_on": [
       "7"
