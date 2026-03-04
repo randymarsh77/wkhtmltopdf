@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 24,
   "current_task_id": "24",
   "issue_number": 47,
+  "pr_number": 48,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/48",
   "last_prompt": "Add GHA workflow for visual regression testing: run the regression test harness on PRs, store diff images as artifacts, and fail the build if any fixture exceeds a configurable visual diff threshold.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -98,6 +100,15 @@
     "iteration 23: agent created PR #46 for task Some(\"23\")",
     "iteration 23: marked PR #46 as ready for review",
     "advance: merged PR #46",
-    "iteration 24: triggered cloud agent for task 24 (issue #47)"
+    "iteration 24: triggered cloud agent for task 24 (issue #47)",
+    "iteration 24: agent created PR #48 for task Some(\"24\")",
+    "iteration 24: marked PR #48 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 48,
+      "task_id": "24",
+      "issue_number": 47
+    }
   ]
 }
