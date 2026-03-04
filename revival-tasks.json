@@ -247,16 +247,17 @@
   {
     "id": "27",
     "description": "Port or replace the libwkhtmltox C API documentation (currently Doxygen) to Rust doc comments with `cargo doc`; generate and publish HTML docs via GitHub Pages.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 6,
     "depends_on": [
       "14"
-    ]
+    ],
+    "last_attempt_at": 1772661032
   },
   {
     "id": "28",
     "description": "Performance benchmarking: measure rendering throughput (pages/second) and memory usage for the Rust implementation vs the original C++ baseline on a standard fixture set; document results and optimize hot paths.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 7,
     "depends_on": [
       "20"
