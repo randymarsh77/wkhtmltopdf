@@ -313,6 +313,22 @@ pub struct Cli {
     #[arg(long = "no-proxy-hostname-lookup", overrides_with = "proxy_hostname_lookup")]
     pub no_proxy_hostname_lookup: bool,
 
+    /// Verify the SSL peer certificate [default: enabled].
+    #[arg(long = "ssl-verify-peer", overrides_with = "no_ssl_verify_peer")]
+    pub ssl_verify_peer: bool,
+
+    /// Do not verify the SSL peer certificate (insecure).
+    #[arg(long = "no-ssl-verify-peer", overrides_with = "ssl_verify_peer")]
+    pub no_ssl_verify_peer: bool,
+
+    /// Verify the SSL certificate hostname [default: enabled].
+    #[arg(long = "ssl-verify-host", overrides_with = "no_ssl_verify_host")]
+    pub ssl_verify_host: bool,
+
+    /// Do not verify the SSL certificate hostname (insecure).
+    #[arg(long = "no-ssl-verify-host", overrides_with = "ssl_verify_host")]
+    pub no_ssl_verify_host: bool,
+
     /// Run this additional javascript after the page is done loading (repeatable).
     #[arg(long, value_name = "js")]
     pub run_script: Vec<String>,
@@ -795,6 +811,17 @@ fn build_object(cli: &Cli, input: &str) -> wkhtmltopdf_settings::PdfObject {
     if cli.custom_header_propagation {
         obj.load.repeat_custom_headers = true;
     }
+    // Proxy
+    if let Some(ref proxy_str) = cli.proxy {
+        obj.load.proxy = parse_proxy_url(proxy_str);
+    }
+    // SSL verification
+    if cli.no_ssl_verify_peer {
+        obj.load.ssl_verify_peer = false;
+    }
+    if cli.no_ssl_verify_host {
+        obj.load.ssl_verify_host = false;
+    }
     // Custom headers (pairs)
     obj.load.custom_headers.extend(collect_pairs(&cli.custom_header, "--custom-header"));
     // Cookies (pairs)
@@ -977,6 +1004,63 @@ fn parse_unit_real(s: &str) -> wkhtmltopdf_settings::UnitReal {
     // No unit suffix — try plain number (assume mm).
     let v = s.parse::<f64>().unwrap_or(0.0);
     UnitReal { value: v, unit: Unit::Millimeter }
+}
+
+/// Parse a proxy URL string (e.g., `"http://user:pass@host:8080"` or
+/// `"socks5://host:1080"`) into a [`Proxy`] settings struct.
+fn parse_proxy_url(url: &str) -> wkhtmltopdf_settings::Proxy {
+    use wkhtmltopdf_settings::{Proxy, ProxyType};
+    let (proxy_type, rest) = if let Some(r) = url.strip_prefix("socks5://") {
+        (ProxyType::Socks5, r)
+    } else if let Some(r) = url.strip_prefix("https://") {
+        (ProxyType::Http, r)
+    } else if let Some(r) = url.strip_prefix("http://") {
+        (ProxyType::Http, r)
+    } else {
+        return Proxy::default();
+    };
+
+    // Split optional "user:pass@" auth part from "host:port".
+    let (auth_str, host_str) = if let Some(at_pos) = rest.rfind('@') {
+        (&rest[..at_pos], &rest[at_pos + 1..])
+    } else {
+        ("", rest)
+    };
+
+    let (username, password) = if !auth_str.is_empty() {
+        if let Some(colon) = auth_str.find(':') {
+            (
+                Some(auth_str[..colon].to_string()),
+                Some(auth_str[colon + 1..].to_string()),
+            )
+        } else {
+            (Some(auth_str.to_string()), None)
+        }
+    } else {
+        (None, None)
+    };
+
+    // Split host and port.  IPv6 addresses are enclosed in brackets
+    // (e.g., "[::1]:8080"), so we strip the brackets first.
+    let (host, port) = if host_str.starts_with('[') {
+        // IPv6 — find the closing bracket.
+        if let Some(close) = host_str.find(']') {
+            let ipv6_host = &host_str[1..close];
+            let port = host_str[close + 1..]
+                .strip_prefix(':')
+                .and_then(|p| p.parse::<u16>().ok());
+            (Some(ipv6_host.to_string()), port)
+        } else {
+            (Some(host_str.to_string()), None)
+        }
+    } else if let Some(colon) = host_str.rfind(':') {
+        let port = host_str[colon + 1..].parse::<u16>().ok();
+        (Some(host_str[..colon].to_string()), port)
+    } else {
+        (Some(host_str.to_string()), None)
+    };
+
+    Proxy { proxy_type, host, port, username, password }
 }
 
 /// Map a page-size string (case-insensitive) to [`PageSize`].
@@ -1285,5 +1369,65 @@ mod tests {
         assert!(obj.is_table_of_content);
         assert!(obj.page.is_none());
         assert_eq!(obj.toc.depth, 5);
+    }
+
+    #[test]
+    fn no_ssl_verify_peer_flag() {
+        let cli = parse(&["wkhtmltopdf", "--no-ssl-verify-peer", "in.html", "out.pdf"]);
+        assert!(cli.no_ssl_verify_peer);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.load.ssl_verify_peer);
+    }
+
+    #[test]
+    fn no_ssl_verify_host_flag() {
+        let cli = parse(&["wkhtmltopdf", "--no-ssl-verify-host", "in.html", "out.pdf"]);
+        assert!(cli.no_ssl_verify_host);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.load.ssl_verify_host);
+    }
+
+    #[test]
+    fn proxy_flag_parsed_into_load_settings() {
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--proxy", "http://user:pass@proxy.example.com:8080",
+            "in.html",
+            "out.pdf",
+        ]);
+        assert_eq!(cli.proxy.as_deref(), Some("http://user:pass@proxy.example.com:8080"));
+        let obj = build_object(&cli, "in.html");
+        use wkhtmltopdf_settings::ProxyType;
+        assert!(matches!(obj.load.proxy.proxy_type, ProxyType::Http));
+        assert_eq!(obj.load.proxy.host.as_deref(), Some("proxy.example.com"));
+        assert_eq!(obj.load.proxy.port, Some(8080));
+        assert_eq!(obj.load.proxy.username.as_deref(), Some("user"));
+        assert_eq!(obj.load.proxy.password.as_deref(), Some("pass"));
+    }
+
+    #[test]
+    fn parse_proxy_url_socks5() {
+        use wkhtmltopdf_settings::ProxyType;
+        let proxy = parse_proxy_url("socks5://myproxy:1080");
+        assert!(matches!(proxy.proxy_type, ProxyType::Socks5));
+        assert_eq!(proxy.host.as_deref(), Some("myproxy"));
+        assert_eq!(proxy.port, Some(1080));
+        assert!(proxy.username.is_none());
+    }
+
+    #[test]
+    fn parse_proxy_url_no_scheme_returns_default() {
+        use wkhtmltopdf_settings::ProxyType;
+        let proxy = parse_proxy_url("notaproxy");
+        assert!(matches!(proxy.proxy_type, ProxyType::None));
+    }
+
+    #[test]
+    fn parse_proxy_url_ipv6() {
+        use wkhtmltopdf_settings::ProxyType;
+        let proxy = parse_proxy_url("http://[::1]:8080");
+        assert!(matches!(proxy.proxy_type, ProxyType::Http));
+        assert_eq!(proxy.host.as_deref(), Some("::1"));
+        assert_eq!(proxy.port, Some(8080));
     }
 }

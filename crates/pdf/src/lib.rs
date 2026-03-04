@@ -21,8 +21,8 @@ use printpdf::{
 use thiserror::Error;
 use wkhtmltopdf_core::{ConvertError, Converter};
 use wkhtmltopdf_settings::{
-    HeaderFooter, Orientation, PageSize, PdfAConformance, PdfGlobal, PdfObject, TableOfContent,
-    Unit, UnitReal,
+    HeaderFooter, LoadPage, Orientation, PageSize, PdfAConformance, PdfGlobal, PdfObject,
+    ProxyType, TableOfContent, Unit, UnitReal,
 };
 
 // ---------------------------------------------------------------------------
@@ -115,7 +115,7 @@ impl Converter for PdfConverter {
             if object.is_table_of_content {
                 fetched.push(None);
             } else if let Some(ref src) = object.page {
-                fetched.push(Some(fetch_html(src)?));
+                fetched.push(Some(fetch_html(src, &object.load)?));
             } else {
                 fetched.push(None);
             }
@@ -157,8 +157,8 @@ impl Converter for PdfConverter {
             let page_src = object.page.as_deref().unwrap_or("<toc>");
 
             // Inject header/footer bands if any settings are active.
-            let header_band = build_band_html(&object.header, true, &date, &title, page_src)?;
-            let footer_band = build_band_html(&object.footer, false, &date, &title, page_src)?;
+            let header_band = build_band_html(&object.header, true, &date, &title, page_src, &object.load)?;
+            let footer_band = build_band_html(&object.footer, false, &date, &title, page_src, &object.load)?;
             let html = if !header_band.is_empty() || !footer_band.is_empty() {
                 inject_header_footer(
                     &html,
@@ -265,10 +265,39 @@ impl Converter for PdfConverter {
 // Helper functions
 // ---------------------------------------------------------------------------
 
-/// Fetch HTML content from a local file path or an HTTP/HTTPS URL.
-fn fetch_html(source: &str) -> Result<String, ConvertError> {
+/// Fetch HTML content from a local file path or an HTTP/HTTPS URL,
+/// applying the per-page network settings (proxy, auth, cookies, headers,
+/// SSL verification).
+fn fetch_html(source: &str, load: &LoadPage) -> Result<String, ConvertError> {
     if source.starts_with("http://") || source.starts_with("https://") {
-        let mut response = ureq::get(source)
+        let agent = build_http_agent(load)?;
+        let mut request = agent.get(source);
+
+        // Custom HTTP headers.
+        for (name, value) in &load.custom_headers {
+            request = request.header(name.as_str(), value.as_str());
+        }
+
+        // HTTP Basic authentication.
+        if let (Some(user), Some(pass)) = (&load.username, &load.password) {
+            use base64::Engine as _;
+            let credentials =
+                base64::engine::general_purpose::STANDARD.encode(format!("{user}:{pass}"));
+            request = request.header("Authorization", &format!("Basic {credentials}"));
+        }
+
+        // Cookies.
+        if !load.cookies.is_empty() {
+            let cookie_header = load
+                .cookies
+                .iter()
+                .map(|(k, v)| format!("{k}={v}"))
+                .collect::<Vec<_>>()
+                .join("; ");
+            request = request.header("Cookie", &cookie_header);
+        }
+
+        let mut response = request
             .call()
             .map_err(|e| ConvertError::Render(format!("HTTP request failed: {e}")))?;
         response
@@ -278,6 +307,47 @@ fn fetch_html(source: &str) -> Result<String, ConvertError> {
     } else {
         std::fs::read_to_string(source).map_err(ConvertError::Io)
     }
+}
+
+/// Build a [`ureq::Agent`] configured with proxy and TLS settings from `load`.
+fn build_http_agent(load: &LoadPage) -> Result<ureq::Agent, ConvertError> {
+    // ureq's `disable_verification` disables the full TLS handshake check
+    // (both certificate chain and hostname matching) as a single flag.  We
+    // therefore disable verification when *either* ssl_verify_peer or
+    // ssl_verify_host is turned off, since partial verification is not
+    // supported by the underlying TLS backend.
+    let disable_tls_verify = !load.ssl_verify_peer || !load.ssl_verify_host;
+    let tls_config = ureq::tls::TlsConfig::builder()
+        .disable_verification(disable_tls_verify)
+        .build();
+
+    let mut builder = ureq::Agent::config_builder().tls_config(tls_config);
+
+    if let Some(proxy_url) = proxy_to_url(&load.proxy) {
+        let proxy = ureq::Proxy::new(&proxy_url)
+            .map_err(|e| ConvertError::Render(format!("invalid proxy URL '{proxy_url}': {e}")))?;
+        builder = builder.proxy(Some(proxy));
+    }
+
+    Ok(builder.build().new_agent())
+}
+
+/// Convert a [`Proxy`] configuration to a proxy URL string for ureq.
+///
+/// Returns `None` when the proxy type is `None` or no host is configured.
+fn proxy_to_url(proxy: &wkhtmltopdf_settings::Proxy) -> Option<String> {
+    let host = proxy.host.as_deref()?;
+    let scheme = match proxy.proxy_type {
+        ProxyType::None => return None,
+        ProxyType::Http => "http",
+        ProxyType::Socks5 => "socks5",
+    };
+    let port_str = proxy.port.map(|p| format!(":{p}")).unwrap_or_default();
+    Some(match (&proxy.username, &proxy.password) {
+        (Some(user), Some(pass)) => format!("{scheme}://{user}:{pass}@{host}{port_str}"),
+        (Some(user), None) => format!("{scheme}://{user}@{host}{port_str}"),
+        _ => format!("{scheme}://{host}{port_str}"),
+    })
 }
 
 /// Return the page width and height in millimetres, swapping the axes when
@@ -428,6 +498,7 @@ pub fn build_band_html(
     date: &str,
     title: &str,
     url: &str,
+    load: &LoadPage,
 ) -> Result<String, ConvertError> {
     let has_text = hf.left.is_some() || hf.center.is_some() || hf.right.is_some();
     let has_html = hf.html_url.is_some();
@@ -449,7 +520,7 @@ pub fn build_band_html(
 
     let band_html = if let Some(ref html_url) = hf.html_url {
         // Fetch the HTML-based header/footer, apply variable substitution.
-        let raw = fetch_html(html_url)?;
+        let raw = fetch_html(html_url, load)?;
         substitute_vars(&raw, date, title, url)
     } else {
         let left = substitute_vars(hf.left.as_deref().unwrap_or(""), date, title, url);
@@ -1186,7 +1257,7 @@ mod tests {
     #[test]
     fn build_band_html_empty_when_no_content() {
         let hf = HeaderFooter::default(); // no text, no html_url, line=false
-        let result = build_band_html(&hf, true, "d", "t", "u").unwrap();
+        let result = build_band_html(&hf, true, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
         assert!(result.is_empty());
     }
 
@@ -1194,7 +1265,7 @@ mod tests {
     fn build_band_html_returns_html_when_left_set() {
         let mut hf = HeaderFooter::default();
         hf.left = Some("Left text".into());
-        let result = build_band_html(&hf, true, "d", "t", "u").unwrap();
+        let result = build_band_html(&hf, true, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
         assert!(result.contains("Left text"));
         assert!(result.contains("position:fixed"));
         assert!(result.contains("top:0"));
@@ -1204,7 +1275,7 @@ mod tests {
     fn build_band_html_footer_positions_at_bottom() {
         let mut hf = HeaderFooter::default();
         hf.right = Some("Footer".into());
-        let result = build_band_html(&hf, false, "d", "t", "u").unwrap();
+        let result = build_band_html(&hf, false, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
         assert!(result.contains("bottom:0"));
     }
 
@@ -1213,9 +1284,9 @@ mod tests {
         let mut hf = HeaderFooter::default();
         hf.center = Some("Title".into());
         hf.line = true;
-        let header = build_band_html(&hf, true, "d", "t", "u").unwrap();
+        let header = build_band_html(&hf, true, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
         assert!(header.contains("border-bottom"));
-        let footer = build_band_html(&hf, false, "d", "t", "u").unwrap();
+        let footer = build_band_html(&hf, false, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
         assert!(footer.contains("border-top"));
     }
 
@@ -1225,7 +1296,7 @@ mod tests {
         hf.left = Some("x".into());
         hf.font_name = "Times New Roman".into();
         hf.font_size = 10;
-        let result = build_band_html(&hf, true, "d", "t", "u").unwrap();
+        let result = build_band_html(&hf, true, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
         assert!(result.contains("Times New Roman"));
         assert!(result.contains("10pt"));
     }
@@ -1234,7 +1305,7 @@ mod tests {
     fn build_band_html_only_line_produces_output() {
         let mut hf = HeaderFooter::default();
         hf.line = true;
-        let result = build_band_html(&hf, true, "d", "t", "u").unwrap();
+        let result = build_band_html(&hf, true, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
         assert!(!result.is_empty());
     }
 
