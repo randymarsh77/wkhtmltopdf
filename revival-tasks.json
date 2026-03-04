@@ -257,16 +257,17 @@
   {
     "id": "28",
     "description": "Performance benchmarking: measure rendering throughput (pages/second) and memory usage for the Rust implementation vs the original C++ baseline on a standard fixture set; document results and optimize hot paths.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 7,
     "depends_on": [
       "20"
-    ]
+    ],
+    "last_attempt_at": 1772662664
   },
   {
     "id": "29",
     "description": "Security hardening: enable sandbox isolation for the headless renderer subprocess, audit all file path handling for path traversal, validate all network inputs, and add a security policy document.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 7,
     "depends_on": [
       "20"
