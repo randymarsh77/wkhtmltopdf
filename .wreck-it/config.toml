@@ -2,11 +2,6 @@ state_branch = "wreck-it-state"
 state_root = ".wreck-it"
 
 [[ralphs]]
-name = "revival"
-task_file = "revival-tasks.json"
-state_file = ".revival-state.json"
-
-[[ralphs]]
-name = "this-project-was-recently-ported-to"
-task_file = "this-project-was-recently-ported-to-tasks.json"
-state_file = ".this-project-was-recently-ported-to-state.json"
+name = "back-to-roots"
+task_file = "back-to-roots-tasks.json"
+state_file = ".back-to-roots-state.json"
