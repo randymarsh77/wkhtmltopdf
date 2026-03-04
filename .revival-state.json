@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 14,
   "current_task_id": "14",
   "issue_number": 27,
+  "pr_number": 28,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/28",
   "last_prompt": "Implement C-compatible shared library API (libwkhtmltox replacement): expose a C ABI with the same function signatures as the original libwkhtmltox for drop-in compatibility with existing bindings.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -58,6 +60,15 @@
     "iteration 13: agent created PR #26 for task Some(\"13\")",
     "iteration 13: marked PR #26 as ready for review",
     "advance: merged PR #26",
-    "iteration 14: triggered cloud agent for task 14 (issue #27)"
+    "iteration 14: triggered cloud agent for task 14 (issue #27)",
+    "iteration 14: agent created PR #28 for task Some(\"14\")",
+    "iteration 14: marked PR #28 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 28,
+      "task_id": "14",
+      "issue_number": 27
+    }
   ]
 }
