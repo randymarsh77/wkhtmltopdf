@@ -3,6 +3,8 @@
   "iteration": 25,
   "current_task_id": "25",
   "issue_number": 49,
+  "pr_number": 50,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/50",
   "last_prompt": "Add GHA workflow for release packaging: build release binaries for Linux (x86_64, aarch64), macOS, and Windows; produce .deb packages for Ubuntu 22/24/25; publish artifacts on tagged releases.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -102,6 +104,14 @@
     "iteration 24: agent created PR #48 for task Some(\"24\")",
     "iteration 24: marked PR #48 as ready for review",
     "advance: merged PR #48",
-    "iteration 25: triggered cloud agent for task 25 (issue #49)"
+    "iteration 25: triggered cloud agent for task 25 (issue #49)",
+    "iteration 25: agent opened PR #50 for task Some(\"25\") (still working)"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 50,
+      "task_id": "25",
+      "issue_number": 49
+    }
   ]
 }
