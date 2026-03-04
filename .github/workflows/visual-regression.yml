@@ -1,0 +1,96 @@
+name: Visual Regression
+
+# Run on every pull-request targeting master so that regressions are caught
+# before code is merged.
+on:
+  pull_request:
+    branches: [ master ]
+  # Allow manual runs – useful for regenerating reference images.
+  workflow_dispatch:
+    inputs:
+      update_refs:
+        description: >
+          Set to "true" to regenerate all reference images instead of
+          comparing against the stored ones.  The new reference PNGs will
+          be uploaded as a workflow artifact.
+        required: false
+        default: "false"
+
+# ---------------------------------------------------------------------------
+# Configurable diff threshold
+# Raise or lower this value to make the check stricter or more lenient.
+# A value of 0 requires pixel-perfect output.
+# ---------------------------------------------------------------------------
+env:
+  VISUAL_DIFF_THRESHOLD: "5.0"
+
+jobs:
+  visual-regression:
+    name: Visual Regression Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config \
+            libssl-dev \
+            ca-certificates
+
+      - name: Install Chrome for headless rendering
+        run: |
+          # Install Google Chrome if no Chrome/Chromium binary is present.
+          # On GitHub-hosted ubuntu-latest runners Chrome is pre-installed, so
+          # this step is a no-op there.  On self-hosted or minimal images it
+          # adds the official Google repository and installs the stable release.
+          if ! command -v google-chrome-stable &>/dev/null \
+             && ! command -v google-chrome &>/dev/null \
+             && ! command -v chromium-browser &>/dev/null; then
+            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub \
+              | gpg --dearmor \
+              | sudo tee /etc/apt/trusted.gpg.d/google-chrome.gpg >/dev/null
+            echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" \
+              | sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null
+            sudo apt-get update -q
+            sudo apt-get install -y --no-install-recommends google-chrome-stable
+          fi
+
+      - name: Create diff output directory
+        run: mkdir -p "${{ github.workspace }}/visual-diffs"
+
+      - name: Run visual regression tests
+        env:
+          VISUAL_DIFF_THRESHOLD: ${{ env.VISUAL_DIFF_THRESHOLD }}
+          VISUAL_REGRESSION_OUTPUT_DIR: ${{ github.workspace }}/visual-diffs
+          VISUAL_UPDATE_REFS: ${{ github.event.inputs.update_refs || 'false' }}
+        run: |
+          cargo test -p wkhtmltopdf-tests --test visual_regression -- --nocapture
+
+      # Upload diff images regardless of whether the tests passed so that
+      # developers can always inspect which pixels changed.
+      - name: Upload diff images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-diffs
+          path: ${{ github.workspace }}/visual-diffs/
+          if-no-files-found: warn
+          retention-days: 30
+
+      # When reference images were regenerated (manual workflow_dispatch with
+      # update_refs=true), also upload them so they can be reviewed and
+      # committed back to the repository.
+      - name: Upload updated reference images
+        if: ${{ github.event.inputs.update_refs == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-references
+          path: crates/tests/fixtures/references/
+          if-no-files-found: warn
+          retention-days: 30
