@@ -3089,6 +3089,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "wkhtmltox"
+version = "0.1.0"
+dependencies = [
+ "wkhtmltopdf-core",
+ "wkhtmltopdf-image",
+ "wkhtmltopdf-pdf",
+ "wkhtmltopdf-settings",
+]
+
+[[package]]
 name = "writeable"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

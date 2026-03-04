@@ -1,0 +1,15 @@
+[package]
+name = "wkhtmltox"
+version = "0.1.0"
+edition = "2021"
+description = "C-compatible shared library API for wkhtmltopdf (libwkhtmltox replacement)"
+
+[lib]
+name = "wkhtmltox"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wkhtmltopdf-core = { path = "../core" }
+wkhtmltopdf-pdf = { path = "../pdf" }
+wkhtmltopdf-image = { path = "../image" }
+wkhtmltopdf-settings = { path = "../settings" }
