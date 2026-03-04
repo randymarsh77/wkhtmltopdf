@@ -5,6 +5,9 @@
 //! pixel-level comparison, reports the diff percentage, and generates an
 //! annotated diff image that highlights changed pixels.
 //!
+//! For structural comparison of PDF documents (metadata, page count, text
+//! content, and outline), see the [`pdf_diff`] module.
+//!
 //! # Quick start
 //!
 //! ```rust,no_run
@@ -21,6 +24,8 @@
 //! // Write the annotated diff image to disk.
 //! std::fs::write("diff.png", result.diff_image()).unwrap();
 //! ```
+
+pub mod pdf_diff;
 
 use std::io::Cursor;
 

@@ -3050,6 +3050,7 @@ name = "wkhtmltopdf-diff"
 version = "0.1.0"
 dependencies = [
  "image",
+ "lopdf",
  "thiserror 1.0.69",
 ]
 
