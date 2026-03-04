@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 8,
   "current_task_id": "8",
   "issue_number": 15,
+  "pr_number": 16,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/16",
   "last_prompt": "Implement image output pipeline in the `image` crate: support PNG, JPG, BMP, SVG, and other formats with configurable width, quality, crop settings, and DPI.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -34,6 +36,15 @@
     "iteration 7: agent created PR #14 for task Some(\"7\")",
     "iteration 7: marked PR #14 as ready for review",
     "advance: merged PR #14",
-    "iteration 8: triggered cloud agent for task 8 (issue #15)"
+    "iteration 8: triggered cloud agent for task 8 (issue #15)",
+    "iteration 8: agent created PR #16 for task Some(\"8\")",
+    "iteration 8: marked PR #16 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 16,
+      "task_id": "8",
+      "issue_number": 15
+    }
   ]
 }
