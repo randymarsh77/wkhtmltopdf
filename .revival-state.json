@@ -1,11 +1,9 @@
 {
-  "phase": "needs_verification",
-  "iteration": 20,
-  "current_task_id": "20",
-  "issue_number": 39,
-  "pr_number": 40,
-  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/40",
-  "last_prompt": "Write integration tests for PDF and image rendering pipelines covering all major feature flags and option combinations.",
+  "phase": "agent_working",
+  "iteration": 21,
+  "current_task_id": "21",
+  "issue_number": 41,
+  "last_prompt": "Update Cargo.toml dependencies to latest stable versions; audit for security advisories using `cargo audit`; pin MSRV (Minimum Supported Rust Version) compatible with Ubuntu 25's packaged Rust toolchain.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -86,13 +84,8 @@
     "advance: merged PR #38",
     "iteration 20: triggered cloud agent for task 20 (issue #39)",
     "iteration 20: agent created PR #40 for task Some(\"20\")",
-    "iteration 20: marked PR #40 as ready for review"
-  ],
-  "tracked_prs": [
-    {
-      "pr_number": 40,
-      "task_id": "20",
-      "issue_number": 39
-    }
+    "iteration 20: marked PR #40 as ready for review",
+    "advance: merged PR #40",
+    "iteration 21: triggered cloud agent for task 21 (issue #41)"
   ]
 }
