@@ -52,6 +52,40 @@ jobs:
       - name: build
         run: cd packaging && MACOSX_DEPLOYMENT_TARGET=10.7 python3 ./build vagrant macos-cocoa --clean --version - - ../wkhtmltopdf
 
+  ubuntu-25:
+    name: Rust on Ubuntu 25.04 (Plucky Piculet)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: ubuntu:25.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            curl \
+            build-essential \
+            pkg-config \
+            libssl-dev \
+            chromium-browser \
+            ca-certificates
+      - name: install Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+      - name: checkout source
+        uses: actions/checkout@v4
+      - name: build
+        run: |
+          . "$HOME/.cargo/env"
+          cargo build --release
+      - name: test
+        run: |
+          . "$HOME/.cargo/env"
+          cargo test --release
+
   windows:
     name: Qt 4.8 on Windows
     runs-on: windows-2019

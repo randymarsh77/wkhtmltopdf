@@ -88,7 +88,11 @@ The current stable series is **0.12.6**, which was released on June 11, 2020 -- 
             </td>
         </tr>
         <tr>
-            <td rowspan="4" valign="top"><a href="https://releases.ubuntu.com">Ubuntu</a></td>
+            <td rowspan="5" valign="top"><a href="https://releases.ubuntu.com">Ubuntu</a></td>
+            <td>25.04 (<code>plucky</code>)</td>
+            <td colspan="6">See <a href="ubuntu-25-dependencies.html">Ubuntu 25 build notes</a> — uses the Rust/Chromium headless implementation; no legacy Qt/WebKit package available.</td>
+        </tr>
+        <tr>
             <td>22.04 (<code>jammy</code>)</td>
             <td>
                 <a href="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb">amd64</a>
