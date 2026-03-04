@@ -85,7 +85,7 @@
   {
     "id": "11",
     "description": "Implement outline/bookmarks support: generate PDF bookmarks from document headings with configurable depth and nesting.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 4,
     "depends_on": [
       "7"
@@ -94,7 +94,7 @@
   {
     "id": "12",
     "description": "Implement JavaScript execution support: allow enabling/disabling JS, setting JS delay, and executing custom JS before rendering.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 4,
     "depends_on": [
       "6"
