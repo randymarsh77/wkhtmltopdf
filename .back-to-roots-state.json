@@ -3,8 +3,18 @@
   "iteration": 1,
   "current_task_id": "1",
   "issue_number": 61,
+  "pr_number": 62,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/62",
   "last_prompt": "Audit the codebase: identify all Chrome headless dependencies, usages, and any headless browser integration points across all Cargo.toml files and source files",
   "memory": [
-    "iteration 1: triggered cloud agent for task 1 (issue #61)"
+    "iteration 1: triggered cloud agent for task 1 (issue #61)",
+    "iteration 1: agent opened PR #62 for task Some(\"1\") (still working)"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 62,
+      "task_id": "1",
+      "issue_number": 61
+    }
   ]
 }
