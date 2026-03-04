@@ -44,6 +44,20 @@ pub enum PrintResolution {
     HighResolution,
 }
 
+/// PDF/A archiving conformance level.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum PdfAConformance {
+    /// No PDF/A conformance (plain PDF).
+    #[default]
+    None,
+    /// PDF/A-1b – ISO 19005-1:2005, basic level based on PDF 1.4.
+    A1b,
+    /// PDF/A-2b – ISO 19005-2:2011, based on PDF 1.7.
+    A2b,
+    /// PDF/A-3b – ISO 19005-3:2012, allows embedded files.
+    A3b,
+}
+
 /// Standard paper/page sizes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum PageSize {
@@ -401,6 +415,12 @@ pub struct PdfGlobal {
     pub output: Option<String>,
     /// PDF document title metadata.
     pub document_title: Option<String>,
+    /// PDF document author metadata.
+    pub author: Option<String>,
+    /// PDF document subject metadata.
+    pub subject: Option<String>,
+    /// PDF/A archiving conformance level.
+    pub pdf_a_conformance: PdfAConformance,
     /// Apply zlib compression to the PDF output stream.
     pub use_compression: bool,
     /// Page margin settings.
@@ -434,6 +454,9 @@ impl Default for PdfGlobal {
             dump_outline: None,
             output: None,
             document_title: None,
+            author: None,
+            subject: None,
+            pdf_a_conformance: PdfAConformance::default(),
             use_compression: true,
             margin: Margin::default(),
             viewport_size: None,

@@ -3,8 +3,8 @@ use wkhtmltopdf_image::ImageConverter;
 use wkhtmltopdf_pdf::PdfConverter;
 use wkhtmltopdf_settings::{
     ColorMode, CropSettings, HeaderFooter, ImageGlobal, LoadErrorHandling, LoadPage, Margin,
-    Orientation, PageSize, PdfGlobal, PdfObject, ProxyType, Size, TableOfContent, Unit, UnitReal,
-    Web,
+    Orientation, PageSize, PdfAConformance, PdfGlobal, PdfObject, ProxyType, Size, TableOfContent,
+    Unit, UnitReal, Web,
 };
 
 #[test]
@@ -245,5 +245,149 @@ fn table_of_content_serializes_and_deserializes() {
 
     assert_eq!(restored.caption_text, "Contents");
     assert!(!restored.use_dotted_lines);
+}
+
+// ---------------------------------------------------------------------------
+// New PdfGlobal metadata / PDF/A conformance fields
+// ---------------------------------------------------------------------------
+
+#[test]
+fn pdf_global_default_author_and_subject_are_none() {
+    let settings = PdfGlobal::default();
+    assert!(settings.author.is_none());
+    assert!(settings.subject.is_none());
+}
+
+#[test]
+fn pdf_global_default_pdf_a_conformance_is_none() {
+    let settings = PdfGlobal::default();
+    assert!(matches!(settings.pdf_a_conformance, PdfAConformance::None));
+}
+
+#[test]
+fn pdf_global_metadata_serializes_and_deserializes() {
+    let mut settings = PdfGlobal::default();
+    settings.document_title = Some("My Document".into());
+    settings.author = Some("Jane Doe".into());
+    settings.subject = Some("Testing".into());
+    settings.pdf_a_conformance = PdfAConformance::A2b;
+
+    let json = serde_json::to_string(&settings).expect("serialize");
+    let restored: PdfGlobal = serde_json::from_str(&json).expect("deserialize");
+
+    assert_eq!(restored.document_title.as_deref(), Some("My Document"));
+    assert_eq!(restored.author.as_deref(), Some("Jane Doe"));
+    assert_eq!(restored.subject.as_deref(), Some("Testing"));
+    assert!(matches!(restored.pdf_a_conformance, PdfAConformance::A2b));
+}
+
+#[test]
+fn pdf_converter_no_objects_returns_error() {
+    let converter = PdfConverter::new(PdfGlobal::default());
+    let result = converter.convert();
+    assert!(result.is_err());
+}
+
+#[test]
+fn pdf_converter_object_without_page_returns_error() {
+    let mut converter = PdfConverter::new(PdfGlobal::default());
+    converter.add_object(PdfObject::default()); // page is None
+    let result = converter.convert();
+    assert!(result.is_err());
+}
+
+#[test]
+fn pdf_converter_produces_pdf_from_local_html() {
+    use std::io::Write;
+
+    // Write a minimal HTML file to a temp path.
+    let mut tmp = tempfile::NamedTempFile::new().expect("temp file");
+    write!(tmp, "<html><body><p>Hello PDF</p></body></html>").expect("write");
+    let path = tmp.path().to_string_lossy().to_string();
+
+    let mut global = PdfGlobal::default();
+    global.document_title = Some("Test PDF".into());
+    global.author = Some("Test Author".into());
+    global.subject = Some("Test Subject".into());
+
+    let mut converter = PdfConverter::new(global);
+    let mut obj = PdfObject::default();
+    obj.page = Some(path);
+    converter.add_object(obj);
+
+    let result = converter.convert();
+    assert!(result.is_ok(), "expected Ok, got {:?}", result.err());
+
+    let bytes = result.unwrap();
+    // A valid PDF starts with "%PDF-".
+    assert!(bytes.starts_with(b"%PDF-"), "output is not a valid PDF");
+}
+
+#[test]
+fn pdf_converter_multi_page_produces_pdf() {
+    use std::io::Write;
+
+    let mut tmp1 = tempfile::NamedTempFile::new().expect("temp file 1");
+    write!(tmp1, "<html><body><p>Page 1</p></body></html>").expect("write");
+    let path1 = tmp1.path().to_string_lossy().to_string();
+
+    let mut tmp2 = tempfile::NamedTempFile::new().expect("temp file 2");
+    write!(tmp2, "<html><body><p>Page 2</p></body></html>").expect("write");
+    let path2 = tmp2.path().to_string_lossy().to_string();
+
+    let mut converter = PdfConverter::new(PdfGlobal::default());
+    let mut obj1 = PdfObject::default();
+    obj1.page = Some(path1);
+    converter.add_object(obj1);
+    let mut obj2 = PdfObject::default();
+    obj2.page = Some(path2);
+    converter.add_object(obj2);
+
+    let result = converter.convert();
+    assert!(result.is_ok(), "expected Ok, got {:?}", result.err());
+    assert!(result.unwrap().starts_with(b"%PDF-"));
+}
+
+#[test]
+fn pdf_converter_landscape_orientation() {
+    use std::io::Write;
+
+    let mut tmp = tempfile::NamedTempFile::new().expect("temp file");
+    write!(tmp, "<html><body>Landscape</body></html>").expect("write");
+    let path = tmp.path().to_string_lossy().to_string();
+
+    let mut global = PdfGlobal::default();
+    global.orientation = Orientation::Landscape;
+
+    let mut converter = PdfConverter::new(global);
+    let mut obj = PdfObject::default();
+    obj.page = Some(path);
+    converter.add_object(obj);
+
+    let result = converter.convert();
+    assert!(result.is_ok(), "expected Ok, got {:?}", result.err());
+    assert!(result.unwrap().starts_with(b"%PDF-"));
+}
+
+#[test]
+fn pdf_converter_pdf_a_conformance() {
+    use std::io::Write;
+
+    let mut tmp = tempfile::NamedTempFile::new().expect("temp file");
+    write!(tmp, "<html><body>PDF/A</body></html>").expect("write");
+    let path = tmp.path().to_string_lossy().to_string();
+
+    let mut global = PdfGlobal::default();
+    global.pdf_a_conformance = PdfAConformance::A2b;
+    global.document_title = Some("Archived Doc".into());
+
+    let mut converter = PdfConverter::new(global);
+    let mut obj = PdfObject::default();
+    obj.page = Some(path);
+    converter.add_object(obj);
+
+    let result = converter.convert();
+    assert!(result.is_ok(), "expected Ok, got {:?}", result.err());
+    assert!(result.unwrap().starts_with(b"%PDF-"));
 }
 
