@@ -2,7 +2,7 @@
   {
     "id": "1",
     "description": "Audit existing C++/Qt codebase: catalog all major subsystems (PDF rendering, image rendering, CLI argument parsing, settings, headers/footers, TOC generation, JS evaluation, network handling) and document their interfaces and dependencies.",
-    "status": "pending"
+    "status": "inprogress"
   },
   {
     "id": "2",
