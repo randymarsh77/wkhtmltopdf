@@ -1,11 +1,9 @@
 {
-  "phase": "needs_verification",
-  "iteration": 16,
-  "current_task_id": "16",
-  "issue_number": 31,
-  "pr_number": 32,
-  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/32",
-  "last_prompt": "Create comprehensive HTML test fixtures covering: basic text/layout, tables, images, CSS (flexbox, grid, print media), page breaks, headers/footers, multi-page documents, TOC, JavaScript-rendered content, external resources, Unicode/RTL, and edge cases.",
+  "phase": "agent_working",
+  "iteration": 17,
+  "current_task_id": "17",
+  "issue_number": 33,
+  "last_prompt": "Implement visual diffing tool: integrate perceptual image diffing (e.g. using the `dssim` or `image` crate with pixel diff) to compare PDF-rendered-to-image output between reference and new implementation, reporting diff percentage and generating annotated diff images.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -70,13 +68,8 @@
     "advance: merged PR #30",
     "iteration 16: triggered cloud agent for task 16 (issue #31)",
     "iteration 16: agent created PR #32 for task Some(\"16\")",
-    "iteration 16: marked PR #32 as ready for review"
-  ],
-  "tracked_prs": [
-    {
-      "pr_number": 32,
-      "task_id": "16",
-      "issue_number": 31
-    }
+    "iteration 16: marked PR #32 as ready for review",
+    "advance: merged PR #32",
+    "iteration 17: triggered cloud agent for task 17 (issue #33)"
   ]
 }

@@ -131,7 +131,7 @@
   {
     "id": "16",
     "description": "Create comprehensive HTML test fixtures covering: basic text/layout, tables, images, CSS (flexbox, grid, print media), page breaks, headers/footers, multi-page documents, TOC, JavaScript-rendered content, external resources, Unicode/RTL, and edge cases.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 3,
     "depends_on": [
       "3"
@@ -140,7 +140,7 @@
   {
     "id": "17",
     "description": "Implement visual diffing tool: integrate perceptual image diffing (e.g. using the `dssim` or `image` crate with pixel diff) to compare PDF-rendered-to-image output between reference and new implementation, reporting diff percentage and generating annotated diff images.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 4,
     "depends_on": [
       "15",
