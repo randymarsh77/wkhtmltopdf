@@ -20,7 +20,8 @@ use printpdf::{
 use thiserror::Error;
 use wkhtmltopdf_core::{ConvertError, Converter};
 use wkhtmltopdf_settings::{
-    HeaderFooter, Orientation, PageSize, PdfAConformance, PdfGlobal, PdfObject, Unit, UnitReal,
+    HeaderFooter, Orientation, PageSize, PdfAConformance, PdfGlobal, PdfObject, TableOfContent,
+    Unit, UnitReal,
 };
 
 // ---------------------------------------------------------------------------
@@ -73,8 +74,10 @@ impl Converter for PdfConverter {
     ///
     /// Each [`PdfObject`] whose `page` field is `Some` is fetched (from a
     /// local file or an HTTP/HTTPS URL) and rendered to one or more PDF
-    /// pages.  The resulting pages are assembled into a single document with
-    /// the settings from [`PdfGlobal`].
+    /// pages.  Objects with `is_table_of_content = true` have their HTML
+    /// auto-generated from the headings found in the other page objects.
+    /// The resulting pages are assembled into a single document with the
+    /// settings from [`PdfGlobal`].
     fn convert(&self) -> Result<Vec<u8>, ConvertError> {
         // Determine page dimensions in mm, accounting for orientation.
         let (page_w, page_h) = page_dimensions_mm(&self.global);
@@ -95,28 +98,74 @@ impl Converter for PdfConverter {
         let date = current_date_string();
         let title = self.global.document_title.clone().unwrap_or_default();
 
-        // Render each page object that has a URL/path specified.
-        let mut combined: Option<PdfDocument> = None;
+        // -----------------------------------------------------------------------
+        // TOC support: pre-fetch HTML and collect headings from non-TOC objects.
+        // -----------------------------------------------------------------------
+        let has_toc = self.objects.iter().any(|o| o.is_table_of_content);
+
+        // Find TOC settings from the first TOC object (used for back-link injection).
+        let toc_settings = self.objects.iter().find(|o| o.is_table_of_content).map(|o| &o.toc);
+        let toc_depth = toc_settings.map(|t| t.depth).unwrap_or(3);
+        let needs_back_links = toc_settings.map(|t| t.back_links).unwrap_or(false);
+
+        // Pre-fetch HTML for all page objects (non-TOC only); TOC objects get None.
+        let mut fetched: Vec<Option<String>> = Vec::new();
         for object in &self.objects {
-            let page_src = match &object.page {
-                Some(p) => p,
-                None => continue,
+            if object.is_table_of_content {
+                fetched.push(None);
+            } else if let Some(ref src) = object.page {
+                fetched.push(Some(fetch_html(src)?));
+            } else {
+                fetched.push(None);
+            }
+        }
+
+        // Collect headings from all non-TOC pages.
+        let all_headings: Vec<HeadingEntry> = if has_toc {
+            fetched
+                .iter()
+                .filter_map(|h| h.as_ref())
+                .flat_map(|html| extract_headings(html, toc_depth))
+                .collect()
+        } else {
+            Vec::new()
+        };
+
+        // Render each page object.
+        let mut combined: Option<PdfDocument> = None;
+        for (object, pre_html) in self.objects.iter().zip(fetched.iter()) {
+            let html = if object.is_table_of_content {
+                // Generate the TOC HTML from the collected headings.
+                generate_toc_html(&all_headings, &object.toc)
+            } else {
+                match pre_html {
+                    Some(h) => {
+                        if has_toc && needs_back_links {
+                            inject_heading_anchors(h, &all_headings, toc_depth)
+                        } else {
+                            h.clone()
+                        }
+                    }
+                    None => continue,
+                }
             };
 
-            let mut html = fetch_html(page_src)?;
+            let page_src = object.page.as_deref().unwrap_or("<toc>");
 
             // Inject header/footer bands if any settings are active.
             let header_band = build_band_html(&object.header, true, &date, &title, page_src)?;
             let footer_band = build_band_html(&object.footer, false, &date, &title, page_src)?;
-            if !header_band.is_empty() || !footer_band.is_empty() {
-                html = inject_header_footer(
+            let html = if !header_band.is_empty() || !footer_band.is_empty() {
+                inject_header_footer(
                     &html,
                     &header_band,
                     &footer_band,
                     object.header.spacing,
                     object.footer.spacing,
-                );
-            }
+                )
+            } else {
+                html
+            };
 
             let mut warnings = Vec::new();
             let doc = PdfDocument::from_html(
@@ -440,8 +489,384 @@ pub fn inject_header_footer(
 }
 
 // ---------------------------------------------------------------------------
-// Tests
+// TOC generation helpers
 // ---------------------------------------------------------------------------
+
+/// A single heading entry extracted from an HTML document.
+#[derive(Debug, Clone)]
+pub struct HeadingEntry {
+    /// Heading level (1 = `<h1>`, 2 = `<h2>`, …, 6 = `<h6>`).
+    pub level: u32,
+    /// Plain-text content of the heading.
+    pub text: String,
+    /// Anchor id used for linking (either from an existing `id=""` attribute
+    /// or auto-generated from the heading text).
+    pub anchor: String,
+}
+
+/// Extract heading elements from `html` up to `max_depth` levels (1–6).
+///
+/// Headings are returned in document order.  If a heading tag already has
+/// an `id` attribute, that value is used as the anchor; otherwise a
+/// URL-safe slug is derived from the heading text and made unique within
+/// the returned list.
+pub fn extract_headings(html: &str, max_depth: u32) -> Vec<HeadingEntry> {
+    let mut entries: Vec<HeadingEntry> = Vec::new();
+    let lower = html.to_ascii_lowercase();
+    let max_depth = max_depth.min(6);
+    let mut pos = 0;
+
+    while pos < lower.len() {
+        // Find the earliest heading tag (h1…h{max_depth}) starting at `pos`.
+        let mut best: Option<(usize, u32)> = None;
+        for level in 1..=max_depth {
+            let tag = format!("<h{}", level);
+            if let Some(rel) = lower[pos..].find(&tag) {
+                let abs = pos + rel;
+                // The character immediately after the tag name must be a
+                // delimiter (space, '>', newline) to avoid matching e.g. <h10>.
+                let after = lower.as_bytes().get(abs + tag.len()).copied();
+                if matches!(
+                    after,
+                    Some(b'>') | Some(b' ') | Some(b'\t') | Some(b'\n') | Some(b'\r') | None
+                ) {
+                    if best.map_or(true, |(bp, _)| abs < bp) {
+                        best = Some((abs, level));
+                    }
+                }
+            }
+        }
+
+        let (tag_start, level) = match best {
+            Some(b) => b,
+            None => break,
+        };
+
+        // Find the end of the opening tag.
+        let gt_rel = match lower[tag_start..].find('>') {
+            Some(o) => o,
+            None => break,
+        };
+        let tag_end = tag_start + gt_rel;
+        let opening_tag = &html[tag_start..=tag_end];
+
+        // Find the closing tag and extract inner HTML.
+        let close_tag = format!("</h{}>", level);
+        let content_start = tag_end + 1;
+        if let Some(close_rel) = lower[content_start..].find(&close_tag) {
+            let content_end = content_start + close_rel;
+            let inner = &html[content_start..content_end];
+            let text = strip_html_tags(inner).trim().to_string();
+
+            if !text.is_empty() {
+                let anchor = extract_id_attr(opening_tag).unwrap_or_else(|| {
+                    make_unique_anchor(&slugify_text(&text), &entries)
+                });
+                entries.push(HeadingEntry { level, text, anchor });
+            }
+
+            pos = content_end + close_tag.len();
+        } else {
+            pos = tag_start + 1;
+        }
+    }
+
+    entries
+}
+
+/// Inject `id` attributes into heading tags (up to `max_depth`) that do not
+/// already have one, using the anchors from `headings` (in document order).
+///
+/// This ensures that TOC forward-links (`href="#anchor"`) resolve correctly
+/// when the TOC and the content are rendered together.
+pub fn inject_heading_anchors(html: &str, headings: &[HeadingEntry], max_depth: u32) -> String {
+    if headings.is_empty() {
+        return html.to_string();
+    }
+
+    let lower = html.to_ascii_lowercase();
+    let max_depth = max_depth.min(6);
+    let mut result = String::with_capacity(html.len() + headings.len() * 24);
+    let mut src_pos = 0;
+    let mut entry_idx = 0;
+
+    while src_pos < lower.len() && entry_idx < headings.len() {
+        // Find the next '<'.
+        let rel_lt = match lower[src_pos..].find('<') {
+            Some(o) => o,
+            None => break,
+        };
+        let abs_lt = src_pos + rel_lt;
+
+        // Determine whether this '<' opens a heading tag h1…h{max_depth}.
+        let mut found_level: Option<u32> = None;
+        for level in 1..=max_depth {
+            let tag_name = format!("h{}", level);
+            let tag_end = abs_lt + 1 + tag_name.len();
+            if tag_end <= lower.len() && &lower[abs_lt + 1..tag_end] == tag_name.as_str() {
+                let after = lower.as_bytes().get(tag_end).copied();
+                if matches!(
+                    after,
+                    Some(b'>') | Some(b' ') | Some(b'\t') | Some(b'\n') | Some(b'\r') | None
+                ) {
+                    found_level = Some(level);
+                    break;
+                }
+            }
+        }
+
+        if let Some(_level) = found_level {
+            // Find end of the opening tag.
+            let rel_gt = match lower[abs_lt..].find('>') {
+                Some(o) => o,
+                None => break,
+            };
+            let abs_gt = abs_lt + rel_gt;
+            let opening_tag = &html[abs_lt..=abs_gt];
+
+            // Flush content before this tag.
+            result.push_str(&html[src_pos..abs_lt]);
+
+            // Inject `id` only when the tag has none yet.
+            if extract_id_attr(opening_tag).is_none() {
+                // Push everything up to (not including) the closing '>'.
+                result.push_str(&html[abs_lt..abs_gt]);
+                result.push_str(&format!(" id=\"{}\"", headings[entry_idx].anchor));
+                result.push('>');
+            } else {
+                result.push_str(opening_tag);
+            }
+
+            src_pos = abs_gt + 1;
+            entry_idx += 1;
+        } else {
+            // Not a heading tag – copy the '<' and advance.
+            result.push_str(&html[src_pos..=abs_lt]);
+            src_pos = abs_lt + 1;
+        }
+    }
+
+    // Flush any remaining content.
+    result.push_str(&html[src_pos..]);
+    result
+}
+
+/// Generate a self-contained HTML page that renders as a Table of Contents.
+///
+/// Each entry in `headings` becomes one row with the heading text, an
+/// optional dotted fill line, and an indented layout based on the heading
+/// level.  When `toc.forward_links` is `true` each entry is wrapped in an
+/// `<a href="#anchor">` link.
+pub fn generate_toc_html(headings: &[HeadingEntry], toc: &TableOfContent) -> String {
+    let indent_per_level: f32 = toc
+        .indentation
+        .trim_end_matches("em")
+        .parse()
+        .unwrap_or(1.0);
+
+    let mut rows = String::new();
+    for entry in headings {
+        let indent = (entry.level.saturating_sub(1) as f32) * indent_per_level;
+        // font_scale is applied once per level below h1.
+        let scale = toc.font_scale.powi(entry.level.saturating_sub(1) as i32);
+
+        let text_html = escape_html(&entry.text);
+        let content = if toc.forward_links {
+            format!(
+                "<a href=\"#{anchor}\">{text}</a>",
+                anchor = escape_html_attr(&entry.anchor),
+                text = text_html,
+            )
+        } else {
+            text_html
+        };
+
+        let dot_style = if toc.use_dotted_lines { "" } else { "visibility:hidden;" };
+        rows.push_str(&format!(
+            "<div class=\"_wk_toc_row\" style=\"margin-left:{indent:.2}em;font-size:{scale:.3}em;\">\
+             <span class=\"_wk_toc_text\">{content}</span>\
+             <span class=\"_wk_toc_dots\" style=\"{dot_style}\"></span>\
+             </div>\n",
+        ));
+    }
+
+    format!(
+        "<!DOCTYPE html>\
+         <html><head><meta charset=\"UTF-8\"><style>\
+         body{{font-family:serif;margin:2em;}}\
+         h1._wk_toc_title{{text-align:center;font-size:1.4em;margin-bottom:1em;}}\
+         ._wk_toc_row{{display:flex;align-items:baseline;margin-bottom:0.3em;}}\
+         ._wk_toc_text{{white-space:nowrap;}}\
+         ._wk_toc_dots{{flex:1;border-bottom:1px dotted #000;margin:0 0.3em 0.15em;}}\
+         a{{color:inherit;text-decoration:none;}}\
+         </style></head><body>\
+         <h1 class=\"_wk_toc_title\" id=\"_wk_toc\">{title}</h1>\
+         {rows}\
+         </body></html>",
+        title = escape_html(&toc.caption_text),
+        rows = rows,
+    )
+}
+
+/// Return the default XSLT stylesheet used to render the TOC XML document.
+///
+/// This is the same default stylesheet that the original wkhtmltopdf uses.
+/// It can be printed to stdout via the `--dump-default-toc-xsl` CLI flag so
+/// that users can customise it and pass it back with `--xsl-style-sheet`.
+pub fn default_toc_xsl() -> &'static str {
+    r#"<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="2.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:outline="http://wkhtmltopdf.org/outline"
+  xmlns="http://www.w3.org/1999/xhtml">
+  <xsl:output doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
+    doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
+    indent="yes" />
+  <xsl:template match="outline:outline">
+    <html>
+      <head>
+        <title>Table of Contents</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <style>
+          h1 { text-align: center; font-size: 1.4em; }
+          div { margin-top: 1em; }
+          div div { margin-left: 1em; font-size: 0.8em; margin-top: 0; }
+          span.dotfill {
+            display: inline-block;
+            border-bottom: 1px dotted black;
+            flex: 1;
+            margin: 0 0.3em 0.15em;
+          }
+          a { color: black; text-decoration: none; }
+          div.toc-entry { display: flex; align-items: baseline; }
+          div.toc-entry a { white-space: nowrap; }
+          div.toc-entry span.page { white-space: nowrap; }
+        </style>
+      </head>
+      <body>
+        <h1><xsl:value-of select="@title"/></h1>
+        <xsl:apply-templates select="outline:item/outline:item"/>
+      </body>
+    </html>
+  </xsl:template>
+  <xsl:template match="outline:item">
+    <xsl:if test="@title!=''">
+      <div class="toc-entry">
+        <a>
+          <xsl:if test="@link">
+            <xsl:attribute name="href"><xsl:value-of select="@link"/></xsl:attribute>
+          </xsl:if>
+          <xsl:value-of select="@title"/>
+        </a>
+        <span class="dotfill"></span>
+        <span class="page"><xsl:value-of select="@page"/></span>
+      </div>
+    </xsl:if>
+    <div>
+      <xsl:apply-templates select="outline:item"/>
+    </div>
+  </xsl:template>
+</xsl:stylesheet>
+"#
+}
+
+// ---------------------------------------------------------------------------
+// TOC generation internal helpers
+// ---------------------------------------------------------------------------
+
+/// Strip HTML tags from a string, returning plain text.
+fn strip_html_tags(html: &str) -> String {
+    let mut result = String::with_capacity(html.len());
+    let mut in_tag = false;
+    for ch in html.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => result.push(ch),
+            _ => {}
+        }
+    }
+    result
+}
+
+/// Extract the value of the `id` attribute from an HTML opening-tag string.
+fn extract_id_attr(tag: &str) -> Option<String> {
+    let lower = tag.to_ascii_lowercase();
+    let id_pos = lower.find("id=")?;
+    let rest = &tag[id_pos + 3..];
+    let value = if rest.starts_with('"') {
+        let inner = &rest[1..];
+        let end = inner.find('"').unwrap_or(inner.len());
+        &inner[..end]
+    } else if rest.starts_with('\'') {
+        let inner = &rest[1..];
+        let end = inner.find('\'').unwrap_or(inner.len());
+        &inner[..end]
+    } else {
+        let end = rest
+            .find(|c: char| c.is_ascii_whitespace() || c == '>')
+            .unwrap_or(rest.len());
+        &rest[..end]
+    };
+    if value.is_empty() {
+        None
+    } else {
+        Some(value.to_string())
+    }
+}
+
+/// Convert heading text to a URL-safe slug (lowercase, hyphens).
+fn slugify_text(text: &str) -> String {
+    let raw: String = text
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() {
+                c.to_ascii_lowercase()
+            } else {
+                '-'
+            }
+        })
+        .collect();
+    // Collapse consecutive hyphens and strip leading/trailing ones.
+    let slug = raw
+        .split('-')
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join("-");
+    if slug.is_empty() {
+        "heading".to_string()
+    } else {
+        slug
+    }
+}
+
+/// Return a slug that is unique among the anchors already in `existing`.
+fn make_unique_anchor(base: &str, existing: &[HeadingEntry]) -> String {
+    if !existing.iter().any(|e| e.anchor == base) {
+        return base.to_string();
+    }
+    let mut i = 2usize;
+    loop {
+        let candidate = format!("{}-{}", base, i);
+        if !existing.iter().any(|e| e.anchor == candidate) {
+            return candidate;
+        }
+        i += 1;
+    }
+}
+
+/// HTML-escape special characters for text content.
+fn escape_html(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
+/// HTML-escape for use inside attribute values.
+fn escape_html_attr(s: &str) -> String {
+    s.replace('&', "&amp;").replace('"', "&quot;")
+}
 
 #[cfg(test)]
 mod tests {
@@ -693,5 +1118,261 @@ mod tests {
         assert_eq!(parts[0].len(), 4); // year
         assert_eq!(parts[1].len(), 2); // month
         assert_eq!(parts[2].len(), 2); // day
+    }
+
+    // -----------------------------------------------------------------------
+    // TOC generation tests
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn extract_headings_basic() {
+        let html = "<h1>Chapter One</h1><h2>Section 1.1</h2><h1>Chapter Two</h1>";
+        let entries = extract_headings(html, 3);
+        assert_eq!(entries.len(), 3);
+        assert_eq!(entries[0].level, 1);
+        assert_eq!(entries[0].text, "Chapter One");
+        assert_eq!(entries[1].level, 2);
+        assert_eq!(entries[1].text, "Section 1.1");
+        assert_eq!(entries[2].level, 1);
+        assert_eq!(entries[2].text, "Chapter Two");
+    }
+
+    #[test]
+    fn extract_headings_uses_existing_id() {
+        let html = "<h1 id=\"intro\">Introduction</h1>";
+        let entries = extract_headings(html, 3);
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].anchor, "intro");
+    }
+
+    #[test]
+    fn extract_headings_generates_anchor_when_no_id() {
+        let html = "<h2>Hello World</h2>";
+        let entries = extract_headings(html, 3);
+        assert_eq!(entries.len(), 1);
+        assert!(!entries[0].anchor.is_empty());
+        assert_eq!(entries[0].anchor, "hello-world");
+    }
+
+    #[test]
+    fn extract_headings_depth_limit() {
+        let html = "<h1>One</h1><h2>Two</h2><h3>Three</h3><h4>Four</h4>";
+        let entries = extract_headings(html, 2);
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].level, 1);
+        assert_eq!(entries[1].level, 2);
+    }
+
+    #[test]
+    fn extract_headings_unique_anchors_for_same_text() {
+        let html = "<h1>Section</h1><h2>Section</h2><h3>Section</h3>";
+        let entries = extract_headings(html, 6);
+        assert_eq!(entries.len(), 3);
+        let anchors: Vec<&str> = entries.iter().map(|e| e.anchor.as_str()).collect();
+        assert_eq!(anchors[0], "section");
+        assert_eq!(anchors[1], "section-2");
+        assert_eq!(anchors[2], "section-3");
+    }
+
+    #[test]
+    fn extract_headings_strips_inner_html() {
+        let html = "<h1><strong>Bold <em>Title</em></strong></h1>";
+        let entries = extract_headings(html, 3);
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].text, "Bold Title");
+    }
+
+    #[test]
+    fn extract_headings_empty_html() {
+        let entries = extract_headings("", 3);
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn extract_headings_no_headings() {
+        let html = "<p>Just a paragraph</p><div>Some content</div>";
+        let entries = extract_headings(html, 3);
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn inject_heading_anchors_adds_id_where_missing() {
+        let html = "<h1>Title</h1>";
+        let headings = extract_headings(html, 3);
+        let injected = inject_heading_anchors(html, &headings, 3);
+        assert!(injected.contains("id=\"title\""), "should contain id='title', got: {injected}");
+    }
+
+    #[test]
+    fn inject_heading_anchors_preserves_existing_id() {
+        let html = "<h1 id=\"my-section\">Title</h1>";
+        let headings = extract_headings(html, 3);
+        let injected = inject_heading_anchors(html, &headings, 3);
+        assert!(injected.contains("id=\"my-section\""));
+        // Should not have a duplicate id attribute
+        let count = injected.matches("id=").count();
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn inject_heading_anchors_empty_headings_is_noop() {
+        let html = "<h1>Title</h1>";
+        let result = inject_heading_anchors(html, &[], 3);
+        assert_eq!(result, html);
+    }
+
+    #[test]
+    fn generate_toc_html_contains_title() {
+        let toc = wkhtmltopdf_settings::TableOfContent {
+            caption_text: "My TOC".into(),
+            ..Default::default()
+        };
+        let html = generate_toc_html(&[], &toc);
+        assert!(html.contains("My TOC"));
+    }
+
+    #[test]
+    fn generate_toc_html_contains_headings() {
+        let headings = vec![
+            HeadingEntry { level: 1, text: "Chapter 1".into(), anchor: "chapter-1".into() },
+            HeadingEntry { level: 2, text: "Section 1.1".into(), anchor: "section-1-1".into() },
+        ];
+        let toc = wkhtmltopdf_settings::TableOfContent::default();
+        let html = generate_toc_html(&headings, &toc);
+        assert!(html.contains("Chapter 1"));
+        assert!(html.contains("Section 1.1"));
+    }
+
+    #[test]
+    fn generate_toc_html_dotted_lines_enabled() {
+        let headings = vec![HeadingEntry {
+            level: 1,
+            text: "Title".into(),
+            anchor: "title".into(),
+        }];
+        let toc = wkhtmltopdf_settings::TableOfContent {
+            use_dotted_lines: true,
+            ..Default::default()
+        };
+        let html = generate_toc_html(&headings, &toc);
+        assert!(
+            html.contains("_wk_toc_dots"),
+            "dotted-line element missing"
+        );
+        // The dotted-line span should NOT be hidden
+        assert!(!html.contains("visibility:hidden"));
+    }
+
+    #[test]
+    fn generate_toc_html_dotted_lines_disabled() {
+        let headings = vec![HeadingEntry {
+            level: 1,
+            text: "Title".into(),
+            anchor: "title".into(),
+        }];
+        let toc = wkhtmltopdf_settings::TableOfContent {
+            use_dotted_lines: false,
+            ..Default::default()
+        };
+        let html = generate_toc_html(&headings, &toc);
+        assert!(html.contains("visibility:hidden"), "dots should be hidden");
+    }
+
+    #[test]
+    fn generate_toc_html_forward_links_enabled() {
+        let headings = vec![HeadingEntry {
+            level: 1,
+            text: "Intro".into(),
+            anchor: "intro".into(),
+        }];
+        let toc = wkhtmltopdf_settings::TableOfContent {
+            forward_links: true,
+            ..Default::default()
+        };
+        let html = generate_toc_html(&headings, &toc);
+        assert!(html.contains("href=\"#intro\""));
+    }
+
+    #[test]
+    fn generate_toc_html_forward_links_disabled() {
+        let headings = vec![HeadingEntry {
+            level: 1,
+            text: "Intro".into(),
+            anchor: "intro".into(),
+        }];
+        let toc = wkhtmltopdf_settings::TableOfContent {
+            forward_links: false,
+            ..Default::default()
+        };
+        let html = generate_toc_html(&headings, &toc);
+        assert!(!html.contains("href=\"#intro\""));
+        assert!(html.contains("Intro"));
+    }
+
+    #[test]
+    fn generate_toc_html_indentation_increases_per_level() {
+        let headings = vec![
+            HeadingEntry { level: 1, text: "H1".into(), anchor: "h1".into() },
+            HeadingEntry { level: 2, text: "H2".into(), anchor: "h2".into() },
+            HeadingEntry { level: 3, text: "H3".into(), anchor: "h3".into() },
+        ];
+        let toc = wkhtmltopdf_settings::TableOfContent {
+            indentation: "1em".into(),
+            ..Default::default()
+        };
+        let html = generate_toc_html(&headings, &toc);
+        // h1 has 0 indentation, h2 has 1em, h3 has 2em
+        assert!(html.contains("margin-left:0.00em"), "h1 should have 0em indent");
+        assert!(html.contains("margin-left:1.00em"), "h2 should have 1em indent");
+        assert!(html.contains("margin-left:2.00em"), "h3 should have 2em indent");
+    }
+
+    #[test]
+    fn generate_toc_html_toc_anchor_in_title() {
+        let toc = wkhtmltopdf_settings::TableOfContent::default();
+        let html = generate_toc_html(&[], &toc);
+        assert!(html.contains("id=\"_wk_toc\""), "TOC title needs back-link anchor");
+    }
+
+    #[test]
+    fn default_toc_xsl_is_non_empty_xml() {
+        let xsl = default_toc_xsl();
+        assert!(!xsl.is_empty());
+        assert!(xsl.contains("<?xml"), "should start with XML declaration");
+        assert!(xsl.contains("xsl:stylesheet"), "should contain stylesheet element");
+        assert!(xsl.contains("outline:item"), "should handle outline items");
+    }
+
+    #[test]
+    fn table_of_content_default_depth_is_3() {
+        let toc = wkhtmltopdf_settings::TableOfContent::default();
+        assert_eq!(toc.depth, 3);
+    }
+
+    #[test]
+    fn slugify_text_basic() {
+        assert_eq!(slugify_text("Hello World"), "hello-world");
+        assert_eq!(slugify_text("  spaces  "), "spaces");
+        assert_eq!(slugify_text("Special & Chars!"), "special-chars");
+        assert_eq!(slugify_text(""), "heading");
+    }
+
+    #[test]
+    fn make_unique_anchor_no_conflict() {
+        let existing: Vec<HeadingEntry> = vec![];
+        assert_eq!(make_unique_anchor("section", &existing), "section");
+    }
+
+    #[test]
+    fn make_unique_anchor_with_conflict() {
+        let existing = vec![
+            HeadingEntry { level: 1, text: "S".into(), anchor: "section".into() },
+        ];
+        assert_eq!(make_unique_anchor("section", &existing), "section-2");
+    }
+
+    #[test]
+    fn escape_html_escapes_special_chars() {
+        assert_eq!(escape_html("<b>Hello & \"World\"</b>"), "&lt;b&gt;Hello &amp; &quot;World&quot;&lt;/b&gt;");
     }
 }
