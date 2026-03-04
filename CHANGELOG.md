@@ -1,5 +1,44 @@
-v0.12.7 (unreleased)
+v0.13.0 (2026-03-04)
 --------------------
+**First Rust-based release — complete reimplementation**
+
+This release replaces the Qt/C++ engine with a pure-Rust implementation.
+The CLI interface and `libwkhtmltox` C ABI are preserved so that most users
+can upgrade with no source changes.  See `docs/migration.md` for a full
+migration guide.
+
+### What's new
+* HTML rendering is now performed by a headless Chromium browser via the
+  `headless_chrome` crate — no Qt, no X11 display server required.
+* PDF assembly uses `printpdf` 0.9 with full multi-page, margin, header /
+  footer, table-of-contents, PDF/A, and document-metadata support.
+* Image capture uses the `image` crate (0.25) with crop, resize, DPI, and
+  PNG / JPEG / BMP / SVG format support.
+* The `libwkhtmltox` C ABI (`wkhtmltopdf_*` / `wkhtmltoimage_*` symbols) is
+  re-exported by the `wkhtmltox` cdylib crate so that existing applications
+  that link the shared library continue to work without source changes.
+* All settings are strongly typed and `serde`-serialisable.
+* TOC generation supports configurable depth via `--toc-depth`.
+* Header/footer variable substitution supports `[page]`, `[toPage]`, `[date]`,
+  `[title]`, and `[url]`.
+* PDF/A conformance levels A1b, A2b, and A3b are supported.
+* Document metadata fields `author`, `subject`, and `title` are supported.
+
+### Breaking changes
+* **Rendering engine changed**: Qt WebKit is replaced by headless Chromium.
+  Pages that relied on Qt-specific rendering quirks may look different.
+* **System dependency**: a Chromium / Chrome binary must be installed at
+  runtime (previously Qt libraries were bundled).
+* **`--disable-javascript` / `--enable-javascript`**: JavaScript is always
+  executed via Chromium; the flag is accepted but has no effect in this
+  release.
+* **PostScript output**: not supported (was already removed in v0.12.1).
+* **`libwkhtmltox` ABI**: binary-compatible — the `.so` / `.dylib` / `.dll`
+  produced by this release exports the same symbols as 0.12.x.  The
+  `wkhtmltopdf_version()` string now returns `"0.13.0"`.
+
+v0.12.7 (unreleased / abandoned)
+---------------------------------
 
 v0.12.6 (2020-06-11)
 --------------------

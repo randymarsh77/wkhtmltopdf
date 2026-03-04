@@ -3008,7 +3008,7 @@ dependencies = [
 
 [[package]]
 name = "wkhtmltopdf-cli"
-version = "0.1.0"
+version = "0.13.0"
 dependencies = [
  "clap",
  "wkhtmltopdf-core",
@@ -3019,7 +3019,7 @@ dependencies = [
 
 [[package]]
 name = "wkhtmltopdf-core"
-version = "0.1.0"
+version = "0.13.0"
 dependencies = [
  "headless_chrome",
  "thiserror",
@@ -3027,7 +3027,7 @@ dependencies = [
 
 [[package]]
 name = "wkhtmltopdf-diff"
-version = "0.1.0"
+version = "0.13.0"
 dependencies = [
  "image",
  "lopdf",
@@ -3036,7 +3036,7 @@ dependencies = [
 
 [[package]]
 name = "wkhtmltopdf-image"
-version = "0.1.0"
+version = "0.13.0"
 dependencies = [
  "image",
  "thiserror",
@@ -3046,7 +3046,7 @@ dependencies = [
 
 [[package]]
 name = "wkhtmltopdf-pdf"
-version = "0.1.0"
+version = "0.13.0"
 dependencies = [
  "base64",
  "lopdf",
@@ -3059,7 +3059,7 @@ dependencies = [
 
 [[package]]
 name = "wkhtmltopdf-settings"
-version = "0.1.0"
+version = "0.13.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -3067,7 +3067,7 @@ dependencies = [
 
 [[package]]
 name = "wkhtmltopdf-tests"
-version = "0.1.0"
+version = "0.13.0"
 dependencies = [
  "image",
  "serde_json",
@@ -3081,7 +3081,7 @@ dependencies = [
 
 [[package]]
 name = "wkhtmltox"
-version = "0.1.0"
+version = "0.13.0"
 dependencies = [
  "wkhtmltopdf-core",
  "wkhtmltopdf-image",
