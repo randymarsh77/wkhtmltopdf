@@ -1,11 +1,9 @@
 {
-  "phase": "needs_verification",
-  "iteration": 14,
-  "current_task_id": "14",
-  "issue_number": 27,
-  "pr_number": 28,
-  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/28",
-  "last_prompt": "Implement C-compatible shared library API (libwkhtmltox replacement): expose a C ABI with the same function signatures as the original libwkhtmltox for drop-in compatibility with existing bindings.",
+  "phase": "agent_working",
+  "iteration": 15,
+  "current_task_id": "15",
+  "issue_number": 29,
+  "last_prompt": "Build regression test harness: create a test framework in the `tests` crate that renders a set of reference HTML fixtures with both the old wkhtmltopdf binary (if available) and the new Rust implementation, producing output files for comparison.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -62,13 +60,8 @@
     "advance: merged PR #26",
     "iteration 14: triggered cloud agent for task 14 (issue #27)",
     "iteration 14: agent created PR #28 for task Some(\"14\")",
-    "iteration 14: marked PR #28 as ready for review"
-  ],
-  "tracked_prs": [
-    {
-      "pr_number": 28,
-      "task_id": "14",
-      "issue_number": 27
-    }
+    "iteration 14: marked PR #28 as ready for review",
+    "advance: merged PR #28",
+    "iteration 15: triggered cloud agent for task 15 (issue #29)"
   ]
 }

@@ -112,7 +112,7 @@
   {
     "id": "14",
     "description": "Implement C-compatible shared library API (libwkhtmltox replacement): expose a C ABI with the same function signatures as the original libwkhtmltox for drop-in compatibility with existing bindings.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 5,
     "depends_on": [
       "7",
@@ -122,7 +122,7 @@
   {
     "id": "15",
     "description": "Build regression test harness: create a test framework in the `tests` crate that renders a set of reference HTML fixtures with both the old wkhtmltopdf binary (if available) and the new Rust implementation, producing output files for comparison.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 3,
     "depends_on": [
       "3"
