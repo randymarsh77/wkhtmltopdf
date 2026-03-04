@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 18,
   "current_task_id": "18",
   "issue_number": 35,
+  "pr_number": 36,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/36",
   "last_prompt": "Implement PDF structural diffing: compare PDF metadata, page count, text content (via pdf-extract or similar), and outline structure between reference and Rust output beyond just visual comparison.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -74,6 +76,15 @@
     "iteration 17: agent created PR #34 for task Some(\"17\")",
     "iteration 17: marked PR #34 as ready for review",
     "advance: merged PR #34",
-    "iteration 18: triggered cloud agent for task 18 (issue #35)"
+    "iteration 18: triggered cloud agent for task 18 (issue #35)",
+    "iteration 18: agent created PR #36 for task Some(\"18\")",
+    "iteration 18: marked PR #36 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 36,
+      "task_id": "18",
+      "issue_number": 35
+    }
   ]
 }
