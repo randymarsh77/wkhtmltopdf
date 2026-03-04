@@ -11,6 +11,7 @@
 //! in the [`PdfGlobal`] settings.
 
 use std::collections::BTreeMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use printpdf::{
     conformance::PdfConformance, deserialize::PdfWarnMsg, GeneratePdfOptions, PdfDocument,
@@ -19,7 +20,7 @@ use printpdf::{
 use thiserror::Error;
 use wkhtmltopdf_core::{ConvertError, Converter};
 use wkhtmltopdf_settings::{
-    Orientation, PageSize, PdfAConformance, PdfGlobal, PdfObject, Unit, UnitReal,
+    HeaderFooter, Orientation, PageSize, PdfAConformance, PdfGlobal, PdfObject, Unit, UnitReal,
 };
 
 // ---------------------------------------------------------------------------
@@ -90,6 +91,10 @@ impl Converter for PdfConverter {
             ..Default::default()
         };
 
+        // Shared template context for all page objects.
+        let date = current_date_string();
+        let title = self.global.document_title.clone().unwrap_or_default();
+
         // Render each page object that has a URL/path specified.
         let mut combined: Option<PdfDocument> = None;
         for object in &self.objects {
@@ -98,7 +103,21 @@ impl Converter for PdfConverter {
                 None => continue,
             };
 
-            let html = fetch_html(page_src)?;
+            let mut html = fetch_html(page_src)?;
+
+            // Inject header/footer bands if any settings are active.
+            let header_band = build_band_html(&object.header, true, &date, &title, page_src)?;
+            let footer_band = build_band_html(&object.footer, false, &date, &title, page_src)?;
+            if !header_band.is_empty() || !footer_band.is_empty() {
+                html = inject_header_footer(
+                    &html,
+                    &header_band,
+                    &footer_band,
+                    object.header.spacing,
+                    object.footer.spacing,
+                );
+            }
+
             let mut warnings = Vec::new();
             let doc = PdfDocument::from_html(
                 &html,
@@ -240,6 +259,187 @@ fn pdf_a_conformance_to_printpdf(conformance: PdfAConformance) -> PdfConformance
 }
 
 // ---------------------------------------------------------------------------
+// Header / footer rendering helpers
+// ---------------------------------------------------------------------------
+
+/// Return the current date formatted as `YYYY-MM-DD` (UTC) using only `std`.
+fn current_date_string() -> String {
+    let secs = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+
+    // Gregorian calendar conversion from Unix timestamp (UTC).
+    let mut days = secs / 86400;
+    let mut year = 1970u32;
+    loop {
+        let days_in_year: u64 = if is_leap_year(year) { 366 } else { 365 };
+        if days < days_in_year {
+            break;
+        }
+        days -= days_in_year;
+        year += 1;
+    }
+    let month_days: [u64; 12] = [
+        31,
+        if is_leap_year(year) { 29 } else { 28 },
+        31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+    ];
+    let mut month = 1u32;
+    for &md in &month_days {
+        if days < md {
+            break;
+        }
+        days -= md;
+        month += 1;
+    }
+    let day = days + 1;
+    format!("{year:04}-{month:02}-{day:02}")
+}
+
+fn is_leap_year(year: u32) -> bool {
+    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+}
+
+/// Substitute template variables in a header/footer text string.
+///
+/// The following variables are recognised:
+///
+/// | Variable   | Replacement                                          |
+/// |------------|------------------------------------------------------|
+/// | `[page]`   | A CSS-counter `<span>` (rendered as current page #). |
+/// | `[toPage]` | A CSS-counter `<span>` (rendered as total pages).    |
+/// | `[date]`   | Current date in `YYYY-MM-DD` format.                 |
+/// | `[title]`  | The document title from [`PdfGlobal`].               |
+/// | `[url]`    | The URL/path of the page being rendered.             |
+pub fn substitute_vars(text: &str, date: &str, title: &str, url: &str) -> String {
+    text.replace("[page]", "<span class='_wk_page'></span>")
+        .replace("[toPage]", "<span class='_wk_topage'></span>")
+        .replace("[date]", date)
+        .replace("[title]", title)
+        .replace("[url]", url)
+}
+
+/// Build the HTML fragment for a header or footer band.
+///
+/// Returns an empty string when the band has no visible content (no text,
+/// no HTML URL, and no separator line).
+pub fn build_band_html(
+    hf: &HeaderFooter,
+    is_header: bool,
+    date: &str,
+    title: &str,
+    url: &str,
+) -> Result<String, ConvertError> {
+    let has_text = hf.left.is_some() || hf.center.is_some() || hf.right.is_some();
+    let has_html = hf.html_url.is_some();
+
+    if !has_text && !has_html && !hf.line {
+        return Ok(String::new());
+    }
+
+    let position = if is_header { "top:0" } else { "bottom:0" };
+    let border = if hf.line {
+        if is_header {
+            "border-bottom:1px solid black;"
+        } else {
+            "border-top:1px solid black;"
+        }
+    } else {
+        ""
+    };
+
+    let band_html = if let Some(ref html_url) = hf.html_url {
+        // Fetch the HTML-based header/footer, apply variable substitution.
+        let raw = fetch_html(html_url)?;
+        substitute_vars(&raw, date, title, url)
+    } else {
+        let left = substitute_vars(hf.left.as_deref().unwrap_or(""), date, title, url);
+        let center = substitute_vars(hf.center.as_deref().unwrap_or(""), date, title, url);
+        let right = substitute_vars(hf.right.as_deref().unwrap_or(""), date, title, url);
+        format!(
+            "<div style=\"display:flex;justify-content:space-between;width:100%;\">\
+             <span style=\"text-align:left;\">{left}</span>\
+             <span style=\"flex:1;text-align:center;\">{center}</span>\
+             <span style=\"text-align:right;\">{right}</span>\
+             </div>"
+        )
+    };
+
+    Ok(format!(
+        "<div class=\"_wk_band\" style=\"position:fixed;left:0;right:0;{position};\
+         {border}font-family:{font};font-size:{size}pt;\
+         padding:1mm 5mm;box-sizing:border-box;\">{inner}</div>",
+        font = hf.font_name,
+        size = hf.font_size,
+        inner = band_html,
+    ))
+}
+
+/// Inject header and footer bands into an HTML document.
+///
+/// The bands are rendered as `position:fixed` elements so they appear on
+/// every printed page.  Body margins are extended by `header_spacing` and
+/// `footer_spacing` millimetres respectively to prevent content from being
+/// obscured by the bands.
+pub fn inject_header_footer(
+    html: &str,
+    header_band: &str,
+    footer_band: &str,
+    header_spacing: f32,
+    footer_spacing: f32,
+) -> String {
+    if header_band.is_empty() && footer_band.is_empty() {
+        return html.to_string();
+    }
+
+    // Estimate a reasonable band height so the body margin clears the band.
+    // 8 mm comfortably fits a single text line at the default 12 pt font size
+    // (~4.2 mm cap-height + padding).  The caller can widen it via `*_spacing`.
+    const BAND_HEIGHT_MM: f32 = 8.0;
+    let top_margin = if header_band.is_empty() {
+        0.0
+    } else {
+        BAND_HEIGHT_MM + header_spacing
+    };
+    let bottom_margin = if footer_band.is_empty() {
+        0.0
+    } else {
+        BAND_HEIGHT_MM + footer_spacing
+    };
+
+    let extra = format!(
+        "<style>\
+         ._wk_page::before{{content:counter(page);}}\
+         ._wk_topage::before{{content:counter(pages);}}\
+         @page{{counter-increment:page;}}\
+         body{{margin-top:{top_margin}mm!important;margin-bottom:{bottom_margin}mm!important;}}\
+         </style>\
+         {header_band}{footer_band}"
+    );
+
+    // Inject immediately after the opening <body …> tag when present.
+    if let Some(body_start) = html.find("<body") {
+        if let Some(tag_end) = html[body_start..].find('>') {
+            let insert_at = body_start + tag_end + 1;
+            let mut result = html.to_string();
+            result.insert_str(insert_at, &extra);
+            return result;
+        }
+    }
+
+    // Fallback: prepend before </body> if present.
+    if let Some(pos) = html.find("</body>") {
+        let mut result = html.to_string();
+        result.insert_str(pos, &extra);
+        return result;
+    }
+
+    // Last resort: wrap the whole content.
+    format!("<html><head></head><body>{extra}{html}</body></html>")
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -362,5 +562,136 @@ mod tests {
     fn pdf_a_conformance_a3b_maps_correctly() {
         let c = pdf_a_conformance_to_printpdf(PdfAConformance::A3b);
         assert!(matches!(c, PdfConformance::A3_2012_PDF_1_7));
+    }
+
+    // -----------------------------------------------------------------------
+    // Header / footer helper tests
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn substitute_vars_replaces_date_title_url() {
+        let result = substitute_vars("Date: [date] Title: [title] URL: [url]", "2024-01-15", "My Doc", "http://example.com");
+        assert_eq!(result, "Date: 2024-01-15 Title: My Doc URL: http://example.com");
+    }
+
+    #[test]
+    fn substitute_vars_replaces_page_with_css_span() {
+        let result = substitute_vars("Page [page] of [toPage]", "", "", "");
+        assert!(result.contains("_wk_page"), "should contain _wk_page span");
+        assert!(result.contains("_wk_topage"), "should contain _wk_topage span");
+    }
+
+    #[test]
+    fn substitute_vars_leaves_unrecognised_vars_intact() {
+        let result = substitute_vars("[unknown]", "d", "t", "u");
+        assert_eq!(result, "[unknown]");
+    }
+
+    #[test]
+    fn build_band_html_empty_when_no_content() {
+        let hf = HeaderFooter::default(); // no text, no html_url, line=false
+        let result = build_band_html(&hf, true, "d", "t", "u").unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn build_band_html_returns_html_when_left_set() {
+        let mut hf = HeaderFooter::default();
+        hf.left = Some("Left text".into());
+        let result = build_band_html(&hf, true, "d", "t", "u").unwrap();
+        assert!(result.contains("Left text"));
+        assert!(result.contains("position:fixed"));
+        assert!(result.contains("top:0"));
+    }
+
+    #[test]
+    fn build_band_html_footer_positions_at_bottom() {
+        let mut hf = HeaderFooter::default();
+        hf.right = Some("Footer".into());
+        let result = build_band_html(&hf, false, "d", "t", "u").unwrap();
+        assert!(result.contains("bottom:0"));
+    }
+
+    #[test]
+    fn build_band_html_line_adds_border() {
+        let mut hf = HeaderFooter::default();
+        hf.center = Some("Title".into());
+        hf.line = true;
+        let header = build_band_html(&hf, true, "d", "t", "u").unwrap();
+        assert!(header.contains("border-bottom"));
+        let footer = build_band_html(&hf, false, "d", "t", "u").unwrap();
+        assert!(footer.contains("border-top"));
+    }
+
+    #[test]
+    fn build_band_html_applies_font_settings() {
+        let mut hf = HeaderFooter::default();
+        hf.left = Some("x".into());
+        hf.font_name = "Times New Roman".into();
+        hf.font_size = 10;
+        let result = build_band_html(&hf, true, "d", "t", "u").unwrap();
+        assert!(result.contains("Times New Roman"));
+        assert!(result.contains("10pt"));
+    }
+
+    #[test]
+    fn build_band_html_only_line_produces_output() {
+        let mut hf = HeaderFooter::default();
+        hf.line = true;
+        let result = build_band_html(&hf, true, "d", "t", "u").unwrap();
+        assert!(!result.is_empty());
+    }
+
+    #[test]
+    fn inject_header_footer_noop_when_both_empty() {
+        let html = "<html><body>content</body></html>";
+        let result = inject_header_footer(html, "", "", 0.0, 0.0);
+        assert_eq!(result, html);
+    }
+
+    #[test]
+    fn inject_header_footer_inserts_after_body_tag() {
+        let html = "<html><body>content</body></html>";
+        let result = inject_header_footer(html, "<div id='hdr'>H</div>", "", 0.0, 0.0);
+        // Header should appear inside <body>
+        let body_pos = result.find("<body>").unwrap();
+        let hdr_pos = result.find("id='hdr'").unwrap();
+        assert!(hdr_pos > body_pos, "header should be after <body>");
+    }
+
+    #[test]
+    fn inject_header_footer_includes_counter_css() {
+        let html = "<html><body>content</body></html>";
+        let result = inject_header_footer(html, "<div>H</div>", "", 0.0, 0.0);
+        assert!(result.contains("_wk_page"));
+        assert!(result.contains("_wk_topage"));
+    }
+
+    #[test]
+    fn inject_header_footer_adjusts_body_margin() {
+        let html = "<html><body>content</body></html>";
+        let result = inject_header_footer(html, "<div>H</div>", "<div>F</div>", 2.0, 3.0);
+        assert!(result.contains("margin-top:"), "should set top margin");
+        assert!(result.contains("margin-bottom:"), "should set bottom margin");
+    }
+
+    #[test]
+    fn inject_header_footer_fallback_without_body_tag() {
+        let html = "<p>plain content</p>";
+        let result = inject_header_footer(html, "<div>H</div>", "", 0.0, 0.0);
+        assert!(result.contains("<p>plain content</p>"));
+        assert!(result.contains("<div>H</div>"));
+    }
+
+    #[test]
+    fn current_date_string_format() {
+        let date = current_date_string();
+        // Format: YYYY-MM-DD  (10 characters, digits and hyphens)
+        assert_eq!(date.len(), 10);
+        let parts: Vec<&str> = date.split('-').collect();
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[0].len(), 4); // year
+        assert_eq!(parts[1].len(), 2); // month
+        assert_eq!(parts[2].len(), 2); // day
     }
 }
