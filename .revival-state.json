@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 13,
   "current_task_id": "13",
   "issue_number": 25,
+  "pr_number": 26,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/26",
   "last_prompt": "Implement network/proxy support: handle HTTP authentication, cookies (file and string), custom headers, SSL peer/host verification settings, and proxy configuration.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -54,6 +56,15 @@
     "iteration 12: agent created PR #24 for task Some(\"12\")",
     "iteration 12: marked PR #24 as ready for review",
     "advance: merged PR #24",
-    "iteration 13: triggered cloud agent for task 13 (issue #25)"
+    "iteration 13: triggered cloud agent for task 13 (issue #25)",
+    "iteration 13: agent created PR #26 for task Some(\"13\")",
+    "iteration 13: marked PR #26 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 26,
+      "task_id": "13",
+      "issue_number": 25
+    }
   ]
 }
