@@ -8,12 +8,13 @@
   {
     "id": "2",
     "description": "Research and select the appropriate Qt Rust wrapper for WebKit (e.g. qmetaobject-rs, qt-rust, or ritual-generated bindings) — confirm latest Qt6 + WebKit compatibility and crate availability on crates.io",
-    "status": "inprogress"
+    "status": "completed",
+    "last_attempt_at": 1772668663
   },
   {
     "id": "3",
     "description": "Replace the LICENSE file content with the full LGPL-3.0 license text",
-    "status": "pending"
+    "status": "inprogress"
   },
   {
     "id": "4",
