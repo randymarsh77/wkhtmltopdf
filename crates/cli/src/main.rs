@@ -506,15 +506,448 @@ fn main() {
     let cli = Cli::parse();
 
     let args = &cli.inputs_and_output;
-    let output = args.last().unwrap();
+    let output = args.last().unwrap().clone();
     let inputs = &args[..args.len() - 1];
 
-    eprintln!(
-        "PDF conversion: {:?} -> {}",
-        inputs, output
+    // Build global settings from CLI flags.
+    let global = build_global(&cli);
+
+    // Build the converter and add one PdfObject per input.
+    let mut converter = wkhtmltopdf_pdf::PdfConverter::new(global);
+    for input in inputs {
+        let object = build_object(&cli, input);
+        converter.add_object(object);
+    }
+
+    // Run the conversion.
+    use wkhtmltopdf_core::Converter;
+    let pdf_bytes = match converter.convert() {
+        Ok(bytes) => bytes,
+        Err(e) => {
+            eprintln!("error: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    // Write output file.
+    if let Err(e) = std::fs::write(&output, &pdf_bytes) {
+        eprintln!("error writing output file '{output}': {e}");
+        std::process::exit(1);
+    }
+}
+
+/// Build [`PdfGlobal`] from the parsed CLI arguments.
+fn build_global(cli: &Cli) -> wkhtmltopdf_settings::PdfGlobal {
+    use wkhtmltopdf_settings::{
+        ColorMode, LogLevel, Margin, Orientation, PdfGlobal, Unit, UnitReal,
+    };
+
+    let mut g = PdfGlobal::default();
+
+    // Paper size / dimensions
+    if let Some(ref s) = cli.page_size {
+        g.size.page_size = parse_page_size(s);
+    }
+    if let Some(ref w) = cli.page_width {
+        g.size.width = Some(parse_unit_real(w));
+    }
+    if let Some(ref h) = cli.page_height {
+        g.size.height = Some(parse_unit_real(h));
+    }
+
+    // Orientation
+    if let Some(ref o) = cli.orientation {
+        g.orientation = if o.eq_ignore_ascii_case("landscape") {
+            Orientation::Landscape
+        } else {
+            Orientation::Portrait
+        };
+    }
+
+    // Color mode
+    if cli.grayscale {
+        g.color_mode = ColorMode::Grayscale;
+    }
+
+    // DPI
+    if let Some(dpi) = cli.dpi {
+        g.dpi = Some(dpi);
+    }
+    if let Some(q) = cli.image_quality {
+        g.image_quality = q;
+    }
+    if let Some(d) = cli.image_dpi {
+        g.image_dpi = d;
+    }
+
+    // Copies / collate
+    if let Some(c) = cli.copies {
+        g.copies = c;
+    }
+    if cli.no_collate {
+        g.collate = false;
+    } else if cli.collate {
+        g.collate = true;
+    }
+
+    // Log level
+    if cli.quiet {
+        g.log_level = LogLevel::None;
+    } else if let Some(ref l) = cli.log_level {
+        g.log_level = match l.as_str() {
+            "none" => LogLevel::None,
+            "error" => LogLevel::Error,
+            "info" => LogLevel::Info,
+            _ => LogLevel::Warn,
+        };
+    }
+
+    // Margins  (default 10 mm each side)
+    let default_margin = || UnitReal { value: 10.0, unit: Unit::Millimeter };
+    g.margin = Margin {
+        top: cli.margin_top.as_deref().map(parse_unit_real).unwrap_or_else(default_margin),
+        bottom: cli.margin_bottom.as_deref().map(parse_unit_real).unwrap_or_else(default_margin),
+        left: cli.margin_left.as_deref().map(parse_unit_real).unwrap_or_else(default_margin),
+        right: cli.margin_right.as_deref().map(parse_unit_real).unwrap_or_else(default_margin),
+    };
+
+    // Compression
+    if cli.no_pdf_compression {
+        g.use_compression = false;
+    }
+
+    // Outline
+    if cli.no_outline {
+        g.outline = false;
+    } else if cli.outline {
+        g.outline = true;
+    }
+    if let Some(d) = cli.outline_depth {
+        g.outline_depth = d;
+    }
+    if let Some(ref f) = cli.dump_outline {
+        g.dump_outline = Some(f.clone());
+    }
+
+    // Page offset
+    if let Some(o) = cli.page_offset {
+        g.page_offset = o;
+    }
+
+    // Metadata
+    if let Some(ref t) = cli.title {
+        g.document_title = Some(t.clone());
+    }
+
+    // Viewport
+    if let Some(ref v) = cli.viewport_size {
+        g.viewport_size = Some(v.clone());
+    }
+
+    // Load settings
+    if let Some(ref c) = cli.cookie_jar {
+        g.load.cookie_jar = Some(c.clone());
+    }
+
+    g
+}
+
+/// Build a [`PdfObject`] for one input URL/file, applying all per-page CLI
+/// options (including header/footer).
+fn build_object(cli: &Cli, input: &str) -> wkhtmltopdf_settings::PdfObject {
+    use wkhtmltopdf_settings::{
+        LoadErrorHandling, PdfObject,
+    };
+
+    let mut obj = PdfObject::default();
+    obj.page = Some(input.to_string());
+
+    // Header settings
+    obj.header = build_header_footer(
+        cli.header_left.as_deref(),
+        cli.header_center.as_deref(),
+        cli.header_right.as_deref(),
+        cli.header_html.as_deref(),
+        cli.header_font_name.as_deref(),
+        cli.header_font_size,
+        cli.header_line,
+        cli.no_header_line,
+        cli.header_spacing,
     );
-    eprintln!("PDF rendering not yet implemented.");
-    std::process::exit(1);
+
+    // Footer settings
+    obj.footer = build_header_footer(
+        cli.footer_left.as_deref(),
+        cli.footer_center.as_deref(),
+        cli.footer_right.as_deref(),
+        cli.footer_html.as_deref(),
+        cli.footer_font_name.as_deref(),
+        cli.footer_font_size,
+        cli.footer_line,
+        cli.no_footer_line,
+        cli.footer_spacing,
+    );
+
+    // Web settings
+    if cli.no_background {
+        obj.web.background = false;
+    }
+    if cli.no_images {
+        obj.web.load_images = false;
+    }
+    if cli.disable_javascript {
+        obj.web.enable_javascript = false;
+    }
+    if cli.disable_smart_shrinking {
+        obj.web.enable_intelligent_shrinking = false;
+    }
+    if let Some(s) = cli.minimum_font_size {
+        obj.web.minimum_font_size = Some(s);
+    }
+    if let Some(ref enc) = cli.encoding {
+        obj.web.default_encoding = Some(enc.clone());
+    }
+    if let Some(ref css) = cli.user_style_sheet {
+        obj.web.user_style_sheet = Some(css.clone());
+    }
+    if cli.enable_plugins {
+        obj.web.enable_plugins = true;
+    }
+
+    // Load settings
+    if let Some(ref u) = cli.username {
+        obj.load.username = Some(u.clone());
+    }
+    if let Some(ref p) = cli.password {
+        obj.load.password = Some(p.clone());
+    }
+    if let Some(ms) = cli.javascript_delay {
+        obj.load.js_delay = ms;
+    }
+    if let Some(z) = cli.zoom {
+        obj.load.zoom = z;
+    }
+    if let Some(ref ws) = cli.window_status {
+        obj.load.window_status = Some(ws.clone());
+    }
+    if let Some(ref h) = cli.load_error_handling {
+        obj.load.load_error_handling = match h.as_str() {
+            "skip" => LoadErrorHandling::Skip,
+            "ignore" => LoadErrorHandling::Ignore,
+            _ => LoadErrorHandling::Abort,
+        };
+    }
+    if let Some(ref h) = cli.load_media_error_handling {
+        obj.load.media_load_error_handling = match h.as_str() {
+            "abort" => LoadErrorHandling::Abort,
+            "skip" => LoadErrorHandling::Skip,
+            _ => LoadErrorHandling::Ignore,
+        };
+    }
+    if cli.print_media_type {
+        obj.load.print_media_type = true;
+    }
+    if cli.debug_javascript {
+        obj.load.debug_javascript = true;
+    }
+    if cli.proxy_hostname_lookup {
+        obj.load.proxy_hostname_lookup = true;
+    }
+    if cli.disable_local_file_access {
+        obj.load.block_local_file_access = true;
+    }
+    if cli.stop_slow_scripts {
+        obj.load.stop_slow_scripts = true;
+    }
+    if let Some(ref c) = cli.cache_dir {
+        obj.load.cache_dir = Some(c.clone());
+    }
+    if let Some(ref key) = cli.ssl_key_path {
+        obj.load.client_ssl_key_path = Some(key.clone());
+    }
+    if let Some(ref pw) = cli.ssl_key_password {
+        obj.load.client_ssl_key_password = Some(pw.clone());
+    }
+    if let Some(ref crt) = cli.ssl_crt_path {
+        obj.load.client_ssl_crt_path = Some(crt.clone());
+    }
+    if cli.custom_header_propagation {
+        obj.load.repeat_custom_headers = true;
+    }
+    // Custom headers (pairs)
+    obj.load.custom_headers.extend(collect_pairs(&cli.custom_header, "--custom-header"));
+    // Cookies (pairs)
+    obj.load.cookies.extend(collect_pairs(&cli.cookie, "--cookie"));
+    // Run scripts
+    obj.load.run_script.extend(cli.run_script.iter().cloned());
+    // Allow paths
+    obj.load.allowed.extend(cli.allow.iter().cloned());
+    // Bypass proxy hosts
+    obj.load.bypass_proxy_for_hosts.extend(cli.bypass_proxy_for.iter().cloned());
+
+    // Links
+    if cli.disable_external_links {
+        obj.use_external_links = false;
+    }
+    if cli.disable_internal_links {
+        obj.use_local_links = false;
+    }
+    if cli.enable_forms {
+        obj.produce_forms = true;
+    }
+
+    // Outline inclusion
+    if cli.exclude_from_outline {
+        obj.include_in_outline = false;
+    }
+
+    // Text replacements (pairs)
+    obj.replacements.extend(collect_pairs(&cli.replace, "--replace"));
+
+    // TOC settings
+    if cli.disable_dotted_lines {
+        obj.toc.use_dotted_lines = false;
+    }
+    if let Some(ref t) = cli.toc_header_text {
+        obj.toc.caption_text = t.clone();
+    }
+    if cli.disable_toc_links {
+        obj.toc.forward_links = false;
+    }
+    if cli.disable_toc_back_links {
+        obj.toc.back_links = false;
+    }
+    if let Some(ref i) = cli.toc_level_indentation {
+        obj.toc.indentation = i.clone();
+    }
+    if let Some(s) = cli.toc_text_size_shrink {
+        obj.toc.font_scale = s;
+    }
+    if let Some(ref x) = cli.xsl_style_sheet {
+        obj.toc_xsl = Some(x.clone());
+    }
+
+    obj
+}
+
+/// Construct a [`HeaderFooter`] value from the individual CLI header/footer
+/// option values.
+fn build_header_footer(
+    left: Option<&str>,
+    center: Option<&str>,
+    right: Option<&str>,
+    html_url: Option<&str>,
+    font_name: Option<&str>,
+    font_size: Option<i32>,
+    line_on: bool,
+    line_off: bool,
+    spacing: Option<f32>,
+) -> wkhtmltopdf_settings::HeaderFooter {
+    use wkhtmltopdf_settings::HeaderFooter;
+    let mut hf = HeaderFooter::default();
+    hf.left = left.map(str::to_string);
+    hf.center = center.map(str::to_string);
+    hf.right = right.map(str::to_string);
+    hf.html_url = html_url.map(str::to_string);
+    if let Some(n) = font_name {
+        hf.font_name = n.to_string();
+    }
+    if let Some(s) = font_size {
+        hf.font_size = s;
+    }
+    if line_on {
+        hf.line = true;
+    } else if line_off {
+        hf.line = false;
+    }
+    if let Some(s) = spacing {
+        hf.spacing = s;
+    }
+    hf
+}
+
+// ---------------------------------------------------------------------------
+// Parsing helpers
+// ---------------------------------------------------------------------------
+
+/// Collect `(name, value)` string pairs from a flat list.
+///
+/// Clap guarantees that multi-value args with `num_args = 2` always produce
+/// an even-length list; this helper handles the general case and emits a
+/// warning to stderr for any trailing unpaired element.
+fn collect_pairs(items: &[String], flag: &str) -> Vec<(String, String)> {
+    let mut pairs = Vec::with_capacity(items.len() / 2);
+    let mut iter = items.iter();
+    loop {
+        match (iter.next(), iter.next()) {
+            (Some(k), Some(v)) => pairs.push((k.clone(), v.clone())),
+            (Some(k), None) => {
+                eprintln!("warning: {flag} '{k}' has no matching value and will be ignored");
+                break;
+            }
+            _ => break,
+        }
+    }
+    pairs
+}
+
+/// Parse a `unitreal` string such as `"10mm"`, `"1.5in"`, `"72pt"` into a
+/// [`UnitReal`].  Falls back to millimetres when no unit suffix is recognised.
+fn parse_unit_real(s: &str) -> wkhtmltopdf_settings::UnitReal {
+    use wkhtmltopdf_settings::{Unit, UnitReal};
+    let s = s.trim();
+    let suffixes: &[(&str, Unit)] = &[
+        ("mm", Unit::Millimeter),
+        ("cm", Unit::Centimeter),
+        ("in", Unit::Inch),
+        ("pt", Unit::Point),
+        ("pc", Unit::Pica),
+        ("px", Unit::Pixel),
+    ];
+    for (suffix, unit) in suffixes {
+        if let Some(num) = s.strip_suffix(suffix) {
+            if let Ok(v) = num.trim().parse::<f64>() {
+                return UnitReal { value: v, unit: *unit };
+            }
+        }
+    }
+    // No unit suffix — try plain number (assume mm).
+    let v = s.parse::<f64>().unwrap_or(0.0);
+    UnitReal { value: v, unit: Unit::Millimeter }
+}
+
+/// Map a page-size string (case-insensitive) to [`PageSize`].
+fn parse_page_size(s: &str) -> wkhtmltopdf_settings::PageSize {
+    use wkhtmltopdf_settings::PageSize;
+    match s.to_ascii_uppercase().as_str() {
+        "A0" => PageSize::A0,
+        "A1" => PageSize::A1,
+        "A2" => PageSize::A2,
+        "A3" => PageSize::A3,
+        "A4" => PageSize::A4,
+        "A5" => PageSize::A5,
+        "A6" => PageSize::A6,
+        "A7" => PageSize::A7,
+        "A8" => PageSize::A8,
+        "A9" => PageSize::A9,
+        "B0" => PageSize::B0,
+        "B1" => PageSize::B1,
+        "B2" => PageSize::B2,
+        "B3" => PageSize::B3,
+        "B4" => PageSize::B4,
+        "B5" => PageSize::B5,
+        "B6" => PageSize::B6,
+        "B7" => PageSize::B7,
+        "B8" => PageSize::B8,
+        "B9" => PageSize::B9,
+        "B10" => PageSize::B10,
+        "LETTER" => PageSize::Letter,
+        "LEGAL" => PageSize::Legal,
+        "EXECUTIVE" => PageSize::Executive,
+        "TABLOID" => PageSize::Tabloid,
+        "LEDGER" => PageSize::Ledger,
+        _ => PageSize::Custom,
+    }
 }
 
 #[cfg(test)]

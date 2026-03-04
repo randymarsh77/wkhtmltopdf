@@ -4,6 +4,7 @@ build/
 *~
 \#*\#
 bin
+!crates/**/src/bin/
 wkhtmltopdf.app/
 wkhtmltopdf.xcodeproj/
 release*/
