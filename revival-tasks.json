@@ -76,7 +76,7 @@
   {
     "id": "10",
     "description": "Implement Table of Contents (TOC) generation: auto-generate TOC from heading elements with configurable depth, XSLT-based styling, dotted lines, and page number references.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 4,
     "depends_on": [
       "7"
@@ -85,7 +85,7 @@
   {
     "id": "11",
     "description": "Implement outline/bookmarks support: generate PDF bookmarks from document headings with configurable depth and nesting.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 4,
     "depends_on": [
       "7"

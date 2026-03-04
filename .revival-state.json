@@ -1,11 +1,9 @@
 {
-  "phase": "needs_verification",
-  "iteration": 10,
-  "current_task_id": "10",
-  "issue_number": 19,
-  "pr_number": 20,
-  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/20",
-  "last_prompt": "Implement Table of Contents (TOC) generation: auto-generate TOC from heading elements with configurable depth, XSLT-based styling, dotted lines, and page number references.",
+  "phase": "agent_working",
+  "iteration": 11,
+  "current_task_id": "11",
+  "issue_number": 21,
+  "last_prompt": "Implement outline/bookmarks support: generate PDF bookmarks from document headings with configurable depth and nesting.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -46,13 +44,8 @@
     "advance: merged PR #18",
     "iteration 10: triggered cloud agent for task 10 (issue #19)",
     "iteration 10: agent created PR #20 for task Some(\"10\")",
-    "iteration 10: marked PR #20 as ready for review"
-  ],
-  "tracked_prs": [
-    {
-      "pr_number": 20,
-      "task_id": "10",
-      "issue_number": 19
-    }
+    "iteration 10: marked PR #20 as ready for review",
+    "advance: merged PR #20",
+    "iteration 11: triggered cloud agent for task 11 (issue #21)"
   ]
 }
