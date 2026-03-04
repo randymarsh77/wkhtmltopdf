@@ -5,3 +5,8 @@ state_root = ".wreck-it"
 name = "revival"
 task_file = "revival-tasks.json"
 state_file = ".revival-state.json"
+
+[[ralphs]]
+name = "this-project-was-recently-ported-to"
+task_file = "this-project-was-recently-ported-to-tasks.json"
+state_file = ".this-project-was-recently-ported-to-state.json"
