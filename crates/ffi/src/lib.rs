@@ -997,12 +997,12 @@ pub unsafe extern "C" fn wkhtmltopdf_create_converter(
     // Take ownership of the global settings.
     let gs_box = Box::from_raw(settings);
     let phase_descriptions = vec![
-        CString::new("Loading pages").unwrap_or_default(),
-        CString::new("Counting pages").unwrap_or_default(),
-        CString::new("Resolving links").unwrap_or_default(),
-        CString::new("Loading headers and footers").unwrap_or_default(),
-        CString::new("Printing pages").unwrap_or_default(),
-        CString::new("Done").unwrap_or_default(),
+        CString::new("Loading pages").unwrap(),
+        CString::new("Counting pages").unwrap(),
+        CString::new("Resolving links").unwrap(),
+        CString::new("Loading headers and footers").unwrap(),
+        CString::new("Printing pages").unwrap(),
+        CString::new("Done").unwrap(),
     ];
     Box::into_raw(Box::new(wkhtmltopdf_converter {
         global: gs_box.inner,
@@ -1010,7 +1010,7 @@ pub unsafe extern "C" fn wkhtmltopdf_create_converter(
         output: None,
         current_phase: 0,
         http_error_code: 0,
-        progress_str: CString::new("").unwrap_or_default(),
+        progress_str: CString::default(),
         phase_descriptions,
         warning_cb: None,
         error_cb: None,
@@ -1163,13 +1163,14 @@ pub unsafe extern "C" fn wkhtmltopdf_convert(
         Ok(bytes) => {
             conv.current_phase = 5;
             fire_phase_changed(conv);
-            conv.progress_str = CString::new("Done").unwrap_or_default();
+            conv.progress_str = CString::new("Done").unwrap();
             conv.output = Some(bytes);
             fire_finished(conv, 1);
             1
         }
         Err(e) => {
-            let msg = CString::new(e.to_string()).unwrap_or_default();
+            let msg = CString::new(e.to_string())
+                .unwrap_or_else(|_| CString::new("<error message contains null bytes>").unwrap());
             if let Some(cb) = conv.error_cb {
                 cb(converter, msg.as_ptr());
             }
@@ -1388,9 +1389,9 @@ pub unsafe extern "C" fn wkhtmltoimage_create_converter(
         if s.is_empty() { None } else { Some(s.to_owned()) }
     };
     let phase_descriptions = vec![
-        CString::new("Loading page").unwrap_or_default(),
-        CString::new("Rendering").unwrap_or_default(),
-        CString::new("Done").unwrap_or_default(),
+        CString::new("Loading page").unwrap(),
+        CString::new("Rendering").unwrap(),
+        CString::new("Done").unwrap(),
     ];
     Box::into_raw(Box::new(wkhtmltoimage_converter {
         settings: gs_box.inner,
@@ -1398,7 +1399,7 @@ pub unsafe extern "C" fn wkhtmltoimage_create_converter(
         output: None,
         current_phase: 0,
         http_error_code: 0,
-        progress_str: CString::new("").unwrap_or_default(),
+        progress_str: CString::default(),
         phase_descriptions,
         warning_cb: None,
         error_cb: None,
@@ -1521,13 +1522,14 @@ pub unsafe extern "C" fn wkhtmltoimage_convert(
         Ok(bytes) => {
             conv.current_phase = 2;
             fire_image_phase_changed(conv);
-            conv.progress_str = CString::new("Done").unwrap_or_default();
+            conv.progress_str = CString::new("Done").unwrap();
             conv.output = Some(bytes);
             fire_image_finished(conv, 1);
             1
         }
         Err(e) => {
-            let msg = CString::new(e.to_string()).unwrap_or_default();
+            let msg = CString::new(e.to_string())
+                .unwrap_or_else(|_| CString::new("<error message contains null bytes>").unwrap());
             if let Some(cb) = conv.error_cb {
                 cb(converter, msg.as_ptr());
             }
