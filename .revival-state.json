@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 23,
   "current_task_id": "23",
   "issue_number": 45,
+  "pr_number": 46,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/46",
   "last_prompt": "Update GitHub Actions workflow for CI: create a matrix build across Ubuntu 22, Ubuntu 24, Ubuntu 25, macOS, and Windows; run `cargo build`, `cargo test`, clippy lints, and `cargo audit` on each platform.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -94,6 +96,15 @@
     "iteration 22: agent created PR #44 for task Some(\"22\")",
     "iteration 22: marked PR #44 as ready for review",
     "advance: merged PR #44",
-    "iteration 23: triggered cloud agent for task 23 (issue #45)"
+    "iteration 23: triggered cloud agent for task 23 (issue #45)",
+    "iteration 23: agent created PR #46 for task Some(\"23\")",
+    "iteration 23: marked PR #46 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 46,
+      "task_id": "23",
+      "issue_number": 45
+    }
   ]
 }
