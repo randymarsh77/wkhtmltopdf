@@ -103,7 +103,7 @@
   {
     "id": "13",
     "description": "Implement network/proxy support: handle HTTP authentication, cookies (file and string), custom headers, SSL peer/host verification settings, and proxy configuration.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 4,
     "depends_on": [
       "6"
@@ -112,7 +112,7 @@
   {
     "id": "14",
     "description": "Implement C-compatible shared library API (libwkhtmltox replacement): expose a C ABI with the same function signatures as the original libwkhtmltox for drop-in compatibility with existing bindings.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 5,
     "depends_on": [
       "7",
