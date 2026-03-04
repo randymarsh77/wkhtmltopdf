@@ -1,11 +1,9 @@
 {
-  "phase": "needs_verification",
-  "iteration": 22,
-  "current_task_id": "22",
-  "issue_number": 43,
-  "pr_number": 44,
-  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/44",
-  "last_prompt": "Add Ubuntu 25 (Plucky Piculet) build support: update packaging scripts, verify Qt/WebKit or Chromium headless library availability on Ubuntu 25, and document any required system dependencies.",
+  "phase": "agent_working",
+  "iteration": 23,
+  "current_task_id": "23",
+  "issue_number": 45,
+  "last_prompt": "Update GitHub Actions workflow for CI: create a matrix build across Ubuntu 22, Ubuntu 24, Ubuntu 25, macOS, and Windows; run `cargo build`, `cargo test`, clippy lints, and `cargo audit` on each platform.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -94,13 +92,8 @@
     "advance: merged PR #42",
     "iteration 22: triggered cloud agent for task 22 (issue #43)",
     "iteration 22: agent created PR #44 for task Some(\"22\")",
-    "iteration 22: marked PR #44 as ready for review"
-  ],
-  "tracked_prs": [
-    {
-      "pr_number": 44,
-      "task_id": "22",
-      "issue_number": 43
-    }
+    "iteration 22: marked PR #44 as ready for review",
+    "advance: merged PR #44",
+    "iteration 23: triggered cloud agent for task 23 (issue #45)"
   ]
 }

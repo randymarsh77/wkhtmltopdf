@@ -195,7 +195,7 @@
   {
     "id": "22",
     "description": "Add Ubuntu 25 (Plucky Piculet) build support: update packaging scripts, verify Qt/WebKit or Chromium headless library availability on Ubuntu 25, and document any required system dependencies.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 5,
     "depends_on": [
       "7",
@@ -205,7 +205,7 @@
   {
     "id": "23",
     "description": "Update GitHub Actions workflow for CI: create a matrix build across Ubuntu 22, Ubuntu 24, Ubuntu 25, macOS, and Windows; run `cargo build`, `cargo test`, clippy lints, and `cargo audit` on each platform.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 6,
     "depends_on": [
       "20",
