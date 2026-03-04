@@ -2,9 +2,10 @@
 name = "wkhtmltopdf-diff"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.80"
 description = "Perceptual image diffing tool for wkhtmltopdf visual regression testing"
 
 [dependencies]
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp"] }
 lopdf = "0.39.0"
-thiserror = "1"
+thiserror = "2"

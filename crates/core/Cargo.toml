@@ -2,8 +2,9 @@
 name = "wkhtmltopdf-core"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.80"
 description = "Rendering engine abstraction for wkhtmltopdf"
 
 [dependencies]
-thiserror = "1"
+thiserror = "2"
 headless_chrome = "1"

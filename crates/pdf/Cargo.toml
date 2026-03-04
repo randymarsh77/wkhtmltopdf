@@ -2,12 +2,13 @@
 name = "wkhtmltopdf-pdf"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.80"
 description = "PDF output for wkhtmltopdf"
 
 [dependencies]
 wkhtmltopdf-core = { path = "../core" }
 wkhtmltopdf-settings = { path = "../settings" }
-thiserror = "1"
+thiserror = "2"
 printpdf = "0.9.1"
 lopdf = "0.39.0"
 ureq = "3.2.0"

@@ -2,10 +2,11 @@
 name = "wkhtmltopdf-image"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.80"
 description = "Image output for wkhtmltopdf"
 
 [dependencies]
 wkhtmltopdf-core = { path = "../core" }
 wkhtmltopdf-settings = { path = "../settings" }
-thiserror = "1"
+thiserror = "2"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp"] }
