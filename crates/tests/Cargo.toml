@@ -1,6 +1,6 @@
 [package]
 name = "wkhtmltopdf-tests"
-version = "0.1.0"
+version = "0.13.0"
 edition = "2021"
 rust-version = "1.80"
 description = "Integration and regression tests for wkhtmltopdf"

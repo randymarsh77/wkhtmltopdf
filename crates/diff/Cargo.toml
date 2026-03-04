@@ -1,6 +1,6 @@
 [package]
 name = "wkhtmltopdf-diff"
-version = "0.1.0"
+version = "0.13.0"
 edition = "2021"
 rust-version = "1.80"
 description = "Perceptual image diffing tool for wkhtmltopdf visual regression testing"
