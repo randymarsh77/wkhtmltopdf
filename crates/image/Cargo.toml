@@ -8,3 +8,4 @@ description = "Image output for wkhtmltopdf"
 wkhtmltopdf-core = { path = "../core" }
 wkhtmltopdf-settings = { path = "../settings" }
 thiserror = "1"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp"] }

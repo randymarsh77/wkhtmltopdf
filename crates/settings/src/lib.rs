@@ -559,7 +559,7 @@ pub struct ImageGlobal {
     pub page: Option<String>,
     /// Path to the output image file.
     pub output: Option<String>,
-    /// Output image format (e.g. `"png"`, `"jpg"`).
+    /// Output image format (e.g. `"png"`, `"jpg"`, `"bmp"`, `"svg"`).
     pub format: Option<String>,
     /// Viewport width in pixels.
     pub screen_width: Option<i32>,
@@ -569,6 +569,8 @@ pub struct ImageGlobal {
     pub quality: i32,
     /// Automatically adjust the viewport width to fit page content.
     pub smart_width: bool,
+    /// Output image DPI (`None` uses the default).
+    pub dpi: Option<i32>,
 }
 
 impl Default for ImageGlobal {
@@ -588,6 +590,7 @@ impl Default for ImageGlobal {
             screen_height: None,
             quality: 94,
             smart_width: true,
+            dpi: None,
         }
     }
 }
