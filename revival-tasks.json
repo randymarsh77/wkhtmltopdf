@@ -12,7 +12,7 @@
   {
     "id": "3",
     "description": "Define Rust workspace layout: create a Cargo workspace with crates for `core` (rendering engine abstraction), `pdf` (PDF output), `image` (image output), `cli` (command-line interface), `settings` (configuration/settings structs), and `tests` (integration/regression tests).",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 2,
     "depends_on": [
       "1",
@@ -22,7 +22,7 @@
   {
     "id": "4",
     "description": "Port settings and configuration system to Rust: implement all global, page-object, header/footer, margin, crop, TOC, and outline settings as strongly-typed Rust structs with serde support for config file loading.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 3,
     "depends_on": [
       "3"
