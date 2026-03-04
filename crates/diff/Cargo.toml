@@ -6,4 +6,5 @@ description = "Perceptual image diffing tool for wkhtmltopdf visual regression t
 
 [dependencies]
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp"] }
+lopdf = "0.39.0"
 thiserror = "1"
