@@ -1,0 +1,8 @@
+[package]
+name = "wkhtmltopdf-core"
+version = "0.1.0"
+edition = "2021"
+description = "Rendering engine abstraction for wkhtmltopdf"
+
+[dependencies]
+thiserror = "1"

@@ -1,0 +1,16 @@
+[package]
+name = "wkhtmltopdf-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Command-line interface for wkhtmltopdf"
+
+[[bin]]
+name = "wkhtmltopdf"
+path = "src/main.rs"
+
+[dependencies]
+wkhtmltopdf-core = { path = "../core" }
+wkhtmltopdf-pdf = { path = "../pdf" }
+wkhtmltopdf-image = { path = "../image" }
+wkhtmltopdf-settings = { path = "../settings" }
+clap = { version = "4", features = ["derive"] }
