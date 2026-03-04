@@ -22,7 +22,7 @@
   {
     "id": "4",
     "description": "Port settings and configuration system to Rust: implement all global, page-object, header/footer, margin, crop, TOC, and outline settings as strongly-typed Rust structs with serde support for config file loading.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 3,
     "depends_on": [
       "3"
@@ -31,7 +31,7 @@
   {
     "id": "5",
     "description": "Implement CLI argument parsing in Rust using clap: replicate all wkhtmltopdf and wkhtmltoimage command-line flags, options, and sub-commands with full help text.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 3,
     "depends_on": [
       "3"
