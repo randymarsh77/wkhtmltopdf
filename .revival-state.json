@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 11,
   "current_task_id": "11",
   "issue_number": 21,
+  "pr_number": 22,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/22",
   "last_prompt": "Implement outline/bookmarks support: generate PDF bookmarks from document headings with configurable depth and nesting.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -46,6 +48,15 @@
     "iteration 10: agent created PR #20 for task Some(\"10\")",
     "iteration 10: marked PR #20 as ready for review",
     "advance: merged PR #20",
-    "iteration 11: triggered cloud agent for task 11 (issue #21)"
+    "iteration 11: triggered cloud agent for task 11 (issue #21)",
+    "iteration 11: agent created PR #22 for task Some(\"11\")",
+    "iteration 11: marked PR #22 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 22,
+      "task_id": "11",
+      "issue_number": 21
+    }
   ]
 }
