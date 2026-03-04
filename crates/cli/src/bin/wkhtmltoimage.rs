@@ -397,4 +397,148 @@ mod tests {
         assert_eq!(proxy.host.as_deref(), Some("proxy"));
         assert_eq!(proxy.port, Some(3128));
     }
+
+    // -----------------------------------------------------------------------
+    // Log level flags
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn quiet_flag() {
+        let cli = parse(&["wkhtmltoimage", "-q", "in.html", "out.png"]);
+        assert!(cli.quiet);
+    }
+
+    #[test]
+    fn log_level_option() {
+        let cli = parse(&["wkhtmltoimage", "--log-level", "info", "in.html", "out.png"]);
+        assert_eq!(cli.log_level.as_deref(), Some("info"));
+    }
+
+    #[test]
+    fn invalid_log_level_fails() {
+        assert!(Cli::try_parse_from(["wkhtmltoimage", "--log-level", "verbose", "in.html", "out.png"]).is_err());
+    }
+
+    // -----------------------------------------------------------------------
+    // JavaScript flags
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn disable_javascript_flag() {
+        let cli = parse(&["wkhtmltoimage", "--disable-javascript", "in.html", "out.png"]);
+        assert!(cli.disable_javascript);
+    }
+
+    #[test]
+    fn javascript_delay_option() {
+        let cli = parse(&["wkhtmltoimage", "--javascript-delay", "500", "in.html", "out.png"]);
+        assert_eq!(cli.javascript_delay, Some(500));
+    }
+
+    // -----------------------------------------------------------------------
+    // Authentication options
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn username_and_password() {
+        let cli = parse(&[
+            "wkhtmltoimage", "--username", "admin", "--password", "secret",
+            "in.html", "out.png",
+        ]);
+        assert_eq!(cli.username.as_deref(), Some("admin"));
+        assert_eq!(cli.password.as_deref(), Some("secret"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Cookie and custom header options
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn cookie_option() {
+        let cli = parse(&["wkhtmltoimage", "--cookie", "session", "abc123", "in.html", "out.png"]);
+        assert_eq!(cli.cookie, vec!["session", "abc123"]);
+    }
+
+    #[test]
+    fn custom_header_option() {
+        let cli = parse(&[
+            "wkhtmltoimage", "--custom-header", "X-Auth", "token",
+            "in.html", "out.png",
+        ]);
+        assert_eq!(cli.custom_header, vec!["X-Auth", "token"]);
+    }
+
+    // -----------------------------------------------------------------------
+    // All supported format values
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn all_valid_formats() {
+        for fmt in &["png", "jpg", "jpeg", "bmp", "svg"] {
+            let cli = parse(&["wkhtmltoimage", "--format", fmt, "in.html", "out"]);
+            assert_eq!(cli.format.as_deref(), Some(*fmt));
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Smart width toggle
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn enable_smart_width_flag() {
+        let cli = parse(&["wkhtmltoimage", "--enable-smart-width", "in.html", "out.png"]);
+        assert!(cli.enable_smart_width);
+        assert!(!cli.disable_smart_width);
+    }
+
+    #[test]
+    fn smart_width_last_flag_wins() {
+        // --enable-smart-width followed by --disable-smart-width: disable wins
+        let cli = parse(&[
+            "wkhtmltoimage", "--enable-smart-width", "--disable-smart-width", "in.html", "out.png",
+        ]);
+        assert!(cli.disable_smart_width);
+        assert!(!cli.enable_smart_width);
+    }
+
+    // -----------------------------------------------------------------------
+    // Proxy URL parsing helper (shared copy in wkhtmltoimage)
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn parse_proxy_url_socks5() {
+        use wkhtmltopdf_settings::ProxyType;
+        let proxy = parse_proxy_url("socks5://myproxy:1080");
+        assert!(matches!(proxy.proxy_type, ProxyType::Socks5));
+        assert_eq!(proxy.host.as_deref(), Some("myproxy"));
+        assert_eq!(proxy.port, Some(1080));
+        assert!(proxy.username.is_none());
+    }
+
+    #[test]
+    fn parse_proxy_url_with_auth() {
+        use wkhtmltopdf_settings::ProxyType;
+        let proxy = parse_proxy_url("http://user:pass@proxy.example.com:8080");
+        assert!(matches!(proxy.proxy_type, ProxyType::Http));
+        assert_eq!(proxy.host.as_deref(), Some("proxy.example.com"));
+        assert_eq!(proxy.port, Some(8080));
+        assert_eq!(proxy.username.as_deref(), Some("user"));
+        assert_eq!(proxy.password.as_deref(), Some("pass"));
+    }
+
+    #[test]
+    fn parse_proxy_url_no_port() {
+        use wkhtmltopdf_settings::ProxyType;
+        let proxy = parse_proxy_url("http://proxy.example.com");
+        assert!(matches!(proxy.proxy_type, ProxyType::Http));
+        assert_eq!(proxy.host.as_deref(), Some("proxy.example.com"));
+        assert!(proxy.port.is_none());
+    }
+
+    #[test]
+    fn parse_proxy_url_no_scheme_returns_default() {
+        use wkhtmltopdf_settings::ProxyType;
+        let proxy = parse_proxy_url("notaproxy");
+        assert!(matches!(proxy.proxy_type, ProxyType::None));
+    }
 }

@@ -603,3 +603,703 @@ impl Default for ImageGlobal {
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Unit tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json;
+
+    // -----------------------------------------------------------------------
+    // Enum default values
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn log_level_default_is_warn() {
+        assert_eq!(LogLevel::default(), LogLevel::Warn);
+    }
+
+    #[test]
+    fn orientation_default_is_portrait() {
+        assert_eq!(Orientation::default(), Orientation::Portrait);
+    }
+
+    #[test]
+    fn color_mode_default_is_color() {
+        assert_eq!(ColorMode::default(), ColorMode::Color);
+    }
+
+    #[test]
+    fn print_resolution_default_is_screen() {
+        assert_eq!(PrintResolution::default(), PrintResolution::ScreenResolution);
+    }
+
+    #[test]
+    fn pdf_a_conformance_default_is_none() {
+        assert_eq!(PdfAConformance::default(), PdfAConformance::None);
+    }
+
+    #[test]
+    fn page_size_default_is_a4() {
+        assert_eq!(PageSize::default(), PageSize::A4);
+    }
+
+    #[test]
+    fn unit_default_is_millimeter() {
+        assert_eq!(Unit::default(), Unit::Millimeter);
+    }
+
+    #[test]
+    fn load_error_handling_default_is_abort() {
+        assert_eq!(LoadErrorHandling::default(), LoadErrorHandling::Abort);
+    }
+
+    #[test]
+    fn proxy_type_default_is_none() {
+        assert_eq!(ProxyType::default(), ProxyType::None);
+    }
+
+    // -----------------------------------------------------------------------
+    // Serde round-trips for all enum variants
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn log_level_all_variants_roundtrip() {
+        for variant in [LogLevel::Warn, LogLevel::Info, LogLevel::Error, LogLevel::None] {
+            let json = serde_json::to_string(&variant).expect("serialize");
+            let restored: LogLevel = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(variant, restored);
+        }
+    }
+
+    #[test]
+    fn orientation_all_variants_roundtrip() {
+        for variant in [Orientation::Portrait, Orientation::Landscape] {
+            let json = serde_json::to_string(&variant).expect("serialize");
+            let restored: Orientation = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(variant, restored);
+        }
+    }
+
+    #[test]
+    fn color_mode_all_variants_roundtrip() {
+        for variant in [ColorMode::Color, ColorMode::Grayscale] {
+            let json = serde_json::to_string(&variant).expect("serialize");
+            let restored: ColorMode = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(variant, restored);
+        }
+    }
+
+    #[test]
+    fn pdf_a_conformance_all_variants_roundtrip() {
+        for variant in [
+            PdfAConformance::None,
+            PdfAConformance::A1b,
+            PdfAConformance::A2b,
+            PdfAConformance::A3b,
+        ] {
+            let json = serde_json::to_string(&variant).expect("serialize");
+            let restored: PdfAConformance = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(variant, restored);
+        }
+    }
+
+    #[test]
+    fn page_size_selected_variants_roundtrip() {
+        for variant in [
+            PageSize::A4,
+            PageSize::A3,
+            PageSize::Letter,
+            PageSize::Legal,
+            PageSize::Tabloid,
+            PageSize::Custom,
+        ] {
+            let json = serde_json::to_string(&variant).expect("serialize");
+            let restored: PageSize = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(variant, restored);
+        }
+    }
+
+    #[test]
+    fn load_error_handling_all_variants_roundtrip() {
+        for variant in [
+            LoadErrorHandling::Abort,
+            LoadErrorHandling::Skip,
+            LoadErrorHandling::Ignore,
+        ] {
+            let json = serde_json::to_string(&variant).expect("serialize");
+            let restored: LoadErrorHandling = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(variant, restored);
+        }
+    }
+
+    #[test]
+    fn proxy_type_all_variants_roundtrip() {
+        for variant in [ProxyType::None, ProxyType::Http, ProxyType::Socks5] {
+            let json = serde_json::to_string(&variant).expect("serialize");
+            let restored: ProxyType = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(variant, restored);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // UnitReal construction and default
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn unit_real_default_is_zero_millimeters() {
+        let ur = UnitReal::default();
+        assert!((ur.value - 0.0).abs() < f64::EPSILON);
+        assert_eq!(ur.unit, Unit::Millimeter);
+    }
+
+    #[test]
+    fn unit_real_can_be_constructed_with_any_unit() {
+        let ur = UnitReal { value: 2.54, unit: Unit::Centimeter };
+        assert!((ur.value - 2.54).abs() < f64::EPSILON);
+        assert_eq!(ur.unit, Unit::Centimeter);
+
+        let ur2 = UnitReal { value: 72.0, unit: Unit::Point };
+        assert!((ur2.value - 72.0).abs() < f64::EPSILON);
+        assert_eq!(ur2.unit, Unit::Point);
+    }
+
+    #[test]
+    fn unit_real_roundtrip() {
+        let ur = UnitReal { value: 1.5, unit: Unit::Inch };
+        let json = serde_json::to_string(&ur).expect("serialize");
+        let restored: UnitReal = serde_json::from_str(&json).expect("deserialize");
+        assert!((restored.value - 1.5).abs() < f64::EPSILON);
+        assert_eq!(restored.unit, Unit::Inch);
+    }
+
+    // -----------------------------------------------------------------------
+    // Proxy struct
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn proxy_default_has_no_host_or_port() {
+        let proxy = Proxy::default();
+        assert_eq!(proxy.proxy_type, ProxyType::None);
+        assert!(proxy.host.is_none());
+        assert!(proxy.port.is_none());
+        assert!(proxy.username.is_none());
+        assert!(proxy.password.is_none());
+    }
+
+    #[test]
+    fn proxy_can_be_configured() {
+        let proxy = Proxy {
+            proxy_type: ProxyType::Http,
+            host: Some("proxy.example.com".into()),
+            port: Some(8080),
+            username: Some("user".into()),
+            password: Some("pass".into()),
+        };
+        assert_eq!(proxy.proxy_type, ProxyType::Http);
+        assert_eq!(proxy.host.as_deref(), Some("proxy.example.com"));
+        assert_eq!(proxy.port, Some(8080));
+        assert_eq!(proxy.username.as_deref(), Some("user"));
+        assert_eq!(proxy.password.as_deref(), Some("pass"));
+    }
+
+    #[test]
+    fn proxy_socks5_roundtrip() {
+        let proxy = Proxy {
+            proxy_type: ProxyType::Socks5,
+            host: Some("socks.example.com".into()),
+            port: Some(1080),
+            username: None,
+            password: None,
+        };
+        let json = serde_json::to_string(&proxy).expect("serialize");
+        let restored: Proxy = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(restored.proxy_type, ProxyType::Socks5);
+        assert_eq!(restored.host.as_deref(), Some("socks.example.com"));
+        assert_eq!(restored.port, Some(1080));
+    }
+
+    // -----------------------------------------------------------------------
+    // PostItem
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn post_item_default_is_empty() {
+        let item = PostItem::default();
+        assert!(item.name.is_empty());
+        assert!(item.value.is_empty());
+        assert!(!item.file);
+    }
+
+    #[test]
+    fn post_item_file_flag() {
+        let item = PostItem {
+            name: "attachment".into(),
+            value: "/path/to/file.pdf".into(),
+            file: true,
+        };
+        assert!(item.file);
+        assert_eq!(item.value, "/path/to/file.pdf");
+    }
+
+    // -----------------------------------------------------------------------
+    // Web defaults and mutation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn web_default_values() {
+        let web = Web::default();
+        assert!(web.background);
+        assert!(web.load_images);
+        assert!(web.enable_javascript);
+        assert!(web.enable_intelligent_shrinking);
+        assert!(!web.enable_plugins);
+        assert!(web.minimum_font_size.is_none());
+        assert!(web.default_encoding.is_none());
+        assert!(web.user_style_sheet.is_none());
+    }
+
+    #[test]
+    fn web_fields_can_be_mutated() {
+        let mut web = Web::default();
+        web.background = false;
+        web.load_images = false;
+        web.enable_javascript = false;
+        web.enable_intelligent_shrinking = false;
+        web.enable_plugins = true;
+        web.minimum_font_size = Some(10);
+        web.default_encoding = Some("utf-8".into());
+        web.user_style_sheet = Some("style.css".into());
+
+        assert!(!web.background);
+        assert!(!web.load_images);
+        assert!(!web.enable_javascript);
+        assert!(!web.enable_intelligent_shrinking);
+        assert!(web.enable_plugins);
+        assert_eq!(web.minimum_font_size, Some(10));
+        assert_eq!(web.default_encoding.as_deref(), Some("utf-8"));
+        assert_eq!(web.user_style_sheet.as_deref(), Some("style.css"));
+    }
+
+    // -----------------------------------------------------------------------
+    // LoadGlobal
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn load_global_default_has_no_cookie_jar() {
+        let lg = LoadGlobal::default();
+        assert!(lg.cookie_jar.is_none());
+    }
+
+    #[test]
+    fn load_global_cookie_jar_roundtrip() {
+        let mut lg = LoadGlobal::default();
+        lg.cookie_jar = Some("/tmp/cookies.jar".into());
+        let json = serde_json::to_string(&lg).expect("serialize");
+        let restored: LoadGlobal = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(restored.cookie_jar.as_deref(), Some("/tmp/cookies.jar"));
+    }
+
+    // -----------------------------------------------------------------------
+    // LoadPage defaults and mutation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn load_page_default_values() {
+        let lp = LoadPage::default();
+        assert!(lp.username.is_none());
+        assert!(lp.password.is_none());
+        assert_eq!(lp.js_delay, 200);
+        assert!((lp.zoom - 1.0).abs() < f64::EPSILON);
+        assert!(!lp.repeat_custom_headers);
+        assert!(!lp.block_local_file_access);
+        assert!(lp.stop_slow_scripts);
+        assert!(!lp.debug_javascript);
+        assert_eq!(lp.load_error_handling, LoadErrorHandling::Abort);
+        assert_eq!(lp.media_load_error_handling, LoadErrorHandling::Ignore);
+        assert!(!lp.proxy_hostname_lookup);
+        assert!(!lp.print_media_type);
+        assert!(lp.ssl_verify_peer);
+        assert!(lp.ssl_verify_host);
+    }
+
+    #[test]
+    fn load_page_fields_can_be_mutated() {
+        let mut lp = LoadPage::default();
+        lp.username = Some("admin".into());
+        lp.password = Some("secret".into());
+        lp.js_delay = 500;
+        lp.zoom = 1.5;
+        lp.block_local_file_access = true;
+        lp.debug_javascript = true;
+        lp.print_media_type = true;
+        lp.ssl_verify_peer = false;
+        lp.ssl_verify_host = false;
+        lp.load_error_handling = LoadErrorHandling::Skip;
+        lp.media_load_error_handling = LoadErrorHandling::Abort;
+        lp.cookies = vec![("session".into(), "abc".into())];
+        lp.custom_headers = vec![("X-Auth".into(), "token".into())];
+        lp.run_script = vec!["console.log('hi');".into()];
+        lp.allowed = vec!["/tmp/data".into()];
+        lp.bypass_proxy_for_hosts = vec!["internal.host".into()];
+
+        assert_eq!(lp.username.as_deref(), Some("admin"));
+        assert_eq!(lp.js_delay, 500);
+        assert!((lp.zoom - 1.5).abs() < f64::EPSILON);
+        assert!(lp.block_local_file_access);
+        assert!(!lp.ssl_verify_peer);
+        assert_eq!(lp.load_error_handling, LoadErrorHandling::Skip);
+        assert_eq!(lp.cookies.len(), 1);
+        assert_eq!(lp.cookies[0].0, "session");
+    }
+
+    #[test]
+    fn load_page_ssl_settings_roundtrip() {
+        let mut lp = LoadPage::default();
+        lp.ssl_verify_peer = false;
+        lp.client_ssl_key_path = Some("/path/to/key.pem".into());
+        lp.client_ssl_key_password = Some("keypass".into());
+        lp.client_ssl_crt_path = Some("/path/to/cert.pem".into());
+
+        let json = serde_json::to_string(&lp).expect("serialize");
+        let restored: LoadPage = serde_json::from_str(&json).expect("deserialize");
+
+        assert!(!restored.ssl_verify_peer);
+        assert!(restored.ssl_verify_host);
+        assert_eq!(restored.client_ssl_key_path.as_deref(), Some("/path/to/key.pem"));
+        assert_eq!(restored.client_ssl_key_password.as_deref(), Some("keypass"));
+        assert_eq!(restored.client_ssl_crt_path.as_deref(), Some("/path/to/cert.pem"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Margin and Size structs
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn margin_default_is_zero() {
+        let m = Margin::default();
+        assert!((m.top.value - 0.0).abs() < f64::EPSILON);
+        assert!((m.right.value - 0.0).abs() < f64::EPSILON);
+        assert!((m.bottom.value - 0.0).abs() < f64::EPSILON);
+        assert!((m.left.value - 0.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn margin_can_be_set_with_mixed_units() {
+        let m = Margin {
+            top: UnitReal { value: 20.0, unit: Unit::Millimeter },
+            bottom: UnitReal { value: 20.0, unit: Unit::Millimeter },
+            left: UnitReal { value: 1.0, unit: Unit::Inch },
+            right: UnitReal { value: 72.0, unit: Unit::Point },
+        };
+        assert!((m.top.value - 20.0).abs() < f64::EPSILON);
+        assert_eq!(m.left.unit, Unit::Inch);
+        assert_eq!(m.right.unit, Unit::Point);
+    }
+
+    #[test]
+    fn size_default_is_a4_no_explicit_dimensions() {
+        let size = Size::default();
+        assert_eq!(size.page_size, PageSize::A4);
+        assert!(size.height.is_none());
+        assert!(size.width.is_none());
+    }
+
+    #[test]
+    fn size_can_specify_custom_dimensions() {
+        let size = Size {
+            page_size: PageSize::Custom,
+            width: Some(UnitReal { value: 210.0, unit: Unit::Millimeter }),
+            height: Some(UnitReal { value: 297.0, unit: Unit::Millimeter }),
+        };
+        assert_eq!(size.page_size, PageSize::Custom);
+        assert!(size.width.is_some());
+        assert!(size.height.is_some());
+        assert!((size.width.as_ref().unwrap().value - 210.0).abs() < f64::EPSILON);
+    }
+
+    // -----------------------------------------------------------------------
+    // TableOfContent defaults and mutation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn table_of_content_default_values() {
+        let toc = TableOfContent::default();
+        assert!(toc.use_dotted_lines);
+        assert_eq!(toc.caption_text, "Table of Contents");
+        assert!(toc.forward_links);
+        assert!(toc.back_links);
+        assert_eq!(toc.indentation, "1em");
+        assert!((toc.font_scale - 0.8).abs() < 1e-6);
+        assert_eq!(toc.depth, 3);
+    }
+
+    #[test]
+    fn table_of_content_fields_can_be_mutated() {
+        let mut toc = TableOfContent::default();
+        toc.use_dotted_lines = false;
+        toc.caption_text = "Index".into();
+        toc.forward_links = false;
+        toc.back_links = false;
+        toc.depth = 5;
+        toc.indentation = "2em".into();
+        toc.font_scale = 0.9;
+
+        assert!(!toc.use_dotted_lines);
+        assert_eq!(toc.caption_text, "Index");
+        assert!(!toc.forward_links);
+        assert!(!toc.back_links);
+        assert_eq!(toc.depth, 5);
+        assert_eq!(toc.indentation, "2em");
+        assert!((toc.font_scale - 0.9).abs() < 1e-6);
+    }
+
+    // -----------------------------------------------------------------------
+    // HeaderFooter defaults and mutation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn header_footer_default_values() {
+        let hf = HeaderFooter::default();
+        assert_eq!(hf.font_size, 12);
+        assert_eq!(hf.font_name, "Arial");
+        assert!(hf.left.is_none());
+        assert!(hf.right.is_none());
+        assert!(hf.center.is_none());
+        assert!(!hf.line);
+        assert!(hf.html_url.is_none());
+        assert!((hf.spacing - 0.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn header_footer_fields_can_be_mutated() {
+        let mut hf = HeaderFooter::default();
+        hf.left = Some("Left".into());
+        hf.center = Some("Center".into());
+        hf.right = Some("Right".into());
+        hf.font_size = 14;
+        hf.font_name = "Helvetica".into();
+        hf.line = true;
+        hf.html_url = Some("header.html".into());
+        hf.spacing = 5.0;
+
+        assert_eq!(hf.left.as_deref(), Some("Left"));
+        assert_eq!(hf.center.as_deref(), Some("Center"));
+        assert_eq!(hf.right.as_deref(), Some("Right"));
+        assert_eq!(hf.font_size, 14);
+        assert_eq!(hf.font_name, "Helvetica");
+        assert!(hf.line);
+        assert_eq!(hf.html_url.as_deref(), Some("header.html"));
+        assert!((hf.spacing - 5.0).abs() < 1e-6);
+    }
+
+    // -----------------------------------------------------------------------
+    // PdfGlobal defaults and mutation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn pdf_global_default_values() {
+        let g = PdfGlobal::default();
+        assert_eq!(g.log_level, LogLevel::Warn);
+        assert!(!g.use_graphics);
+        assert!(g.resolve_relative_links);
+        assert_eq!(g.orientation, Orientation::Portrait);
+        assert_eq!(g.color_mode, ColorMode::Color);
+        assert!(g.dpi.is_none());
+        assert_eq!(g.page_offset, 0);
+        assert_eq!(g.copies, 1);
+        assert!(g.collate);
+        assert!(g.outline);
+        assert_eq!(g.outline_depth, 4);
+        assert!(g.dump_outline.is_none());
+        assert!(g.output.is_none());
+        assert!(g.document_title.is_none());
+        assert!(g.author.is_none());
+        assert!(g.subject.is_none());
+        assert_eq!(g.pdf_a_conformance, PdfAConformance::None);
+        assert!(g.use_compression);
+        assert!(g.viewport_size.is_none());
+        assert_eq!(g.image_dpi, 600);
+        assert_eq!(g.image_quality, 94);
+    }
+
+    #[test]
+    fn pdf_global_metadata_can_be_set() {
+        let mut g = PdfGlobal::default();
+        g.document_title = Some("My Title".into());
+        g.author = Some("Jane Doe".into());
+        g.subject = Some("Testing".into());
+        g.pdf_a_conformance = PdfAConformance::A2b;
+        g.dpi = Some(300);
+        g.copies = 2;
+        g.collate = false;
+        g.outline = false;
+        g.use_compression = false;
+        g.page_offset = 5;
+
+        assert_eq!(g.document_title.as_deref(), Some("My Title"));
+        assert_eq!(g.author.as_deref(), Some("Jane Doe"));
+        assert_eq!(g.subject.as_deref(), Some("Testing"));
+        assert_eq!(g.pdf_a_conformance, PdfAConformance::A2b);
+        assert_eq!(g.dpi, Some(300));
+        assert_eq!(g.copies, 2);
+        assert!(!g.collate);
+        assert!(!g.outline);
+        assert!(!g.use_compression);
+        assert_eq!(g.page_offset, 5);
+    }
+
+    #[test]
+    fn pdf_global_full_roundtrip() {
+        let mut g = PdfGlobal::default();
+        g.document_title = Some("Round-trip".into());
+        g.author = Some("Author".into());
+        g.pdf_a_conformance = PdfAConformance::A1b;
+        g.orientation = Orientation::Landscape;
+        g.color_mode = ColorMode::Grayscale;
+        g.dpi = Some(150);
+
+        let json = serde_json::to_string(&g).expect("serialize");
+        let restored: PdfGlobal = serde_json::from_str(&json).expect("deserialize");
+
+        assert_eq!(restored.document_title.as_deref(), Some("Round-trip"));
+        assert_eq!(restored.author.as_deref(), Some("Author"));
+        assert_eq!(restored.pdf_a_conformance, PdfAConformance::A1b);
+        assert_eq!(restored.orientation, Orientation::Landscape);
+        assert_eq!(restored.color_mode, ColorMode::Grayscale);
+        assert_eq!(restored.dpi, Some(150));
+    }
+
+    // -----------------------------------------------------------------------
+    // PdfObject defaults and mutation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn pdf_object_default_values() {
+        let obj = PdfObject::default();
+        assert!(obj.page.is_none());
+        assert!(obj.use_external_links);
+        assert!(obj.use_local_links);
+        assert!(!obj.produce_forms);
+        assert!(obj.include_in_outline);
+        assert!(obj.pages_count);
+        assert!(!obj.is_table_of_content);
+        assert!(obj.replacements.is_empty());
+        assert!(obj.toc_xsl.is_none());
+    }
+
+    #[test]
+    fn pdf_object_fields_can_be_mutated() {
+        let mut obj = PdfObject::default();
+        obj.page = Some("https://example.com".into());
+        obj.use_external_links = false;
+        obj.use_local_links = false;
+        obj.produce_forms = true;
+        obj.include_in_outline = false;
+        obj.is_table_of_content = true;
+        obj.toc_xsl = Some("custom.xsl".into());
+        obj.replacements = vec![("FOO".into(), "bar".into())];
+
+        assert_eq!(obj.page.as_deref(), Some("https://example.com"));
+        assert!(!obj.use_external_links);
+        assert!(!obj.use_local_links);
+        assert!(obj.produce_forms);
+        assert!(!obj.include_in_outline);
+        assert!(obj.is_table_of_content);
+        assert_eq!(obj.toc_xsl.as_deref(), Some("custom.xsl"));
+        assert_eq!(obj.replacements.len(), 1);
+    }
+
+    // -----------------------------------------------------------------------
+    // CropSettings
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn crop_settings_default_is_all_zeros() {
+        let crop = CropSettings::default();
+        assert_eq!(crop.left, 0);
+        assert_eq!(crop.top, 0);
+        assert_eq!(crop.width, 0);
+        assert_eq!(crop.height, 0);
+    }
+
+    #[test]
+    fn crop_settings_can_be_set() {
+        let crop = CropSettings { left: 10, top: 20, width: 100, height: 200 };
+        assert_eq!(crop.left, 10);
+        assert_eq!(crop.top, 20);
+        assert_eq!(crop.width, 100);
+        assert_eq!(crop.height, 200);
+    }
+
+    #[test]
+    fn crop_settings_roundtrip() {
+        let crop = CropSettings { left: 5, top: 10, width: 640, height: 480 };
+        let json = serde_json::to_string(&crop).expect("serialize");
+        let restored: CropSettings = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(restored.left, 5);
+        assert_eq!(restored.top, 10);
+        assert_eq!(restored.width, 640);
+        assert_eq!(restored.height, 480);
+    }
+
+    // -----------------------------------------------------------------------
+    // ImageGlobal defaults and mutation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn image_global_default_values() {
+        let img = ImageGlobal::default();
+        assert_eq!(img.quality, 94);
+        assert!(img.smart_width);
+        assert!(!img.transparent);
+        assert!(!img.use_graphics);
+        assert!(img.page.is_none());
+        assert!(img.output.is_none());
+        assert!(img.format.is_none());
+        assert!(img.screen_width.is_none());
+        assert!(img.screen_height.is_none());
+        assert!(img.dpi.is_none());
+        assert_eq!(img.log_level, LogLevel::Warn);
+    }
+
+    #[test]
+    fn image_global_fields_can_be_mutated() {
+        let mut img = ImageGlobal::default();
+        img.format = Some("jpg".into());
+        img.screen_width = Some(800);
+        img.screen_height = Some(600);
+        img.quality = 80;
+        img.transparent = true;
+        img.smart_width = false;
+        img.dpi = Some(150);
+        img.page = Some("https://example.com".into());
+        img.output = Some("out.jpg".into());
+
+        assert_eq!(img.format.as_deref(), Some("jpg"));
+        assert_eq!(img.screen_width, Some(800));
+        assert_eq!(img.screen_height, Some(600));
+        assert_eq!(img.quality, 80);
+        assert!(img.transparent);
+        assert!(!img.smart_width);
+        assert_eq!(img.dpi, Some(150));
+    }
+
+    #[test]
+    fn image_global_roundtrip() {
+        let mut img = ImageGlobal::default();
+        img.format = Some("png".into());
+        img.quality = 75;
+        img.dpi = Some(96);
+
+        let json = serde_json::to_string(&img).expect("serialize");
+        let restored: ImageGlobal = serde_json::from_str(&json).expect("deserialize");
+
+        assert_eq!(restored.format.as_deref(), Some("png"));
+        assert_eq!(restored.quality, 75);
+        assert_eq!(restored.dpi, Some(96));
+    }
+}

@@ -1430,4 +1430,671 @@ mod tests {
         assert_eq!(proxy.host.as_deref(), Some("::1"));
         assert_eq!(proxy.port, Some(8080));
     }
+
+    // -----------------------------------------------------------------------
+    // parse_unit_real helper
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn parse_unit_real_millimeter() {
+        use wkhtmltopdf_settings::Unit;
+        let ur = parse_unit_real("10mm");
+        assert!((ur.value - 10.0).abs() < f64::EPSILON);
+        assert!(matches!(ur.unit, Unit::Millimeter));
+    }
+
+    #[test]
+    fn parse_unit_real_centimeter() {
+        use wkhtmltopdf_settings::Unit;
+        let ur = parse_unit_real("2.5cm");
+        assert!((ur.value - 2.5).abs() < f64::EPSILON);
+        assert!(matches!(ur.unit, Unit::Centimeter));
+    }
+
+    #[test]
+    fn parse_unit_real_inch() {
+        use wkhtmltopdf_settings::Unit;
+        let ur = parse_unit_real("1in");
+        assert!((ur.value - 1.0).abs() < f64::EPSILON);
+        assert!(matches!(ur.unit, Unit::Inch));
+    }
+
+    #[test]
+    fn parse_unit_real_point() {
+        use wkhtmltopdf_settings::Unit;
+        let ur = parse_unit_real("72pt");
+        assert!((ur.value - 72.0).abs() < f64::EPSILON);
+        assert!(matches!(ur.unit, Unit::Point));
+    }
+
+    #[test]
+    fn parse_unit_real_pica() {
+        use wkhtmltopdf_settings::Unit;
+        let ur = parse_unit_real("6pc");
+        assert!((ur.value - 6.0).abs() < f64::EPSILON);
+        assert!(matches!(ur.unit, Unit::Pica));
+    }
+
+    #[test]
+    fn parse_unit_real_pixel() {
+        use wkhtmltopdf_settings::Unit;
+        let ur = parse_unit_real("100px");
+        assert!((ur.value - 100.0).abs() < f64::EPSILON);
+        assert!(matches!(ur.unit, Unit::Pixel));
+    }
+
+    #[test]
+    fn parse_unit_real_no_unit_defaults_to_mm() {
+        use wkhtmltopdf_settings::Unit;
+        let ur = parse_unit_real("15");
+        assert!((ur.value - 15.0).abs() < f64::EPSILON);
+        assert!(matches!(ur.unit, Unit::Millimeter));
+    }
+
+    #[test]
+    fn parse_unit_real_whitespace_is_trimmed() {
+        use wkhtmltopdf_settings::Unit;
+        let ur = parse_unit_real("  20mm  ");
+        assert!((ur.value - 20.0).abs() < f64::EPSILON);
+        assert!(matches!(ur.unit, Unit::Millimeter));
+    }
+
+    #[test]
+    fn parse_unit_real_invalid_returns_zero_mm() {
+        use wkhtmltopdf_settings::Unit;
+        let ur = parse_unit_real("notanumber");
+        assert!((ur.value - 0.0).abs() < f64::EPSILON);
+        assert!(matches!(ur.unit, Unit::Millimeter));
+    }
+
+    // -----------------------------------------------------------------------
+    // parse_page_size helper
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn parse_page_size_a4_case_insensitive() {
+        use wkhtmltopdf_settings::PageSize;
+        assert!(matches!(parse_page_size("A4"), PageSize::A4));
+        assert!(matches!(parse_page_size("a4"), PageSize::A4));
+    }
+
+    #[test]
+    fn parse_page_size_all_iso_a_series() {
+        use wkhtmltopdf_settings::PageSize;
+        assert!(matches!(parse_page_size("A0"), PageSize::A0));
+        assert!(matches!(parse_page_size("A3"), PageSize::A3));
+        assert!(matches!(parse_page_size("A5"), PageSize::A5));
+    }
+
+    #[test]
+    fn parse_page_size_letter_and_legal() {
+        use wkhtmltopdf_settings::PageSize;
+        assert!(matches!(parse_page_size("Letter"), PageSize::Letter));
+        assert!(matches!(parse_page_size("Legal"), PageSize::Legal));
+        assert!(matches!(parse_page_size("Tabloid"), PageSize::Tabloid));
+        assert!(matches!(parse_page_size("Ledger"), PageSize::Ledger));
+        assert!(matches!(parse_page_size("Executive"), PageSize::Executive));
+    }
+
+    #[test]
+    fn parse_page_size_unknown_returns_custom() {
+        use wkhtmltopdf_settings::PageSize;
+        assert!(matches!(parse_page_size("Folio"), PageSize::Custom));
+        assert!(matches!(parse_page_size(""), PageSize::Custom));
+    }
+
+    // -----------------------------------------------------------------------
+    // collect_pairs helper
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn collect_pairs_even_list() {
+        let items: Vec<String> = vec![
+            "k1".into(), "v1".into(),
+            "k2".into(), "v2".into(),
+        ];
+        let pairs = collect_pairs(&items, "--flag");
+        assert_eq!(pairs.len(), 2);
+        assert_eq!(pairs[0], ("k1".into(), "v1".into()));
+        assert_eq!(pairs[1], ("k2".into(), "v2".into()));
+    }
+
+    #[test]
+    fn collect_pairs_empty_list() {
+        let items: Vec<String> = vec![];
+        let pairs = collect_pairs(&items, "--flag");
+        assert!(pairs.is_empty());
+    }
+
+    #[test]
+    fn collect_pairs_single_pair() {
+        let items: Vec<String> = vec!["name".into(), "value".into()];
+        let pairs = collect_pairs(&items, "--flag");
+        assert_eq!(pairs.len(), 1);
+        assert_eq!(pairs[0].0, "name");
+        assert_eq!(pairs[0].1, "value");
+    }
+
+    // -----------------------------------------------------------------------
+    // build_global: CLI flags → PdfGlobal settings
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn build_global_grayscale_sets_color_mode() {
+        use wkhtmltopdf_settings::ColorMode;
+        let cli = parse(&["wkhtmltopdf", "--grayscale", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert!(matches!(g.color_mode, ColorMode::Grayscale));
+    }
+
+    #[test]
+    fn build_global_quiet_sets_log_level_none() {
+        use wkhtmltopdf_settings::LogLevel;
+        let cli = parse(&["wkhtmltopdf", "-q", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert!(matches!(g.log_level, LogLevel::None));
+    }
+
+    #[test]
+    fn build_global_log_level_info() {
+        use wkhtmltopdf_settings::LogLevel;
+        let cli = parse(&["wkhtmltopdf", "--log-level", "info", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert!(matches!(g.log_level, LogLevel::Info));
+    }
+
+    #[test]
+    fn build_global_log_level_error() {
+        use wkhtmltopdf_settings::LogLevel;
+        let cli = parse(&["wkhtmltopdf", "--log-level", "error", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert!(matches!(g.log_level, LogLevel::Error));
+    }
+
+    #[test]
+    fn build_global_orientation_landscape() {
+        use wkhtmltopdf_settings::Orientation;
+        let cli = parse(&["wkhtmltopdf", "--orientation", "Landscape", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert!(matches!(g.orientation, Orientation::Landscape));
+    }
+
+    #[test]
+    fn build_global_orientation_portrait() {
+        use wkhtmltopdf_settings::Orientation;
+        let cli = parse(&["wkhtmltopdf", "--orientation", "Portrait", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert!(matches!(g.orientation, Orientation::Portrait));
+    }
+
+    #[test]
+    fn build_global_copies_and_no_collate() {
+        let cli = parse(&["wkhtmltopdf", "--copies", "3", "--no-collate", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert_eq!(g.copies, 3);
+        assert!(!g.collate);
+    }
+
+    #[test]
+    fn build_global_collate_flag() {
+        let cli = parse(&["wkhtmltopdf", "--collate", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert!(g.collate);
+    }
+
+    #[test]
+    fn build_global_no_pdf_compression() {
+        let cli = parse(&["wkhtmltopdf", "--no-pdf-compression", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert!(!g.use_compression);
+    }
+
+    #[test]
+    fn build_global_no_outline() {
+        let cli = parse(&["wkhtmltopdf", "--no-outline", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert!(!g.outline);
+    }
+
+    #[test]
+    fn build_global_outline_depth() {
+        let cli = parse(&["wkhtmltopdf", "--outline-depth", "6", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert_eq!(g.outline_depth, 6);
+    }
+
+    #[test]
+    fn build_global_dump_outline() {
+        let cli = parse(&["wkhtmltopdf", "--dump-outline", "toc.xml", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert_eq!(g.dump_outline.as_deref(), Some("toc.xml"));
+    }
+
+    #[test]
+    fn build_global_page_offset() {
+        let cli = parse(&["wkhtmltopdf", "--page-offset", "5", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert_eq!(g.page_offset, 5);
+    }
+
+    #[test]
+    fn build_global_title_sets_document_title() {
+        let cli = parse(&["wkhtmltopdf", "--title", "My Document", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert_eq!(g.document_title.as_deref(), Some("My Document"));
+    }
+
+    #[test]
+    fn build_global_viewport_size() {
+        let cli = parse(&["wkhtmltopdf", "--viewport-size", "1280x1024", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert_eq!(g.viewport_size.as_deref(), Some("1280x1024"));
+    }
+
+    #[test]
+    fn build_global_cookie_jar() {
+        let cli = parse(&["wkhtmltopdf", "--cookie-jar", "/tmp/cookies.jar", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert_eq!(g.load.cookie_jar.as_deref(), Some("/tmp/cookies.jar"));
+    }
+
+    #[test]
+    fn build_global_dpi() {
+        let cli = parse(&["wkhtmltopdf", "--dpi", "150", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert_eq!(g.dpi, Some(150));
+    }
+
+    #[test]
+    fn build_global_image_quality_and_dpi() {
+        let cli = parse(&[
+            "wkhtmltopdf", "--image-quality", "80", "--image-dpi", "300",
+            "in.html", "out.pdf",
+        ]);
+        let g = build_global(&cli);
+        assert_eq!(g.image_quality, 80);
+        assert_eq!(g.image_dpi, 300);
+    }
+
+    #[test]
+    fn build_global_margins_parsed_with_units() {
+        use wkhtmltopdf_settings::Unit;
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--margin-top", "20mm",
+            "--margin-bottom", "15mm",
+            "--margin-left", "1in",
+            "--margin-right", "72pt",
+            "in.html", "out.pdf",
+        ]);
+        let g = build_global(&cli);
+        assert!((g.margin.top.value - 20.0).abs() < f64::EPSILON);
+        assert!(matches!(g.margin.top.unit, Unit::Millimeter));
+        assert!((g.margin.bottom.value - 15.0).abs() < f64::EPSILON);
+        assert!((g.margin.left.value - 1.0).abs() < f64::EPSILON);
+        assert!(matches!(g.margin.left.unit, Unit::Inch));
+        assert!((g.margin.right.value - 72.0).abs() < f64::EPSILON);
+        assert!(matches!(g.margin.right.unit, Unit::Point));
+    }
+
+    #[test]
+    fn build_global_page_size_letter() {
+        use wkhtmltopdf_settings::PageSize;
+        let cli = parse(&["wkhtmltopdf", "--page-size", "Letter", "in.html", "out.pdf"]);
+        let g = build_global(&cli);
+        assert!(matches!(g.size.page_size, PageSize::Letter));
+    }
+
+    // -----------------------------------------------------------------------
+    // build_object: CLI flags → PdfObject settings
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn build_object_page_is_set() {
+        let cli = parse(&["wkhtmltopdf", "input.html", "out.pdf"]);
+        let obj = build_object(&cli, "input.html");
+        assert_eq!(obj.page.as_deref(), Some("input.html"));
+    }
+
+    #[test]
+    fn build_object_no_background() {
+        let cli = parse(&["wkhtmltopdf", "--no-background", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.web.background);
+    }
+
+    #[test]
+    fn build_object_no_images() {
+        let cli = parse(&["wkhtmltopdf", "--no-images", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.web.load_images);
+    }
+
+    #[test]
+    fn build_object_disable_javascript() {
+        let cli = parse(&["wkhtmltopdf", "--disable-javascript", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.web.enable_javascript);
+    }
+
+    #[test]
+    fn build_object_disable_smart_shrinking() {
+        let cli = parse(&["wkhtmltopdf", "--disable-smart-shrinking", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.web.enable_intelligent_shrinking);
+    }
+
+    #[test]
+    fn build_object_minimum_font_size() {
+        let cli = parse(&["wkhtmltopdf", "--minimum-font-size", "10", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.web.minimum_font_size, Some(10));
+    }
+
+    #[test]
+    fn build_object_encoding() {
+        let cli = parse(&["wkhtmltopdf", "--encoding", "utf-8", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.web.default_encoding.as_deref(), Some("utf-8"));
+    }
+
+    #[test]
+    fn build_object_user_style_sheet() {
+        let cli = parse(&["wkhtmltopdf", "--user-style-sheet", "style.css", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.web.user_style_sheet.as_deref(), Some("style.css"));
+    }
+
+    #[test]
+    fn build_object_enable_plugins() {
+        let cli = parse(&["wkhtmltopdf", "--enable-plugins", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(obj.web.enable_plugins);
+    }
+
+    #[test]
+    fn build_object_load_error_handling_skip() {
+        use wkhtmltopdf_settings::LoadErrorHandling;
+        let cli = parse(&[
+            "wkhtmltopdf", "--load-error-handling", "skip", "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert!(matches!(obj.load.load_error_handling, LoadErrorHandling::Skip));
+    }
+
+    #[test]
+    fn build_object_load_error_handling_ignore() {
+        use wkhtmltopdf_settings::LoadErrorHandling;
+        let cli = parse(&[
+            "wkhtmltopdf", "--load-error-handling", "ignore", "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert!(matches!(obj.load.load_error_handling, LoadErrorHandling::Ignore));
+    }
+
+    #[test]
+    fn build_object_load_media_error_handling_abort() {
+        use wkhtmltopdf_settings::LoadErrorHandling;
+        let cli = parse(&[
+            "wkhtmltopdf", "--load-media-error-handling", "abort", "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert!(matches!(obj.load.media_load_error_handling, LoadErrorHandling::Abort));
+    }
+
+    #[test]
+    fn build_object_print_media_type() {
+        let cli = parse(&["wkhtmltopdf", "--print-media-type", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(obj.load.print_media_type);
+    }
+
+    #[test]
+    fn build_object_debug_javascript() {
+        let cli = parse(&["wkhtmltopdf", "--debug-javascript", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(obj.load.debug_javascript);
+    }
+
+    #[test]
+    fn build_object_proxy_hostname_lookup() {
+        let cli = parse(&["wkhtmltopdf", "--proxy-hostname-lookup", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(obj.load.proxy_hostname_lookup);
+    }
+
+    #[test]
+    fn build_object_disable_local_file_access() {
+        let cli = parse(&["wkhtmltopdf", "--disable-local-file-access", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(obj.load.block_local_file_access);
+    }
+
+    #[test]
+    fn build_object_cache_dir() {
+        let cli = parse(&["wkhtmltopdf", "--cache-dir", "/tmp/cache", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.load.cache_dir.as_deref(), Some("/tmp/cache"));
+    }
+
+    #[test]
+    fn build_object_ssl_cert_paths() {
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--ssl-key-path", "/path/to/key.pem",
+            "--ssl-key-password", "keypass",
+            "--ssl-crt-path", "/path/to/cert.pem",
+            "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.load.client_ssl_key_path.as_deref(), Some("/path/to/key.pem"));
+        assert_eq!(obj.load.client_ssl_key_password.as_deref(), Some("keypass"));
+        assert_eq!(obj.load.client_ssl_crt_path.as_deref(), Some("/path/to/cert.pem"));
+    }
+
+    #[test]
+    fn build_object_custom_header_propagation() {
+        let cli = parse(&["wkhtmltopdf", "--custom-header-propagation", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(obj.load.repeat_custom_headers);
+    }
+
+    #[test]
+    fn build_object_username_and_password() {
+        let cli = parse(&[
+            "wkhtmltopdf", "--username", "admin", "--password", "secret",
+            "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.load.username.as_deref(), Some("admin"));
+        assert_eq!(obj.load.password.as_deref(), Some("secret"));
+    }
+
+    #[test]
+    fn build_object_javascript_delay() {
+        let cli = parse(&["wkhtmltopdf", "--javascript-delay", "500", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.load.js_delay, 500);
+    }
+
+    #[test]
+    fn build_object_zoom() {
+        let cli = parse(&["wkhtmltopdf", "--zoom", "1.5", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!((obj.load.zoom - 1.5).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn build_object_window_status() {
+        let cli = parse(&["wkhtmltopdf", "--window-status", "ready", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.load.window_status.as_deref(), Some("ready"));
+    }
+
+    #[test]
+    fn build_object_custom_headers_as_pairs() {
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--custom-header", "X-Foo", "bar",
+            "--custom-header", "X-Baz", "qux",
+            "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.load.custom_headers.len(), 2);
+        assert_eq!(obj.load.custom_headers[0], ("X-Foo".into(), "bar".into()));
+        assert_eq!(obj.load.custom_headers[1], ("X-Baz".into(), "qux".into()));
+    }
+
+    #[test]
+    fn build_object_cookies_as_pairs() {
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--cookie", "session", "abc123",
+            "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.load.cookies.len(), 1);
+        assert_eq!(obj.load.cookies[0], ("session".into(), "abc123".into()));
+    }
+
+    #[test]
+    fn build_object_run_script() {
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--run-script", "console.log('ok');",
+            "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.load.run_script.len(), 1);
+        assert_eq!(obj.load.run_script[0], "console.log('ok');");
+    }
+
+    #[test]
+    fn build_object_allow_paths() {
+        let cli = parse(&["wkhtmltopdf", "--allow", "/tmp/data", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(obj.load.allowed.contains(&"/tmp/data".to_string()));
+    }
+
+    #[test]
+    fn build_object_bypass_proxy_for() {
+        let cli = parse(&["wkhtmltopdf", "--bypass-proxy-for", "internal.host", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(obj.load.bypass_proxy_for_hosts.contains(&"internal.host".to_string()));
+    }
+
+    #[test]
+    fn build_object_disable_external_links() {
+        let cli = parse(&["wkhtmltopdf", "--disable-external-links", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.use_external_links);
+    }
+
+    #[test]
+    fn build_object_disable_internal_links() {
+        let cli = parse(&["wkhtmltopdf", "--disable-internal-links", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.use_local_links);
+    }
+
+    #[test]
+    fn build_object_enable_forms() {
+        let cli = parse(&["wkhtmltopdf", "--enable-forms", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(obj.produce_forms);
+    }
+
+    #[test]
+    fn build_object_exclude_from_outline() {
+        let cli = parse(&["wkhtmltopdf", "--exclude-from-outline", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.include_in_outline);
+    }
+
+    #[test]
+    fn build_object_replace_pairs() {
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--replace", "FOO", "bar",
+            "--replace", "BAZ", "qux",
+            "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.replacements.len(), 2);
+        assert_eq!(obj.replacements[0], ("FOO".into(), "bar".into()));
+        assert_eq!(obj.replacements[1], ("BAZ".into(), "qux".into()));
+    }
+
+    #[test]
+    fn build_object_toc_settings() {
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--disable-dotted-lines",
+            "--toc-header-text", "Index",
+            "--toc-depth", "2",
+            "--toc-level-indentation", "2em",
+            "--toc-text-size-shrink", "0.9",
+            "--xsl-style-sheet", "custom.xsl",
+            "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.toc.use_dotted_lines);
+        assert_eq!(obj.toc.caption_text, "Index");
+        assert_eq!(obj.toc.depth, 2);
+        assert_eq!(obj.toc.indentation, "2em");
+        assert!((obj.toc.font_scale - 0.9).abs() < 1e-6);
+        assert_eq!(obj.toc_xsl.as_deref(), Some("custom.xsl"));
+    }
+
+    #[test]
+    fn build_object_disable_toc_links() {
+        let cli = parse(&["wkhtmltopdf", "--disable-toc-links", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.toc.forward_links);
+    }
+
+    #[test]
+    fn build_object_disable_toc_back_links() {
+        let cli = parse(&["wkhtmltopdf", "--disable-toc-back-links", "in.html", "out.pdf"]);
+        let obj = build_object(&cli, "in.html");
+        assert!(!obj.toc.back_links);
+    }
+
+    #[test]
+    fn build_object_header_settings() {
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--header-left", "Left",
+            "--header-center", "Center",
+            "--header-right", "Right",
+            "--header-font-name", "Times New Roman",
+            "--header-font-size", "14",
+            "--header-line",
+            "--header-spacing", "5",
+            "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.header.left.as_deref(), Some("Left"));
+        assert_eq!(obj.header.center.as_deref(), Some("Center"));
+        assert_eq!(obj.header.right.as_deref(), Some("Right"));
+        assert_eq!(obj.header.font_name, "Times New Roman");
+        assert_eq!(obj.header.font_size, 14);
+        assert!(obj.header.line);
+        assert!((obj.header.spacing - 5.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn build_object_footer_settings() {
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--footer-html", "footer.html",
+            "--footer-spacing", "3",
+            "--footer-center", "Page [page]",
+            "in.html", "out.pdf",
+        ]);
+        let obj = build_object(&cli, "in.html");
+        assert_eq!(obj.footer.html_url.as_deref(), Some("footer.html"));
+        assert!((obj.footer.spacing - 3.0).abs() < 1e-6);
+        assert_eq!(obj.footer.center.as_deref(), Some("Page [page]"));
+    }
 }
