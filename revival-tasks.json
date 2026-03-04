@@ -7,12 +7,12 @@
   {
     "id": "2",
     "description": "Research Rust ecosystem equivalents: identify crates for HTML/CSS rendering (e.g. servo/webrender), PDF generation (e.g. printpdf, lopdf), image output (e.g. image crate), headless browser automation (e.g. chromiumoxide, headless_chrome), CLI parsing (clap), HTTP client (reqwest), and JS execution.",
-    "status": "inprogress"
+    "status": "completed"
   },
   {
     "id": "3",
     "description": "Define Rust workspace layout: create a Cargo workspace with crates for `core` (rendering engine abstraction), `pdf` (PDF output), `image` (image output), `cli` (command-line interface), `settings` (configuration/settings structs), and `tests` (integration/regression tests).",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 2,
     "depends_on": [
       "1",
