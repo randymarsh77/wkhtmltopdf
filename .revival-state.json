@@ -1,22 +1,15 @@
 {
-  "phase": "needs_verification",
-  "iteration": 1,
-  "current_task_id": "1",
-  "issue_number": 1,
-  "pr_number": 2,
-  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/2",
-  "last_prompt": "Audit existing C++/Qt codebase: catalog all major subsystems (PDF rendering, image rendering, CLI argument parsing, settings, headers/footers, TOC generation, JS evaluation, network handling) and document their interfaces and dependencies.",
+  "phase": "agent_working",
+  "iteration": 2,
+  "current_task_id": "2",
+  "issue_number": 3,
+  "last_prompt": "Research Rust ecosystem equivalents: identify crates for HTML/CSS rendering (e.g. servo/webrender), PDF generation (e.g. printpdf, lopdf), image output (e.g. image crate), headless browser automation (e.g. chromiumoxide, headless_chrome), CLI parsing (clap), HTTP client (reqwest), and JS execution.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
     "iteration 1: marked PR #2 as ready for review",
-    "iteration 1: PR #2 not yet mergeable"
-  ],
-  "tracked_prs": [
-    {
-      "pr_number": 2,
-      "task_id": "1",
-      "issue_number": 1
-    }
+    "iteration 1: PR #2 not yet mergeable",
+    "advance: merged PR #2",
+    "iteration 2: triggered cloud agent for task 2 (issue #3)"
   ]
 }
