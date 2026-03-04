@@ -226,16 +226,17 @@
   {
     "id": "25",
     "description": "Add GHA workflow for release packaging: build release binaries for Linux (x86_64, aarch64), macOS, and Windows; produce .deb packages for Ubuntu 22/24/25; publish artifacts on tagged releases.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 6,
     "depends_on": [
       "23"
-    ]
+    ],
+    "last_attempt_at": 1772658957
   },
   {
     "id": "26",
     "description": "Update README.md and documentation: rewrite build instructions, document new Rust-based architecture, list system dependencies per OS, describe the visual regression test suite, and update the project status to active.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 6,
     "depends_on": [
       "20",

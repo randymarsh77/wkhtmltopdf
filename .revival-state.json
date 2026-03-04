@@ -1,11 +1,9 @@
 {
   "phase": "agent_working",
-  "iteration": 25,
-  "current_task_id": "25",
-  "issue_number": 49,
-  "pr_number": 50,
-  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/50",
-  "last_prompt": "Add GHA workflow for release packaging: build release binaries for Linux (x86_64, aarch64), macOS, and Windows; produce .deb packages for Ubuntu 22/24/25; publish artifacts on tagged releases.",
+  "iteration": 26,
+  "current_task_id": "26",
+  "issue_number": 51,
+  "last_prompt": "Update README.md and documentation: rewrite build instructions, document new Rust-based architecture, list system dependencies per OS, describe the visual regression test suite, and update the project status to active.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -106,13 +104,10 @@
     "advance: merged PR #48",
     "iteration 25: triggered cloud agent for task 25 (issue #49)",
     "iteration 25: agent opened PR #50 for task Some(\"25\") (still working)",
-    "iteration 25: agent opened PR #50 for task Some(\"25\") (still working)"
-  ],
-  "tracked_prs": [
-    {
-      "pr_number": 50,
-      "task_id": "25",
-      "issue_number": 49
-    }
+    "iteration 25: agent opened PR #50 for task Some(\"25\") (still working)",
+    "iteration 25: agent created PR #50 for task Some(\"25\")",
+    "iteration 25: marked PR #50 as ready for review",
+    "iteration 25: merged PR #50 for task Some(\"25\")",
+    "iteration 26: triggered cloud agent for task 26 (issue #51)"
   ]
 }
