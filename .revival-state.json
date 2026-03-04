@@ -1,10 +1,21 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 1,
   "current_task_id": "1",
   "issue_number": 1,
+  "pr_number": 2,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/2",
   "last_prompt": "Audit existing C++/Qt codebase: catalog all major subsystems (PDF rendering, image rendering, CLI argument parsing, settings, headers/footers, TOC generation, JS evaluation, network handling) and document their interfaces and dependencies.",
   "memory": [
-    "iteration 1: triggered cloud agent for task 1 (issue #1)"
+    "iteration 1: triggered cloud agent for task 1 (issue #1)",
+    "iteration 1: agent created PR #2 for task Some(\"1\")",
+    "iteration 1: marked PR #2 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 2,
+      "task_id": "1",
+      "issue_number": 1
+    }
   ]
 }
