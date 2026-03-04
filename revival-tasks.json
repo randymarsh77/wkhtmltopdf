@@ -122,7 +122,7 @@
   {
     "id": "15",
     "description": "Build regression test harness: create a test framework in the `tests` crate that renders a set of reference HTML fixtures with both the old wkhtmltopdf binary (if available) and the new Rust implementation, producing output files for comparison.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 3,
     "depends_on": [
       "3"
@@ -131,7 +131,7 @@
   {
     "id": "16",
     "description": "Create comprehensive HTML test fixtures covering: basic text/layout, tables, images, CSS (flexbox, grid, print media), page breaks, headers/footers, multi-page documents, TOC, JavaScript-rendered content, external resources, Unicode/RTL, and edge cases.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 3,
     "depends_on": [
       "3"
