@@ -1,0 +1,9 @@
+[package]
+name = "wkhtmltopdf-diff"
+version = "0.1.0"
+edition = "2021"
+description = "Perceptual image diffing tool for wkhtmltopdf visual regression testing"
+
+[dependencies]
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp"] }
+thiserror = "1"

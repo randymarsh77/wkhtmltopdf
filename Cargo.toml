@@ -4,6 +4,7 @@ members = [
     "crates/core",
     "crates/pdf",
     "crates/image",
+    "crates/diff",
     "crates/cli",
     "crates/ffi",
     "crates/tests",

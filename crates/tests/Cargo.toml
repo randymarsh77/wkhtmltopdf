@@ -8,6 +8,8 @@ description = "Integration and regression tests for wkhtmltopdf"
 wkhtmltopdf-core = { path = "../core" }
 wkhtmltopdf-pdf = { path = "../pdf" }
 wkhtmltopdf-image = { path = "../image" }
+wkhtmltopdf-diff = { path = "../diff" }
 wkhtmltopdf-settings = { path = "../settings" }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp"] }
 serde_json = "1"
 tempfile = "3.26.0"

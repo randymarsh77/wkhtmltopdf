@@ -3046,6 +3046,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "wkhtmltopdf-diff"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "wkhtmltopdf-image"
 version = "0.1.0"
 dependencies = [
@@ -3080,9 +3088,11 @@ dependencies = [
 name = "wkhtmltopdf-tests"
 version = "0.1.0"
 dependencies = [
+ "image",
  "serde_json",
  "tempfile",
  "wkhtmltopdf-core",
+ "wkhtmltopdf-diff",
  "wkhtmltopdf-image",
  "wkhtmltopdf-pdf",
  "wkhtmltopdf-settings",
