@@ -58,7 +58,7 @@
   {
     "id": "8",
     "description": "Implement image output pipeline in the `image` crate: support PNG, JPG, BMP, SVG, and other formats with configurable width, quality, crop settings, and DPI.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 4,
     "depends_on": [
       "6"
@@ -67,7 +67,7 @@
   {
     "id": "9",
     "description": "Implement header and footer rendering: support HTML-based headers/footers with template variable substitution ([page], [toPage], [date], [title], [url]), spacing, line options, and font settings.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 4,
     "depends_on": [
       "7"
