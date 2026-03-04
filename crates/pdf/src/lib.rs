@@ -996,9 +996,9 @@ fn escape_html_attr(s: &str) -> String {
 ///
 /// `outline_entries` is a list of `(first_page_0indexed, headings)` pairs, one
 /// entry per rendered page-object that participates in the outline.  Each
-/// heading in the list is mapped to a lopdf [`Bookmark`] with the correct
+/// heading in the list is mapped to a lopdf `Bookmark` with the correct
 /// parent so that the hierarchy mirrors the HTML heading levels (H1 → H2 →
-/// H3, etc.).  After all bookmarks have been added, [`Document::build_outline`]
+/// H3, etc.).  After all bookmarks have been added, `Document::build_outline`
 /// is called to build the PDF outline dictionary.
 pub fn add_outline_to_lopdf(
     lopdf_doc: &mut lopdf::Document,
