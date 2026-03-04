@@ -2,7 +2,7 @@ name: Ralph
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # every 30 minutes
+    - cron: "*/10 * * * *" # every 30 minutes
   workflow_dispatch: # allow manual triggers
 
 permissions:
