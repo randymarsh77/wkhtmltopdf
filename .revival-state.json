@@ -1,8 +1,10 @@
 {
-  "phase": "agent_working",
+  "phase": "needs_verification",
   "iteration": 12,
   "current_task_id": "12",
   "issue_number": 23,
+  "pr_number": 24,
+  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/24",
   "last_prompt": "Implement JavaScript execution support: allow enabling/disabling JS, setting JS delay, and executing custom JS before rendering.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
@@ -50,6 +52,15 @@
     "iteration 11: agent created PR #22 for task Some(\"11\")",
     "iteration 11: marked PR #22 as ready for review",
     "advance: merged PR #22",
-    "iteration 12: triggered cloud agent for task 12 (issue #23)"
+    "iteration 12: triggered cloud agent for task 12 (issue #23)",
+    "iteration 12: agent created PR #24 for task Some(\"12\")",
+    "iteration 12: marked PR #24 as ready for review"
+  ],
+  "tracked_prs": [
+    {
+      "pr_number": 24,
+      "task_id": "12",
+      "issue_number": 23
+    }
   ]
 }
