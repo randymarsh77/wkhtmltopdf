@@ -31,7 +31,7 @@
   {
     "id": "5",
     "description": "Implement CLI argument parsing in Rust using clap: replicate all wkhtmltopdf and wkhtmltoimage command-line flags, options, and sub-commands with full help text.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 3,
     "depends_on": [
       "3"
@@ -40,7 +40,7 @@
   {
     "id": "6",
     "description": "Implement headless rendering abstraction layer in the `core` crate: define a trait-based renderer interface that accepts HTML input (URL or file) and produces a rendered page representation, with an initial implementation backed by a headless Chromium/WebKit engine.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 3,
     "depends_on": [
       "3"
