@@ -105,6 +105,7 @@
     "iteration 24: marked PR #48 as ready for review",
     "advance: merged PR #48",
     "iteration 25: triggered cloud agent for task 25 (issue #49)",
+    "iteration 25: agent opened PR #50 for task Some(\"25\") (still working)",
     "iteration 25: agent opened PR #50 for task Some(\"25\") (still working)"
   ],
   "tracked_prs": [
