@@ -1,11 +1,9 @@
 {
-  "phase": "needs_verification",
-  "iteration": 21,
-  "current_task_id": "21",
-  "issue_number": 41,
-  "pr_number": 42,
-  "pr_url": "https://github.com/randymarsh77/wkhtmltopdf/pull/42",
-  "last_prompt": "Update Cargo.toml dependencies to latest stable versions; audit for security advisories using `cargo audit`; pin MSRV (Minimum Supported Rust Version) compatible with Ubuntu 25's packaged Rust toolchain.",
+  "phase": "agent_working",
+  "iteration": 22,
+  "current_task_id": "22",
+  "issue_number": 43,
+  "last_prompt": "Add Ubuntu 25 (Plucky Piculet) build support: update packaging scripts, verify Qt/WebKit or Chromium headless library availability on Ubuntu 25, and document any required system dependencies.",
   "memory": [
     "iteration 1: triggered cloud agent for task 1 (issue #1)",
     "iteration 1: agent created PR #2 for task Some(\"1\")",
@@ -90,13 +88,8 @@
     "advance: merged PR #40",
     "iteration 21: triggered cloud agent for task 21 (issue #41)",
     "iteration 21: agent created PR #42 for task Some(\"21\")",
-    "iteration 21: marked PR #42 as ready for review"
-  ],
-  "tracked_prs": [
-    {
-      "pr_number": 42,
-      "task_id": "21",
-      "issue_number": 41
-    }
+    "iteration 21: marked PR #42 as ready for review",
+    "advance: merged PR #42",
+    "iteration 22: triggered cloud agent for task 22 (issue #43)"
   ]
 }

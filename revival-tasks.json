@@ -185,7 +185,7 @@
   {
     "id": "21",
     "description": "Update Cargo.toml dependencies to latest stable versions; audit for security advisories using `cargo audit`; pin MSRV (Minimum Supported Rust Version) compatible with Ubuntu 25's packaged Rust toolchain.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 5,
     "depends_on": [
       "7",
@@ -195,7 +195,7 @@
   {
     "id": "22",
     "description": "Add Ubuntu 25 (Plucky Piculet) build support: update packaging scripts, verify Qt/WebKit or Chromium headless library availability on Ubuntu 25, and document any required system dependencies.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 5,
     "depends_on": [
       "7",
