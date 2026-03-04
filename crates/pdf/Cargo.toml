@@ -8,3 +8,4 @@ description = "PDF output for wkhtmltopdf"
 wkhtmltopdf-core = { path = "../core" }
 wkhtmltopdf-settings = { path = "../settings" }
 thiserror = "1"
+printpdf = "0.9.1"
