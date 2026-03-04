@@ -99,12 +99,37 @@ pub trait Renderer {
 pub struct HeadlessRenderer {
     /// When `true` the browser window is hidden (the normal operating mode).
     pub headless: bool,
+    /// When `false`, JavaScript execution is disabled in the rendered page.
+    pub enable_javascript: bool,
+    /// Milliseconds to wait after page load before capturing the screenshot.
+    pub js_delay: u32,
+    /// JavaScript snippets to execute after the page has loaded.
+    pub run_scripts: Vec<String>,
 }
 
 impl HeadlessRenderer {
     /// Create a new `HeadlessRenderer` with headless mode enabled.
     pub fn new() -> Self {
-        Self { headless: true }
+        Self {
+            headless: true,
+            enable_javascript: true,
+            js_delay: 200,
+            run_scripts: Vec::new(),
+        }
+    }
+
+    /// Create a `HeadlessRenderer` with explicit JavaScript settings.
+    pub fn with_js_settings(
+        enable_javascript: bool,
+        js_delay: u32,
+        run_scripts: Vec<String>,
+    ) -> Self {
+        Self {
+            headless: true,
+            enable_javascript,
+            js_delay,
+            run_scripts,
+        }
     }
 }
 
@@ -117,7 +142,7 @@ impl Default for HeadlessRenderer {
 impl Renderer for HeadlessRenderer {
     fn render(&self, input: &HtmlInput) -> Result<RenderedPage, RenderError> {
         use headless_chrome::{Browser, LaunchOptions};
-        use headless_chrome::protocol::cdp::Page;
+        use headless_chrome::protocol::cdp::{Emulation, Page};
 
         let url = input.to_url_string();
 
@@ -133,11 +158,28 @@ impl Renderer for HeadlessRenderer {
             .new_tab()
             .map_err(|e| RenderError::RenderFailed(e.to_string()))?;
 
+        // Disable JavaScript execution before navigation when requested.
+        if !self.enable_javascript {
+            tab.call_method(Emulation::SetScriptExecutionDisabled { value: true })
+                .map_err(|e| RenderError::RenderFailed(e.to_string()))?;
+        }
+
         tab.navigate_to(&url)
             .map_err(|e| RenderError::RenderFailed(e.to_string()))?;
 
         tab.wait_until_navigated()
             .map_err(|e| RenderError::RenderFailed(e.to_string()))?;
+
+        // Apply JS delay after page load.
+        if self.js_delay > 0 {
+            std::thread::sleep(std::time::Duration::from_millis(self.js_delay as u64));
+        }
+
+        // Execute custom scripts after the page has loaded.
+        for (idx, script) in self.run_scripts.iter().enumerate() {
+            tab.evaluate(script, false)
+                .map_err(|e| RenderError::RenderFailed(format!("script {idx}: {e}")))?;
+        }
 
         // capture_screenshot(format, quality, clip, from_surface)
         // `from_surface: true` captures the GPU-composited output rather than
@@ -192,12 +234,30 @@ mod tests {
     fn headless_renderer_default_is_headless() {
         let renderer = HeadlessRenderer::default();
         assert!(renderer.headless);
+        assert!(renderer.enable_javascript);
+        assert_eq!(renderer.js_delay, 200);
+        assert!(renderer.run_scripts.is_empty());
     }
 
     #[test]
     fn headless_renderer_new_is_headless() {
         let renderer = HeadlessRenderer::new();
         assert!(renderer.headless);
+        assert!(renderer.enable_javascript);
+        assert_eq!(renderer.js_delay, 200);
+        assert!(renderer.run_scripts.is_empty());
+    }
+
+    #[test]
+    fn headless_renderer_with_js_settings() {
+        let renderer = HeadlessRenderer::with_js_settings(
+            false,
+            500,
+            vec!["console.log('test')".to_string()],
+        );
+        assert!(!renderer.enable_javascript);
+        assert_eq!(renderer.js_delay, 500);
+        assert_eq!(renderer.run_scripts, vec!["console.log('test')"]);
     }
 
     /// Verify that `HeadlessRenderer` implements `Renderer`.

@@ -68,8 +68,13 @@ impl Converter for ImageConverter {
             )
         })?;
 
-        // Render the HTML to a PNG screenshot via the headless browser.
-        let renderer = HeadlessRenderer::new();
+        // Render the HTML to a PNG screenshot via the headless browser,
+        // passing through the JavaScript settings from the global config.
+        let renderer = HeadlessRenderer::with_js_settings(
+            self.settings.web.enable_javascript,
+            self.settings.load_page.js_delay,
+            self.settings.load_page.run_script.clone(),
+        );
         let input = parse_input(page_src);
         let rendered = renderer
             .render(&input)
