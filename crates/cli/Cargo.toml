@@ -8,6 +8,10 @@ description = "Command-line interface for wkhtmltopdf"
 name = "wkhtmltopdf"
 path = "src/main.rs"
 
+[[bin]]
+name = "wkhtmltoimage"
+path = "src/bin/wkhtmltoimage.rs"
+
 [dependencies]
 wkhtmltopdf-core = { path = "../core" }
 wkhtmltopdf-pdf = { path = "../pdf" }
