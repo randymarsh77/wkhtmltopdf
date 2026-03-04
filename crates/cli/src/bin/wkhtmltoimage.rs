@@ -2,7 +2,7 @@ use clap::Parser;
 
 /// Convert an HTML page into an image.
 ///
-/// Usage: wkhtmltoimage [OPTIONS] <URL|file> <output>
+/// Usage: wkhtmltoimage \[OPTIONS\] \<URL|file\> \<output\>
 #[derive(Parser, Debug)]
 #[command(
     name = "wkhtmltoimage",
@@ -48,7 +48,7 @@ pub struct Cli {
     #[arg(long, overrides_with = "no_transparent")]
     pub transparent: bool,
 
-    /// Do not render a transparent background [default].
+    /// Do not render a transparent background \[default\].
     #[arg(long = "no-transparent", overrides_with = "transparent")]
     pub no_transparent: bool,
 
@@ -249,7 +249,7 @@ fn main() {
 }
 
 /// Parse a proxy URL string (e.g., `"http://user:pass@host:8080"` or
-/// `"socks5://host:1080"`) into a [`Proxy`] settings struct.
+/// `"socks5://host:1080"`) into a [`wkhtmltopdf_settings::Proxy`] settings struct.
 fn parse_proxy_url(url: &str) -> wkhtmltopdf_settings::Proxy {
     use wkhtmltopdf_settings::{Proxy, ProxyType};
     let (proxy_type, rest) = if let Some(r) = url.strip_prefix("socks5://") {
