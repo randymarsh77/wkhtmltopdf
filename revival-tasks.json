@@ -215,7 +215,7 @@
   {
     "id": "24",
     "description": "Add GHA workflow for visual regression testing: run the regression test harness on PRs, store diff images as artifacts, and fail the build if any fixture exceeds a configurable visual diff threshold.",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 6,
     "depends_on": [
       "17",
@@ -226,7 +226,7 @@
   {
     "id": "25",
     "description": "Add GHA workflow for release packaging: build release binaries for Linux (x86_64, aarch64), macOS, and Windows; produce .deb packages for Ubuntu 22/24/25; publish artifacts on tagged releases.",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 6,
     "depends_on": [
       "23"
