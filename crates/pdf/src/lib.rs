@@ -624,24 +624,31 @@ pub struct HeadingEntry {
     pub anchor: String,
 }
 
+/// Precomputed lowercase opening-tag prefixes for h1…h6 (index 0 = h1).
+const HEADING_OPEN_TAGS: [&str; 6] = ["<h1", "<h2", "<h3", "<h4", "<h5", "<h6"];
+
+/// Precomputed lowercase closing tags for h1…h6 (index 0 = h1).
+const HEADING_CLOSE_TAGS: [&str; 6] = ["</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>"];
+
 /// Extract heading elements from `html` up to `max_depth` levels (1–6).
 ///
 /// Headings are returned in document order.  If a heading tag already has
 /// an `id` attribute, that value is used as the anchor; otherwise a
 /// URL-safe slug is derived from the heading text and made unique within
 /// the returned list.
+
 pub fn extract_headings(html: &str, max_depth: u32) -> Vec<HeadingEntry> {
     let mut entries: Vec<HeadingEntry> = Vec::new();
     let lower = html.to_ascii_lowercase();
-    let max_depth = max_depth.min(6);
+    let max_depth = (max_depth.min(6)) as usize;
     let mut pos = 0;
 
     while pos < lower.len() {
         // Find the earliest heading tag (h1…h{max_depth}) starting at `pos`.
-        let mut best: Option<(usize, u32)> = None;
-        for level in 1..=max_depth {
-            let tag = format!("<h{}", level);
-            if let Some(rel) = lower[pos..].find(&tag) {
+        let mut best: Option<(usize, usize)> = None;
+        for idx in 0..max_depth {
+            let tag = HEADING_OPEN_TAGS[idx];
+            if let Some(rel) = lower[pos..].find(tag) {
                 let abs = pos + rel;
                 // The character immediately after the tag name must be a
                 // delimiter (space, '>', newline) to avoid matching e.g. <h10>.
@@ -651,16 +658,17 @@ pub fn extract_headings(html: &str, max_depth: u32) -> Vec<HeadingEntry> {
                     Some(b'>') | Some(b' ') | Some(b'\t') | Some(b'\n') | Some(b'\r') | None
                 ) {
                     if best.map_or(true, |(bp, _)| abs < bp) {
-                        best = Some((abs, level));
+                        best = Some((abs, idx));
                     }
                 }
             }
         }
 
-        let (tag_start, level) = match best {
+        let (tag_start, idx) = match best {
             Some(b) => b,
             None => break,
         };
+        let level = (idx + 1) as u32;
 
         // Find the end of the opening tag.
         let gt_rel = match lower[tag_start..].find('>') {
@@ -671,9 +679,9 @@ pub fn extract_headings(html: &str, max_depth: u32) -> Vec<HeadingEntry> {
         let opening_tag = &html[tag_start..=tag_end];
 
         // Find the closing tag and extract inner HTML.
-        let close_tag = format!("</h{}>", level);
+        let close_tag = HEADING_CLOSE_TAGS[idx];
         let content_start = tag_end + 1;
-        if let Some(close_rel) = lower[content_start..].find(&close_tag) {
+        if let Some(close_rel) = lower[content_start..].find(close_tag) {
             let content_end = content_start + close_rel;
             let inner = &html[content_start..content_end];
             let text = strip_html_tags(inner).trim().to_string();
@@ -694,6 +702,10 @@ pub fn extract_headings(html: &str, max_depth: u32) -> Vec<HeadingEntry> {
     entries
 }
 
+/// Precomputed lowercase tag names for h1…h6 (index 0 = h1), used when
+/// scanning for heading open-tags without the leading '<'.
+const HEADING_TAG_NAMES: [&str; 6] = ["h1", "h2", "h3", "h4", "h5", "h6"];
+
 /// Inject `id` attributes into heading tags (up to `max_depth`) that do not
 /// already have one, using the anchors from `headings` (in document order).
 ///
@@ -705,7 +717,7 @@ pub fn inject_heading_anchors(html: &str, headings: &[HeadingEntry], max_depth: 
     }
 
     let lower = html.to_ascii_lowercase();
-    let max_depth = max_depth.min(6);
+    let max_depth = (max_depth.min(6)) as usize;
     let mut result = String::with_capacity(html.len() + headings.len() * 24);
     let mut src_pos = 0;
     let mut entry_idx = 0;
@@ -720,16 +732,16 @@ pub fn inject_heading_anchors(html: &str, headings: &[HeadingEntry], max_depth: 
 
         // Determine whether this '<' opens a heading tag h1…h{max_depth}.
         let mut found_level: Option<u32> = None;
-        for level in 1..=max_depth {
-            let tag_name = format!("h{}", level);
+        for idx in 0..max_depth {
+            let tag_name = HEADING_TAG_NAMES[idx];
             let tag_end = abs_lt + 1 + tag_name.len();
-            if tag_end <= lower.len() && &lower[abs_lt + 1..tag_end] == tag_name.as_str() {
+            if tag_end <= lower.len() && &lower[abs_lt + 1..tag_end] == tag_name {
                 let after = lower.as_bytes().get(tag_end).copied();
                 if matches!(
                     after,
                     Some(b'>') | Some(b' ') | Some(b'\t') | Some(b'\n') | Some(b'\r') | None
                 ) {
-                    found_level = Some(level);
+                    found_level = Some((idx + 1) as u32);
                     break;
                 }
             }
@@ -751,8 +763,9 @@ pub fn inject_heading_anchors(html: &str, headings: &[HeadingEntry], max_depth: 
             if extract_id_attr(opening_tag).is_none() {
                 // Push everything up to (not including) the closing '>'.
                 result.push_str(&html[abs_lt..abs_gt]);
-                result.push_str(&format!(" id=\"{}\"", headings[entry_idx].anchor));
-                result.push('>');
+                result.push_str(" id=\"");
+                result.push_str(&headings[entry_idx].anchor);
+                result.push_str("\">");
             } else {
                 result.push_str(opening_tag);
             }
