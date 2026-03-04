@@ -52,8 +52,49 @@ jobs:
       - name: build
         run: cd packaging && MACOSX_DEPLOYMENT_TARGET=10.7 python3 ./build vagrant macos-cocoa --clean --version - - ../wkhtmltopdf
 
-  ubuntu-25:
-    name: Rust on Ubuntu 25.04 (Plucky Piculet)
+  ci:
+    name: CI (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu 22
+            os: ubuntu-22.04
+          - name: Ubuntu 24
+            os: ubuntu-24.04
+          - name: macOS
+            os: macos-latest
+          - name: Windows
+            os: windows-latest
+    steps:
+      - name: checkout source
+        uses: actions/checkout@v4
+      - name: install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config \
+            libssl-dev \
+            ca-certificates
+      - name: install clippy
+        run: rustup component add clippy
+      - name: build
+        run: cargo build
+      - name: test
+        run: cargo test
+      - name: clippy
+        run: cargo clippy -- -D warnings
+      - name: install cargo-audit
+        run: cargo install --locked cargo-audit
+      - name: audit
+        run: cargo audit
+
+  ci-ubuntu-25:
+    name: CI (Ubuntu 25)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -70,21 +111,36 @@ jobs:
             build-essential \
             pkg-config \
             libssl-dev \
-            chromium-browser \
             ca-certificates
       - name: install Rust toolchain
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
       - name: checkout source
         uses: actions/checkout@v4
+      - name: install clippy
+        run: |
+          . "$HOME/.cargo/env"
+          rustup component add clippy
       - name: build
         run: |
           . "$HOME/.cargo/env"
-          cargo build --release
+          cargo build
       - name: test
         run: |
           . "$HOME/.cargo/env"
-          cargo test --release
+          cargo test
+      - name: clippy
+        run: |
+          . "$HOME/.cargo/env"
+          cargo clippy -- -D warnings
+      - name: install cargo-audit
+        run: |
+          . "$HOME/.cargo/env"
+          cargo install --locked cargo-audit
+      - name: audit
+        run: |
+          . "$HOME/.cargo/env"
+          cargo audit
 
   windows:
     name: Qt 4.8 on Windows
