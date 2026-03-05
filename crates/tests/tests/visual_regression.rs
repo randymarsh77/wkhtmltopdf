@@ -25,11 +25,11 @@
 //! are always written, even for passing fixtures, so they can be uploaded as
 //! CI artifacts for inspection.
 //!
-//! # Headless browser availability
+//! # Qt WebKit backend availability
 //!
-//! If the headless Chromium backend is unavailable (e.g. Chrome is not installed
+//! If the Qt WebKit backend is unavailable (e.g. Qt is not installed
 //! on the host) each test is skipped with an informational message rather than
-//! failing, so the suite remains green in environments without a browser.
+//! failing, so the suite remains green in environments without Qt WebKit.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -114,9 +114,9 @@ fn try_render_fixture(name: &str) -> Option<Vec<u8>> {
     match converter.convert() {
         Ok(bytes) => Some(bytes),
         // ConvertError::Render wraps RenderError::BackendUnavailable when the
-        // headless Chrome binary cannot be located or launched.  Treat this as
-        // a graceful skip so the suite stays green in environments without a
-        // browser (e.g. plain Rust CI without Chrome installed).
+        // Qt WebKit backend cannot be located or initialised.  Treat this as
+        // a graceful skip so the suite stays green in environments without
+        // Qt WebKit (e.g. plain Rust CI without Qt installed).
         Err(ConvertError::Render(ref msg))
             if msg.contains("browser backend unavailable") =>
         {
@@ -137,7 +137,7 @@ fn try_render_fixture(name: &str) -> Option<Vec<u8>> {
 /// Run the visual regression harness for a single HTML fixture.
 ///
 /// Steps:
-/// 1. Render the fixture to PNG (skip gracefully when Chrome is absent).
+/// 1. Render the fixture to PNG (skip gracefully when Qt WebKit is absent).
 /// 2. If `VISUAL_UPDATE_REFS=true` **or** no reference exists → save as new
 ///    reference and return (test passes).
 /// 3. Otherwise compare against the stored reference with [`diff_images`].
