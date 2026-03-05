@@ -196,4 +196,4 @@ Environment variables:
 
 ## License
 
-Licensed under the MIT License — see [LICENSE](LICENSE) for details.
+Licensed under the GNU Lesser General Public License v3.0 — see [LICENSE](LICENSE) for details.
