@@ -2,8 +2,12 @@
 //!
 //! This module defines the [`Renderer`] trait, the [`HtmlInput`] enum that
 //! describes what to render, the [`RenderedPage`] type that holds the output,
-//! and a [`HeadlessRenderer`] stub struct that implements the renderer
-//! interface without a browser backend.
+//! and [`HeadlessRenderer`] which implements the renderer interface.
+//!
+//! When compiled with the `qt-webkit` feature (and Qt WebEngine installed on
+//! the build host), [`HeadlessRenderer::render`] delegates to the Qt
+//! WebEngine C++ backend.  Without the feature the method returns
+//! [`RenderError::BackendUnavailable`].
 
 use std::path::PathBuf;
 use thiserror::Error;
@@ -84,11 +88,16 @@ pub trait Renderer {
 // HeadlessRenderer – initial implementation backed by headless Chromium
 // ---------------------------------------------------------------------------
 
-/// A [`Renderer`] implementation providing the headless rendering interface.
+/// A [`Renderer`] implementation backed by Qt WebEngine when the `qt-webkit`
+/// feature is enabled, or a no-op stub otherwise.
 ///
-/// This implementation does not include a browser backend; [`Renderer::render`]
-/// always returns [`RenderError::BackendUnavailable`] (after validating the
-/// input URL scheme).
+/// # Feature-gated behaviour
+///
+/// * **With `qt-webkit`**: [`Renderer::render`] calls into the Qt WebEngine
+///   C++ backend (see `webkit_renderer.cpp`).  Qt 5.6+ or Qt 6 with the
+///   `WebEngineWidgets` module must be installed on the build host.
+/// * **Without `qt-webkit`** (default): [`Renderer::render`] always returns
+///   [`RenderError::BackendUnavailable`] after validating the input URL scheme.
 ///
 /// # Example
 /// ```
@@ -97,6 +106,8 @@ pub trait Renderer {
 /// let renderer = HeadlessRenderer::new();
 /// let input = HtmlInput::Url("https://example.com".into());
 /// let result = renderer.render(&input);
+/// // Without the `qt-webkit` feature the backend is unavailable.
+/// #[cfg(not(feature = "qt-webkit"))]
 /// assert!(matches!(result, Err(RenderError::BackendUnavailable(_))));
 /// ```
 pub struct HeadlessRenderer {
@@ -161,6 +172,26 @@ impl Renderer for HeadlessRenderer {
             }
         }
 
+        // When the `qt-webkit` feature is enabled, delegate to the Qt
+        // WebEngine backend.  The C++ implementation handles QApplication
+        // lifecycle, page loading, and PNG capture internally.
+        #[cfg(feature = "qt-webkit")]
+        {
+            let url_str = input.to_url_string();
+            return crate::qt_webkit::render_url(
+                &url_str,
+                self.enable_javascript,
+                self.js_delay,
+            )
+            .map(|bytes| RenderedPage {
+                bytes,
+                mime_type: "image/png".to_string(),
+            })
+            .map_err(|e| RenderError::RenderFailed(format!("Qt WebEngine error: {e}")));
+        }
+
+        // No browser backend compiled in.
+        #[cfg(not(feature = "qt-webkit"))]
         Err(RenderError::BackendUnavailable(
             "headless browser rendering is not implemented; \
              no browser backend is available"
