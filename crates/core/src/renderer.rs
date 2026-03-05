@@ -178,10 +178,12 @@ impl Renderer for HeadlessRenderer {
         #[cfg(feature = "qt-webkit")]
         {
             let url_str = input.to_url_string();
+            let scripts: Vec<&str> = self.run_scripts.iter().map(String::as_str).collect();
             return crate::qt_webkit::render_url(
                 &url_str,
                 self.enable_javascript,
                 self.js_delay,
+                &scripts,
             )
             .map(|bytes| RenderedPage {
                 bytes,

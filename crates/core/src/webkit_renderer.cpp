@@ -3,6 +3,7 @@
 // This file implements the `wkhtmltopdf::render_url` function declared in
 // `webkit_renderer.h`.  It uses QWebEngineView to load the requested URL,
 // waits for the page to finish loading (with an optional JS-settle delay),
+// evaluates any requested JavaScript snippets via QWebEnginePage::runJavaScript,
 // then grabs a screenshot and returns it as PNG bytes.
 //
 // Requirements:
@@ -20,6 +21,7 @@
 #include <QString>
 #include <QTimer>
 #include <QUrl>
+#include <QVariant>
 #include <QWebEnginePage>
 #include <QWebEngineSettings>
 #include <QWebEngineView>
@@ -33,7 +35,8 @@
 namespace wkhtmltopdf {
 
 rust::Vec<uint8_t> render_url(rust::Str url, bool js_enabled,
-                               uint32_t js_delay_ms) {
+                               uint32_t js_delay_ms,
+                               rust::Slice<rust::Str> run_scripts) {
     // Ensure a QApplication exists for the Qt event loop.  If the calling
     // process already created one we reuse it; otherwise we own one for the
     // duration of this call.
@@ -79,6 +82,32 @@ rust::Vec<uint8_t> render_url(rust::Str url, bool js_enabled,
             "Qt WebEngine: page load failed for URL: " +
             std::string(url.data(), url.size());
         throw std::runtime_error(msg);
+    }
+
+    // Execute any user-provided JavaScript snippets sequentially.  Each
+    // script is run via QWebEnginePage::runJavaScript; a local QEventLoop
+    // is used to block until the asynchronous callback fires, making the
+    // execution effectively synchronous from the caller's perspective.
+    //
+    // Note: Qt WebEngine's runJavaScript callback receives the script's
+    // return value as a QVariant but does not surface JavaScript runtime
+    // errors (exceptions are swallowed by the engine).  The flag guard
+    // below prevents a stall if the callback fires before exec() is reached.
+    if (js_enabled && !run_scripts.empty()) {
+        QWebEnginePage *page = view.page();
+        for (const rust::Str &script : run_scripts) {
+            const QString qscript =
+                QString::fromUtf8(script.data(), static_cast<int>(script.size()));
+            QEventLoop script_loop;
+            bool script_done = false;
+            page->runJavaScript(qscript, [&script_loop, &script_done](const QVariant &) {
+                script_done = true;
+                script_loop.quit();
+            });
+            if (!script_done) {
+                script_loop.exec();
+            }
+        }
     }
 
     // Grab the rendered viewport as a QPixmap and encode to PNG.

@@ -24,12 +24,21 @@ mod ffi {
         /// Render the HTML page at `url` using Qt WebEngine and return the
         /// result as raw PNG bytes.
         ///
+        /// `run_scripts` contains JavaScript snippets that are evaluated in
+        /// the page context after the page has loaded and the settle delay has
+        /// elapsed.  Each script runs sequentially and the call blocks until
+        /// each one completes before the next starts.
+        ///
         /// # Errors
         ///
         /// Propagates any C++ exception thrown by the implementation as a Rust
         /// `Err` (e.g. when the page fails to load).
-        fn render_url(url: &str, js_enabled: bool, js_delay_ms: u32)
-            -> Result<Vec<u8>>;
+        fn render_url(
+            url: &str,
+            js_enabled: bool,
+            js_delay_ms: u32,
+            run_scripts: &[&str],
+        ) -> Result<Vec<u8>>;
     }
 }
 
