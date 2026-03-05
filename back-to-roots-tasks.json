@@ -26,17 +26,18 @@
   {
     "id": "5",
     "description": "Remove all Chrome/headless-browser crate dependencies (e.g. headless_chrome, chromiumoxide, fantoccini) from Cargo.toml files",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 2,
     "depends_on": [
       "1",
       "2"
-    ]
+    ],
+    "last_attempt_at": 1772675125
   },
   {
     "id": "6",
     "description": "Add the selected Qt WebKit Rust wrapper crate(s) to the appropriate Cargo.toml(s) with the latest compatible versions",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 2,
     "depends_on": [
       "1",
