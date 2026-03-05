@@ -14,12 +14,13 @@
   {
     "id": "3",
     "description": "Replace the LICENSE file content with the full LGPL-3.0 license text",
-    "status": "inprogress"
+    "status": "completed",
+    "last_attempt_at": 1772670818
   },
   {
     "id": "4",
     "description": "Update the license field in every Cargo.toml (workspace root, cli/, core/, worker/) from 'MIT' to 'LGPL-3.0'",
-    "status": "pending"
+    "status": "inprogress"
   },
   {
     "id": "5",
