@@ -4,6 +4,7 @@ version = "0.13.0"
 edition = "2021"
 rust-version = "1.80"
 description = "Configuration and settings structs for wkhtmltopdf"
+license = "LGPL-3.0"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
