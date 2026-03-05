@@ -3,9 +3,8 @@
 > **Project status: Active** — This project has been rewritten in Rust.
 
 `wkhtmltopdf` and `wkhtmltoimage` are command-line tools that render HTML into
-PDF and various image formats.  The rendering is performed by a headless
-Chromium browser via the [`headless_chrome`] crate, so no display server is
-required.
+PDF and various image formats.  The rendering is performed by the Qt WebKit
+engine, so no display server is required.
 
 This repository contains a complete Rust reimplementation of the original
 `wkhtmltopdf` / `wkhtmltoimage` tooling.  The C FFI layer (`libwkhtmltox`) is
@@ -21,7 +20,7 @@ The workspace is organised into focused crates under the `crates/` directory:
 | Crate | Description |
 |---|---|
 | `settings` (`wkhtmltopdf-settings`) | Strongly-typed settings structs and enums for every PDF and image option. |
-| `core` (`wkhtmltopdf-core`) | `Renderer` trait, `HeadlessRenderer` (headless Chromium), shared error types. |
+| `core` (`wkhtmltopdf-core`) | `Renderer` trait, `HeadlessRenderer` (Qt WebKit engine), shared error types. |
 | `pdf` (`wkhtmltopdf-pdf`) | `PdfConverter` — multi-page PDF pipeline: margins, headers/footers, TOC, PDF/A, metadata. |
 | `image` (`wkhtmltopdf-image`) | `ImageConverter` — PNG/JPEG/BMP/SVG capture with crop, resize, and DPI support. |
 | `ffi` (`wkhtmltox`) | `cdylib` that re-exports the original `libwkhtmltox` C ABI using the Rust implementation. |
@@ -31,7 +30,8 @@ The workspace is organised into focused crates under the `crates/` directory:
 
 ### Key design choices
 
-* **Headless Chromium** is used for all HTML rendering (replaces Qt WebKit).
+* **Qt WebKit** is used for all HTML rendering, matching the original
+  wkhtmltopdf behaviour.  Enable with the `qt-webkit` feature flag.
 * **`printpdf`** assembles multi-page PDF documents.
 * **`ureq`** fetches remote HTML resources.
 * **`image` crate** handles image encode/decode and transforms.
@@ -48,10 +48,8 @@ The workspace is organised into focused crates under the `crates/` directory:
 # Rust toolchain
 curl https://sh.rustup.rs -sSf | sh
 
-# Chromium (required at runtime for headless rendering)
-sudo apt-get install -y chromium-browser
-# or
-sudo apt-get install -y chromium
+# Qt 5 development libraries (required for the qt-webkit rendering backend)
+sudo apt-get install -y qt5-default libqt5webkit5-dev libqt5webenginewidgets5
 
 # Optional: fonts for full Unicode / CJK support
 sudo apt-get install -y fonts-noto fonts-noto-cjk
@@ -63,9 +61,8 @@ sudo apt-get install -y fonts-noto fonts-noto-cjk
 # Rust toolchain
 curl https://sh.rustup.rs -sSf | sh
 
-# Chromium – install Google Chrome or Chromium via Homebrew
-brew install --cask chromium
-# or install Google Chrome from https://www.google.com/chrome/
+# Qt 5 via Homebrew (includes WebKit)
+brew install qt@5
 
 # Optional: additional fonts
 brew install --cask font-noto-sans
@@ -74,10 +71,9 @@ brew install --cask font-noto-sans
 ### Windows
 
 1. Install the [Rust toolchain](https://rustup.rs/).
-2. Install [Google Chrome](https://www.google.com/chrome/) or
-   [Chromium](https://www.chromium.org/getting-involved/download-chromium/).
-3. Ensure `chrome.exe` / `chromium.exe` is on your `PATH` or in a standard
-   installation directory.
+2. Install [Qt 5](https://www.qt.io/download) including the `Qt WebKit` or
+   `Qt WebEngine` module.
+3. Ensure the Qt `bin/` directory is on your `PATH`.
 
 ---
 
@@ -90,6 +86,9 @@ cd wkhtmltopdf
 
 # Build all workspace crates (debug)
 cargo build
+
+# Build with the Qt WebKit rendering backend enabled
+cargo build --features qt-webkit
 
 # Build release binaries
 cargo build --release
@@ -180,7 +179,7 @@ How it works:
 5. An annotated diff image is always written to the output directory
    (`VISUAL_REGRESSION_OUTPUT_DIR`) so failing pixels can be inspected as CI
    artefacts.
-6. If a headless Chromium browser is unavailable the test is **skipped**
+6. If the Qt WebKit backend is unavailable the test is **skipped**
    (rather than failed) so the suite stays green in minimal CI environments.
 
 Environment variables:

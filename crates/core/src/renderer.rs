@@ -85,7 +85,7 @@ pub trait Renderer {
 }
 
 // ---------------------------------------------------------------------------
-// HeadlessRenderer – initial implementation backed by headless Chromium
+// HeadlessRenderer – implementation backed by Qt WebKit/WebEngine
 // ---------------------------------------------------------------------------
 
 /// A [`Renderer`] implementation backed by Qt WebEngine when the `qt-webkit`
@@ -113,11 +113,11 @@ pub trait Renderer {
 pub struct HeadlessRenderer {
     /// When `true` the browser window is hidden (the normal operating mode).
     pub headless: bool,
-    /// When `true` the browser subprocess runs inside the OS sandbox
-    /// (Chrome's built-in sandbox).  Defaults to `true`.  Only set this to
-    /// `false` when running as root in an environment where the kernel
-    /// namespaces required by Chrome's sandbox are unavailable (e.g. some
-    /// container runtimes); doing so is not recommended in production.
+    /// When `true` the rendering process runs inside the OS sandbox
+    /// (Qt's process isolation).  Defaults to `true`.  Only set this to
+    /// `false` when running in an environment where the kernel namespaces
+    /// required by Qt's sandbox are unavailable (e.g. some container
+    /// runtimes); doing so is not recommended in production.
     pub sandbox: bool,
     /// When `false`, JavaScript execution is disabled in the rendered page.
     pub enable_javascript: bool,
@@ -294,11 +294,11 @@ mod tests {
         fn assert_renderer<R: Renderer>(_: &R) {}
         let renderer = HeadlessRenderer::new();
         assert_renderer(&renderer);
-        // In environments without Chrome the render will fail; that is expected.
+        // In environments without Qt WebKit the render will fail; that is expected.
         let input = HtmlInput::Url("https://example.com".into());
         let result = renderer.render(&input);
         match result {
-            Ok(_) => { /* Chrome was available and rendering succeeded */ }
+            Ok(_) => { /* Qt WebKit was available and rendering succeeded */ }
             Err(RenderError::BackendUnavailable(_)) | Err(RenderError::RenderFailed(_)) => {
                 // Expected in sandboxed / CI environments
             }
