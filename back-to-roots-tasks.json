@@ -20,12 +20,13 @@
   {
     "id": "4",
     "description": "Update the license field in every Cargo.toml (workspace root, cli/, core/, worker/) from 'MIT' to 'LGPL-3.0'",
-    "status": "inprogress"
+    "status": "completed",
+    "last_attempt_at": 1772672502
   },
   {
     "id": "5",
     "description": "Remove all Chrome/headless-browser crate dependencies (e.g. headless_chrome, chromiumoxide, fantoccini) from Cargo.toml files",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 2,
     "depends_on": [
       "1",
