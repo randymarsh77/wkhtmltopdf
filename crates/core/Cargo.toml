@@ -5,6 +5,17 @@ edition = "2021"
 rust-version = "1.80"
 description = "Rendering engine abstraction for wkhtmltopdf"
 license = "LGPL-3.0"
+build = "build.rs"
+
+[features]
+# Enable the Qt WebKit / Qt WebEngine rendering backend via cxx-qt bindings.
+# Requires Qt 5 or Qt 6 (plus cmake) to be installed on the build host.
+qt-webkit = ["dep:cxx-qt", "dep:cxx-qt-lib", "dep:cxx-qt-build"]
 
 [dependencies]
 thiserror = "2"
+cxx-qt = { version = "0.8", optional = true }
+cxx-qt-lib = { version = "0.8", optional = true }
+
+[build-dependencies]
+cxx-qt-build = { version = "0.8", optional = true }
