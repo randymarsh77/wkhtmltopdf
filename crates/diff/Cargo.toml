@@ -4,6 +4,7 @@ version = "0.13.0"
 edition = "2021"
 rust-version = "1.80"
 description = "Perceptual image diffing tool for wkhtmltopdf visual regression testing"
+license = "LGPL-3.0"
 
 [dependencies]
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp"] }

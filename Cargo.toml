@@ -10,3 +10,6 @@ members = [
     "crates/tests",
 ]
 resolver = "2"
+
+[workspace.package]
+license = "LGPL-3.0"
