@@ -1,0 +1,28 @@
+name: wkhtmltopdf
+description: >
+  Convert an HTML file or URL to PDF (or image) using wkhtmltopdf built
+  against Qt6 WebEngine.
+
+branding:
+  icon: file-text
+  color: blue
+
+inputs:
+  input:
+    description: >
+      Path to the HTML file or an HTTP/HTTPS URL to convert.
+    required: true
+  output:
+    description: >
+      Path where the generated PDF (or image) file should be written.
+    required: true
+  args:
+    description: >
+      Extra arguments forwarded verbatim to the wkhtmltopdf binary (e.g.
+      --orientation Landscape --margin-top 10mm).
+    required: false
+    default: ""
+
+runs:
+  using: docker
+  image: Dockerfile
