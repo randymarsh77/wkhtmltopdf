@@ -69,19 +69,20 @@
   {
     "id": "9",
     "description": "Update README.md, IMPLEMENTATION.md, and any inline code comments to reflect the WebKit/Qt stack and LGPL-3.0 license",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 4,
     "depends_on": [
       "3",
       "4",
       "7",
       "8"
-    ]
+    ],
+    "last_attempt_at": 1772686759
   },
   {
     "id": "10",
     "description": "Run the full build and test suite (cargo build --workspace && cargo test --workspace) and fix any compilation or test failures introduced by the browser engine swap",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 4,
     "depends_on": [
       "7",
