@@ -48,17 +48,18 @@
   {
     "id": "7",
     "description": "Replace Chrome headless browser initialization and page-loading code with equivalent Qt WebKit API calls (QWebEngineView or WebKitWebView), preserving all existing public interfaces",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 3,
     "depends_on": [
       "5",
       "6"
-    ]
+    ],
+    "last_attempt_at": 1772681851
   },
   {
     "id": "8",
     "description": "Replace Chrome headless screenshot, DOM query, and JavaScript evaluation calls with the corresponding Qt WebKit equivalents",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 3,
     "depends_on": [
       "7"
