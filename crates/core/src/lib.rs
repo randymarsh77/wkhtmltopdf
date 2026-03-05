@@ -8,6 +8,9 @@
 pub mod renderer;
 pub use renderer::{HeadlessRenderer, HtmlInput, RenderError, RenderedPage, Renderer};
 
+#[cfg(feature = "qt-webkit")]
+pub(crate) mod qt_webkit;
+
 use thiserror::Error;
 
 /// Errors that can occur during a conversion.
