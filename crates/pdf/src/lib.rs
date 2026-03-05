@@ -15,8 +15,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use lopdf::Bookmark as LopdfBookmark;
 use printpdf::{
-    conformance::PdfConformance, deserialize::PdfWarnMsg, GeneratePdfOptions, PdfDocument,
-    serialize::PdfSaveOptions,
+    conformance::PdfConformance, deserialize::PdfWarnMsg, serialize::PdfSaveOptions,
+    GeneratePdfOptions, PdfDocument,
 };
 use thiserror::Error;
 use wkhtmltopdf_core::{ConvertError, Converter};
@@ -105,7 +105,11 @@ impl Converter for PdfConverter {
         let has_toc = self.objects.iter().any(|o| o.is_table_of_content);
 
         // Find TOC settings from the first TOC object (used for back-link injection).
-        let toc_settings = self.objects.iter().find(|o| o.is_table_of_content).map(|o| &o.toc);
+        let toc_settings = self
+            .objects
+            .iter()
+            .find(|o| o.is_table_of_content)
+            .map(|o| &o.toc);
         let toc_depth = toc_settings.map(|t| t.depth).unwrap_or(3);
         let needs_back_links = toc_settings.map(|t| t.back_links).unwrap_or(false);
 
@@ -157,8 +161,10 @@ impl Converter for PdfConverter {
             let page_src = object.page.as_deref().unwrap_or("<toc>");
 
             // Inject header/footer bands if any settings are active.
-            let header_band = build_band_html(&object.header, true, &date, &title, page_src, &object.load)?;
-            let footer_band = build_band_html(&object.footer, false, &date, &title, page_src, &object.load)?;
+            let header_band =
+                build_band_html(&object.header, true, &date, &title, page_src, &object.load)?;
+            let footer_band =
+                build_band_html(&object.footer, false, &date, &title, page_src, &object.load)?;
             let html = if !header_band.is_empty() || !footer_band.is_empty() {
                 inject_header_footer(
                     &html,
@@ -192,7 +198,7 @@ impl Converter for PdfConverter {
                 &opts,
                 &mut warnings,
             )
-            .map_err(|e| ConvertError::Render(e))?;
+            .map_err(ConvertError::Render)?;
 
             match combined.take() {
                 None => combined = Some(doc),
@@ -204,12 +210,13 @@ impl Converter for PdfConverter {
         }
 
         let mut doc = combined.ok_or_else(|| {
-            ConvertError::Render("no pages to convert: add at least one PdfObject with a page URL".into())
+            ConvertError::Render(
+                "no pages to convert: add at least one PdfObject with a page URL".into(),
+            )
         })?;
 
         // Apply document metadata.
-        doc.metadata.info.document_title =
-            self.global.document_title.clone().unwrap_or_default();
+        doc.metadata.info.document_title = self.global.document_title.clone().unwrap_or_default();
         doc.metadata.info.author = self.global.author.clone().unwrap_or_default();
         doc.metadata.info.subject = self.global.subject.clone().unwrap_or_default();
 
@@ -232,8 +239,9 @@ impl Converter for PdfConverter {
         // -----------------------------------------------------------------------
         if self.global.outline && !outline_entries.is_empty() {
             // Re-parse the PDF with lopdf so we can embed a proper outline tree.
-            let mut lopdf_doc = lopdf::Document::load_mem(&pdf_bytes)
-                .map_err(|e| ConvertError::Render(format!("failed to re-parse PDF for outline: {e}")))?;
+            let mut lopdf_doc = lopdf::Document::load_mem(&pdf_bytes).map_err(|e| {
+                ConvertError::Render(format!("failed to re-parse PDF for outline: {e}"))
+            })?;
 
             add_outline_to_lopdf(&mut lopdf_doc, &outline_entries);
 
@@ -248,7 +256,9 @@ impl Converter for PdfConverter {
             let mut buf: Vec<u8> = Vec::new();
             lopdf_doc
                 .save_to(&mut std::io::Cursor::new(&mut buf))
-                .map_err(|e| ConvertError::Render(format!("failed to save PDF with outline: {e}")))?;
+                .map_err(|e| {
+                    ConvertError::Render(format!("failed to save PDF with outline: {e}"))
+                })?;
             return Ok(buf);
         }
 
@@ -436,9 +446,9 @@ fn unit_real_to_mm(ur: &UnitReal) -> f32 {
 /// Map our [`PdfAConformance`] enum to printpdf's [`PdfConformance`].
 fn pdf_a_conformance_to_printpdf(conformance: PdfAConformance) -> PdfConformance {
     match conformance {
-        PdfAConformance::None => PdfConformance::Custom(
-            printpdf::conformance::CustomPdfConformance::default(),
-        ),
+        PdfAConformance::None => {
+            PdfConformance::Custom(printpdf::conformance::CustomPdfConformance::default())
+        }
         PdfAConformance::A1b => PdfConformance::A1B_2005_PDF_1_4,
         PdfAConformance::A2b => PdfConformance::A2B_2011_PDF_1_7,
         PdfAConformance::A3b => PdfConformance::A3_2012_PDF_1_7,
@@ -470,7 +480,16 @@ fn current_date_string() -> String {
     let month_days: [u64; 12] = [
         31,
         if is_leap_year(year) { 29 } else { 28 },
-        31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
     ];
     let mut month = 1u32;
     for &md in &month_days {
@@ -655,7 +674,6 @@ const HEADING_CLOSE_TAGS: [&str; 6] = ["</h1>", "</h2>", "</h3>", "</h4>", "</h5
 /// an `id` attribute, that value is used as the anchor; otherwise a
 /// URL-safe slug is derived from the heading text and made unique within
 /// the returned list.
-
 pub fn extract_headings(html: &str, max_depth: u32) -> Vec<HeadingEntry> {
     let mut entries: Vec<HeadingEntry> = Vec::new();
     let lower = html.to_ascii_lowercase();
@@ -665,8 +683,7 @@ pub fn extract_headings(html: &str, max_depth: u32) -> Vec<HeadingEntry> {
     while pos < lower.len() {
         // Find the earliest heading tag (h1…h{max_depth}) starting at `pos`.
         let mut best: Option<(usize, usize)> = None;
-        for idx in 0..max_depth {
-            let tag = HEADING_OPEN_TAGS[idx];
+        for (idx, tag) in HEADING_OPEN_TAGS.iter().enumerate().take(max_depth) {
             if let Some(rel) = lower[pos..].find(tag) {
                 let abs = pos + rel;
                 // The character immediately after the tag name must be a
@@ -675,10 +692,9 @@ pub fn extract_headings(html: &str, max_depth: u32) -> Vec<HeadingEntry> {
                 if matches!(
                     after,
                     Some(b'>') | Some(b' ') | Some(b'\t') | Some(b'\n') | Some(b'\r') | None
-                ) {
-                    if best.map_or(true, |(bp, _)| abs < bp) {
-                        best = Some((abs, idx));
-                    }
+                ) && best.map_or(true, |(bp, _)| abs < bp)
+                {
+                    best = Some((abs, idx));
                 }
             }
         }
@@ -706,10 +722,13 @@ pub fn extract_headings(html: &str, max_depth: u32) -> Vec<HeadingEntry> {
             let text = strip_html_tags(inner).trim().to_string();
 
             if !text.is_empty() {
-                let anchor = extract_id_attr(opening_tag).unwrap_or_else(|| {
-                    make_unique_anchor(&slugify_text(&text), &entries)
+                let anchor = extract_id_attr(opening_tag)
+                    .unwrap_or_else(|| make_unique_anchor(&slugify_text(&text), &entries));
+                entries.push(HeadingEntry {
+                    level,
+                    text,
+                    anchor,
                 });
-                entries.push(HeadingEntry { level, text, anchor });
             }
 
             pos = content_end + close_tag.len();
@@ -751,10 +770,9 @@ pub fn inject_heading_anchors(html: &str, headings: &[HeadingEntry], max_depth: 
 
         // Determine whether this '<' opens a heading tag h1…h{max_depth}.
         let mut found_level: Option<u32> = None;
-        for idx in 0..max_depth {
-            let tag_name = HEADING_TAG_NAMES[idx];
+        for (idx, tag_name) in HEADING_TAG_NAMES.iter().enumerate().take(max_depth) {
             let tag_end = abs_lt + 1 + tag_name.len();
-            if tag_end <= lower.len() && &lower[abs_lt + 1..tag_end] == tag_name {
+            if tag_end <= lower.len() && &lower[abs_lt + 1..tag_end] == *tag_name {
                 let after = lower.as_bytes().get(tag_end).copied();
                 if matches!(
                     after,
@@ -833,7 +851,11 @@ pub fn generate_toc_html(headings: &[HeadingEntry], toc: &TableOfContent) -> Str
             text_html
         };
 
-        let dot_style = if toc.use_dotted_lines { "" } else { "visibility:hidden;" };
+        let dot_style = if toc.use_dotted_lines {
+            ""
+        } else {
+            "visibility:hidden;"
+        };
         rows.push_str(&format!(
             "<div class=\"_wk_toc_row\" style=\"margin-left:{indent:.2}em;font-size:{scale:.3}em;\">\
              <span class=\"_wk_toc_text\">{content}</span>\
@@ -946,12 +968,10 @@ fn extract_id_attr(tag: &str) -> Option<String> {
     let lower = tag.to_ascii_lowercase();
     let id_pos = lower.find("id=")?;
     let rest = &tag[id_pos + 3..];
-    let value = if rest.starts_with('"') {
-        let inner = &rest[1..];
+    let value = if let Some(inner) = rest.strip_prefix('"') {
         let end = inner.find('"').unwrap_or(inner.len());
         &inner[..end]
-    } else if rest.starts_with('\'') {
-        let inner = &rest[1..];
+    } else if let Some(inner) = rest.strip_prefix('\'') {
         let end = inner.find('\'').unwrap_or(inner.len());
         &inner[..end]
     } else {
@@ -1054,7 +1074,7 @@ pub fn add_outline_to_lopdf(
 
             // Pop any stack entries at the same or deeper level so we find the
             // correct parent.
-            while level_stack.last().map_or(false, |(l, _)| *l >= heading.level) {
+            while level_stack.last().is_some_and(|(l, _)| *l >= heading.level) {
                 level_stack.pop();
             }
 
@@ -1100,7 +1120,7 @@ pub fn build_outline_xml(outline_entries: &[(usize, Vec<HeadingEntry>)]) -> Stri
 
     for (level, title, page, anchor) in &flat {
         // Close any open levels deeper than the current heading level.
-        while open_levels.last().map_or(false, |l| *l >= *level) {
+        while open_levels.last().is_some_and(|l| *l >= *level) {
             let indent = "  ".repeat(open_levels.len());
             xml.push_str(&format!("{}</outline:item>\n", indent));
             open_levels.pop();
@@ -1185,19 +1205,28 @@ mod tests {
 
     #[test]
     fn unit_real_to_mm_millimeter() {
-        let ur = UnitReal { value: 10.0, unit: Unit::Millimeter };
+        let ur = UnitReal {
+            value: 10.0,
+            unit: Unit::Millimeter,
+        };
         assert!((unit_real_to_mm(&ur) - 10.0).abs() < 0.001);
     }
 
     #[test]
     fn unit_real_to_mm_centimeter() {
-        let ur = UnitReal { value: 1.0, unit: Unit::Centimeter };
+        let ur = UnitReal {
+            value: 1.0,
+            unit: Unit::Centimeter,
+        };
         assert!((unit_real_to_mm(&ur) - 10.0).abs() < 0.001);
     }
 
     #[test]
     fn unit_real_to_mm_inch() {
-        let ur = UnitReal { value: 1.0, unit: Unit::Inch };
+        let ur = UnitReal {
+            value: 1.0,
+            unit: Unit::Inch,
+        };
         assert!((unit_real_to_mm(&ur) - 25.4).abs() < 0.001);
     }
 
@@ -1232,8 +1261,14 @@ mod tests {
     fn page_dimensions_custom_explicit() {
         let mut g = PdfGlobal::default();
         g.size.page_size = PageSize::Custom;
-        g.size.width = Some(UnitReal { value: 100.0, unit: Unit::Millimeter });
-        g.size.height = Some(UnitReal { value: 200.0, unit: Unit::Millimeter });
+        g.size.width = Some(UnitReal {
+            value: 100.0,
+            unit: Unit::Millimeter,
+        });
+        g.size.height = Some(UnitReal {
+            value: 200.0,
+            unit: Unit::Millimeter,
+        });
         let (w, h) = page_dimensions_mm(&g);
         assert!((w - 100.0).abs() < 0.1);
         assert!((h - 200.0).abs() < 0.1);
@@ -1269,15 +1304,26 @@ mod tests {
 
     #[test]
     fn substitute_vars_replaces_date_title_url() {
-        let result = substitute_vars("Date: [date] Title: [title] URL: [url]", "2024-01-15", "My Doc", "http://example.com");
-        assert_eq!(result, "Date: 2024-01-15 Title: My Doc URL: http://example.com");
+        let result = substitute_vars(
+            "Date: [date] Title: [title] URL: [url]",
+            "2024-01-15",
+            "My Doc",
+            "http://example.com",
+        );
+        assert_eq!(
+            result,
+            "Date: 2024-01-15 Title: My Doc URL: http://example.com"
+        );
     }
 
     #[test]
     fn substitute_vars_replaces_page_with_css_span() {
         let result = substitute_vars("Page [page] of [toPage]", "", "", "");
         assert!(result.contains("_wk_page"), "should contain _wk_page span");
-        assert!(result.contains("_wk_topage"), "should contain _wk_topage span");
+        assert!(
+            result.contains("_wk_topage"),
+            "should contain _wk_topage span"
+        );
     }
 
     #[test]
@@ -1289,7 +1335,15 @@ mod tests {
     #[test]
     fn build_band_html_empty_when_no_content() {
         let hf = HeaderFooter::default(); // no text, no html_url, line=false
-        let result = build_band_html(&hf, true, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
+        let result = build_band_html(
+            &hf,
+            true,
+            "d",
+            "t",
+            "u",
+            &wkhtmltopdf_settings::LoadPage::default(),
+        )
+        .unwrap();
         assert!(result.is_empty());
     }
 
@@ -1297,7 +1351,15 @@ mod tests {
     fn build_band_html_returns_html_when_left_set() {
         let mut hf = HeaderFooter::default();
         hf.left = Some("Left text".into());
-        let result = build_band_html(&hf, true, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
+        let result = build_band_html(
+            &hf,
+            true,
+            "d",
+            "t",
+            "u",
+            &wkhtmltopdf_settings::LoadPage::default(),
+        )
+        .unwrap();
         assert!(result.contains("Left text"));
         assert!(result.contains("position:fixed"));
         assert!(result.contains("top:0"));
@@ -1307,7 +1369,15 @@ mod tests {
     fn build_band_html_footer_positions_at_bottom() {
         let mut hf = HeaderFooter::default();
         hf.right = Some("Footer".into());
-        let result = build_band_html(&hf, false, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
+        let result = build_band_html(
+            &hf,
+            false,
+            "d",
+            "t",
+            "u",
+            &wkhtmltopdf_settings::LoadPage::default(),
+        )
+        .unwrap();
         assert!(result.contains("bottom:0"));
     }
 
@@ -1316,9 +1386,25 @@ mod tests {
         let mut hf = HeaderFooter::default();
         hf.center = Some("Title".into());
         hf.line = true;
-        let header = build_band_html(&hf, true, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
+        let header = build_band_html(
+            &hf,
+            true,
+            "d",
+            "t",
+            "u",
+            &wkhtmltopdf_settings::LoadPage::default(),
+        )
+        .unwrap();
         assert!(header.contains("border-bottom"));
-        let footer = build_band_html(&hf, false, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
+        let footer = build_band_html(
+            &hf,
+            false,
+            "d",
+            "t",
+            "u",
+            &wkhtmltopdf_settings::LoadPage::default(),
+        )
+        .unwrap();
         assert!(footer.contains("border-top"));
     }
 
@@ -1328,7 +1414,15 @@ mod tests {
         hf.left = Some("x".into());
         hf.font_name = "Times New Roman".into();
         hf.font_size = 10;
-        let result = build_band_html(&hf, true, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
+        let result = build_band_html(
+            &hf,
+            true,
+            "d",
+            "t",
+            "u",
+            &wkhtmltopdf_settings::LoadPage::default(),
+        )
+        .unwrap();
         assert!(result.contains("Times New Roman"));
         assert!(result.contains("10pt"));
     }
@@ -1337,7 +1431,15 @@ mod tests {
     fn build_band_html_only_line_produces_output() {
         let mut hf = HeaderFooter::default();
         hf.line = true;
-        let result = build_band_html(&hf, true, "d", "t", "u", &wkhtmltopdf_settings::LoadPage::default()).unwrap();
+        let result = build_band_html(
+            &hf,
+            true,
+            "d",
+            "t",
+            "u",
+            &wkhtmltopdf_settings::LoadPage::default(),
+        )
+        .unwrap();
         assert!(!result.is_empty());
     }
 
@@ -1371,7 +1473,10 @@ mod tests {
         let html = "<html><body>content</body></html>";
         let result = inject_header_footer(html, "<div>H</div>", "<div>F</div>", 2.0, 3.0);
         assert!(result.contains("margin-top:"), "should set top margin");
-        assert!(result.contains("margin-bottom:"), "should set bottom margin");
+        assert!(
+            result.contains("margin-bottom:"),
+            "should set bottom margin"
+        );
     }
 
     #[test]
@@ -1474,7 +1579,10 @@ mod tests {
         let html = "<h1>Title</h1>";
         let headings = extract_headings(html, 3);
         let injected = inject_heading_anchors(html, &headings, 3);
-        assert!(injected.contains("id=\"title\""), "should contain id='title', got: {injected}");
+        assert!(
+            injected.contains("id=\"title\""),
+            "should contain id='title', got: {injected}"
+        );
     }
 
     #[test]
@@ -1508,8 +1616,16 @@ mod tests {
     #[test]
     fn generate_toc_html_contains_headings() {
         let headings = vec![
-            HeadingEntry { level: 1, text: "Chapter 1".into(), anchor: "chapter-1".into() },
-            HeadingEntry { level: 2, text: "Section 1.1".into(), anchor: "section-1-1".into() },
+            HeadingEntry {
+                level: 1,
+                text: "Chapter 1".into(),
+                anchor: "chapter-1".into(),
+            },
+            HeadingEntry {
+                level: 2,
+                text: "Section 1.1".into(),
+                anchor: "section-1-1".into(),
+            },
         ];
         let toc = wkhtmltopdf_settings::TableOfContent::default();
         let html = generate_toc_html(&headings, &toc);
@@ -1529,10 +1645,7 @@ mod tests {
             ..Default::default()
         };
         let html = generate_toc_html(&headings, &toc);
-        assert!(
-            html.contains("_wk_toc_dots"),
-            "dotted-line element missing"
-        );
+        assert!(html.contains("_wk_toc_dots"), "dotted-line element missing");
         // The dotted-line span should NOT be hidden
         assert!(!html.contains("visibility:hidden"));
     }
@@ -1586,9 +1699,21 @@ mod tests {
     #[test]
     fn generate_toc_html_indentation_increases_per_level() {
         let headings = vec![
-            HeadingEntry { level: 1, text: "H1".into(), anchor: "h1".into() },
-            HeadingEntry { level: 2, text: "H2".into(), anchor: "h2".into() },
-            HeadingEntry { level: 3, text: "H3".into(), anchor: "h3".into() },
+            HeadingEntry {
+                level: 1,
+                text: "H1".into(),
+                anchor: "h1".into(),
+            },
+            HeadingEntry {
+                level: 2,
+                text: "H2".into(),
+                anchor: "h2".into(),
+            },
+            HeadingEntry {
+                level: 3,
+                text: "H3".into(),
+                anchor: "h3".into(),
+            },
         ];
         let toc = wkhtmltopdf_settings::TableOfContent {
             indentation: "1em".into(),
@@ -1596,16 +1721,28 @@ mod tests {
         };
         let html = generate_toc_html(&headings, &toc);
         // h1 has 0 indentation, h2 has 1em, h3 has 2em
-        assert!(html.contains("margin-left:0.00em"), "h1 should have 0em indent");
-        assert!(html.contains("margin-left:1.00em"), "h2 should have 1em indent");
-        assert!(html.contains("margin-left:2.00em"), "h3 should have 2em indent");
+        assert!(
+            html.contains("margin-left:0.00em"),
+            "h1 should have 0em indent"
+        );
+        assert!(
+            html.contains("margin-left:1.00em"),
+            "h2 should have 1em indent"
+        );
+        assert!(
+            html.contains("margin-left:2.00em"),
+            "h3 should have 2em indent"
+        );
     }
 
     #[test]
     fn generate_toc_html_toc_anchor_in_title() {
         let toc = wkhtmltopdf_settings::TableOfContent::default();
         let html = generate_toc_html(&[], &toc);
-        assert!(html.contains("id=\"_wk_toc\""), "TOC title needs back-link anchor");
+        assert!(
+            html.contains("id=\"_wk_toc\""),
+            "TOC title needs back-link anchor"
+        );
     }
 
     #[test]
@@ -1613,7 +1750,10 @@ mod tests {
         let xsl = default_toc_xsl();
         assert!(!xsl.is_empty());
         assert!(xsl.contains("<?xml"), "should start with XML declaration");
-        assert!(xsl.contains("xsl:stylesheet"), "should contain stylesheet element");
+        assert!(
+            xsl.contains("xsl:stylesheet"),
+            "should contain stylesheet element"
+        );
         assert!(xsl.contains("outline:item"), "should handle outline items");
     }
 
@@ -1639,15 +1779,20 @@ mod tests {
 
     #[test]
     fn make_unique_anchor_with_conflict() {
-        let existing = vec![
-            HeadingEntry { level: 1, text: "S".into(), anchor: "section".into() },
-        ];
+        let existing = vec![HeadingEntry {
+            level: 1,
+            text: "S".into(),
+            anchor: "section".into(),
+        }];
         assert_eq!(make_unique_anchor("section", &existing), "section-2");
     }
 
     #[test]
     fn escape_html_escapes_special_chars() {
-        assert_eq!(escape_html("<b>Hello & \"World\"</b>"), "&lt;b&gt;Hello &amp; &quot;World&quot;&lt;/b&gt;");
+        assert_eq!(
+            escape_html("<b>Hello & \"World\"</b>"),
+            "&lt;b&gt;Hello &amp; &quot;World&quot;&lt;/b&gt;"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -1668,8 +1813,16 @@ mod tests {
         let entries = vec![(
             0,
             vec![
-                HeadingEntry { level: 1, text: "Chapter 1".into(), anchor: "chapter-1".into() },
-                HeadingEntry { level: 1, text: "Chapter 2".into(), anchor: "chapter-2".into() },
+                HeadingEntry {
+                    level: 1,
+                    text: "Chapter 1".into(),
+                    anchor: "chapter-1".into(),
+                },
+                HeadingEntry {
+                    level: 1,
+                    text: "Chapter 2".into(),
+                    anchor: "chapter-2".into(),
+                },
             ],
         )];
         let xml = build_outline_xml(&entries);
@@ -1684,9 +1837,21 @@ mod tests {
         let entries = vec![(
             0,
             vec![
-                HeadingEntry { level: 1, text: "Ch1".into(), anchor: "ch1".into() },
-                HeadingEntry { level: 2, text: "Sec1".into(), anchor: "sec1".into() },
-                HeadingEntry { level: 1, text: "Ch2".into(), anchor: "ch2".into() },
+                HeadingEntry {
+                    level: 1,
+                    text: "Ch1".into(),
+                    anchor: "ch1".into(),
+                },
+                HeadingEntry {
+                    level: 2,
+                    text: "Sec1".into(),
+                    anchor: "sec1".into(),
+                },
+                HeadingEntry {
+                    level: 1,
+                    text: "Ch2".into(),
+                    anchor: "ch2".into(),
+                },
             ],
         )];
         let xml = build_outline_xml(&entries);
@@ -1722,8 +1887,22 @@ mod tests {
     fn build_outline_xml_page_numbers_offset_by_object() {
         // Two objects: first starts at page 0, second at page 5.
         let entries = vec![
-            (0, vec![HeadingEntry { level: 1, text: "A".into(), anchor: "a".into() }]),
-            (5, vec![HeadingEntry { level: 1, text: "B".into(), anchor: "b".into() }]),
+            (
+                0,
+                vec![HeadingEntry {
+                    level: 1,
+                    text: "A".into(),
+                    anchor: "a".into(),
+                }],
+            ),
+            (
+                5,
+                vec![HeadingEntry {
+                    level: 1,
+                    text: "B".into(),
+                    anchor: "b".into(),
+                }],
+            ),
         ];
         let xml = build_outline_xml(&entries);
         assert!(xml.contains("page=\"1\""), "first object page should be 1");

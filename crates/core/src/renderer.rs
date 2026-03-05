@@ -254,11 +254,8 @@ mod tests {
 
     #[test]
     fn headless_renderer_with_js_settings() {
-        let renderer = HeadlessRenderer::with_js_settings(
-            false,
-            500,
-            vec!["console.log('test')".to_string()],
-        );
+        let renderer =
+            HeadlessRenderer::with_js_settings(false, 500, vec!["console.log('test')".to_string()]);
         assert!(renderer.sandbox);
         assert!(!renderer.enable_javascript);
         assert_eq!(renderer.js_delay, 500);

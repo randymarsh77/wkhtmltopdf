@@ -24,6 +24,7 @@
 //! The image conversion workflow is analogous using `wkhtmltoimage_*` symbols.
 
 #![allow(non_camel_case_types)]
+#![allow(clippy::missing_safety_doc)]
 
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int, c_long, c_uchar};
@@ -33,8 +34,8 @@ use wkhtmltopdf_core::Converter;
 use wkhtmltopdf_image::ImageConverter;
 use wkhtmltopdf_pdf::PdfConverter;
 use wkhtmltopdf_settings::{
-    ColorMode, ImageGlobal, LoadErrorHandling, Orientation, PdfGlobal, PdfObject, PageSize,
-    Unit, UnitReal,
+    ColorMode, ImageGlobal, LoadErrorHandling, Orientation, PageSize, PdfGlobal, PdfObject, Unit,
+    UnitReal,
 };
 
 // ---------------------------------------------------------------------------
@@ -565,9 +566,7 @@ fn pdf_object_get(obj: &PdfObject, name: &str) -> Option<String> {
             Some(bool_str(obj.load.debug_javascript))
         }
         "load.loadErrorHandling" => Some(format!("{:?}", obj.load.load_error_handling)),
-        "load.mediaLoadErrorHandling" => {
-            Some(format!("{:?}", obj.load.media_load_error_handling))
-        }
+        "load.mediaLoadErrorHandling" => Some(format!("{:?}", obj.load.media_load_error_handling)),
         "load.printMediaType" => Some(bool_str(obj.load.print_media_type)),
         _ => None,
     }
@@ -706,16 +705,8 @@ fn image_global_get(gs: &ImageGlobal, name: &str) -> Option<String> {
         "out" => Some(gs.output.clone().unwrap_or_default()),
         "in" => Some(gs.page.clone().unwrap_or_default()),
         "fmt" => Some(gs.format.clone().unwrap_or_default()),
-        "screenWidth" => Some(
-            gs.screen_width
-                .map(|v| v.to_string())
-                .unwrap_or_default(),
-        ),
-        "screenHeight" => Some(
-            gs.screen_height
-                .map(|v| v.to_string())
-                .unwrap_or_default(),
-        ),
+        "screenWidth" => Some(gs.screen_width.map(|v| v.to_string()).unwrap_or_default()),
+        "screenHeight" => Some(gs.screen_height.map(|v| v.to_string()).unwrap_or_default()),
         "smartWidth" => Some(bool_str(gs.smart_width)),
         "quality" => Some(gs.quality.to_string()),
         "transparent" => Some(bool_str(gs.transparent)),
@@ -726,9 +717,7 @@ fn image_global_get(gs: &ImageGlobal, name: &str) -> Option<String> {
         "crop.height" => Some(gs.crop.height.to_string()),
         "web.background" => Some(bool_str(gs.web.background)),
         "web.loadImages" => Some(bool_str(gs.web.load_images)),
-        "web.enableJavascript" | "web.enableJavaScript" => {
-            Some(bool_str(gs.web.enable_javascript))
-        }
+        "web.enableJavascript" | "web.enableJavaScript" => Some(bool_str(gs.web.enable_javascript)),
         "web.enableIntelligentShrinking" => Some(bool_str(gs.web.enable_intelligent_shrinking)),
         "web.minimumFontSize" => Some(
             gs.web
@@ -762,7 +751,11 @@ fn bool_str(b: bool) -> String {
 }
 
 fn opt_str(s: &str) -> Option<String> {
-    if s.is_empty() { None } else { Some(s.to_owned()) }
+    if s.is_empty() {
+        None
+    } else {
+        Some(s.to_owned())
+    }
 }
 
 fn parse_page_size(s: &str) -> PageSize {
@@ -789,20 +782,23 @@ fn parse_unit_real(s: &str) -> Option<UnitReal> {
     if s.is_empty() {
         return None;
     }
-    let (num, unit) = if s.ends_with("mm") {
-        (&s[..s.len() - 2], Unit::Millimeter)
-    } else if s.ends_with("cm") {
-        (&s[..s.len() - 2], Unit::Centimeter)
-    } else if s.ends_with("in") {
-        (&s[..s.len() - 2], Unit::Inch)
-    } else if s.ends_with("pt") {
-        (&s[..s.len() - 2], Unit::Point)
-    } else if s.ends_with("px") {
-        (&s[..s.len() - 2], Unit::Pixel)
+    let (num, unit) = if let Some(s) = s.strip_suffix("mm") {
+        (s, Unit::Millimeter)
+    } else if let Some(s) = s.strip_suffix("cm") {
+        (s, Unit::Centimeter)
+    } else if let Some(s) = s.strip_suffix("in") {
+        (s, Unit::Inch)
+    } else if let Some(s) = s.strip_suffix("pt") {
+        (s, Unit::Point)
+    } else if let Some(s) = s.strip_suffix("px") {
+        (s, Unit::Pixel)
     } else {
         (s, Unit::Millimeter)
     };
-    num.trim().parse::<f64>().ok().map(|value| UnitReal { value, unit })
+    num.trim()
+        .parse::<f64>()
+        .ok()
+        .map(|value| UnitReal { value, unit })
 }
 
 fn unit_real_to_str(ur: &UnitReal) -> String {
@@ -862,8 +858,7 @@ pub unsafe extern "C" fn wkhtmltopdf_version() -> *const c_char {
 /// [`wkhtmltopdf_create_converter`] (which takes ownership) or
 /// [`wkhtmltopdf_destroy_global_settings`].
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn wkhtmltopdf_create_global_settings(
-) -> *mut wkhtmltopdf_global_settings {
+pub unsafe extern "C" fn wkhtmltopdf_create_global_settings() -> *mut wkhtmltopdf_global_settings {
     Box::into_raw(Box::new(wkhtmltopdf_global_settings {
         inner: PdfGlobal::default(),
     }))
@@ -882,8 +877,7 @@ pub unsafe extern "C" fn wkhtmltopdf_destroy_global_settings(
 
 /// Allocate a new `wkhtmltopdf_object_settings` struct with default values.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn wkhtmltopdf_create_object_settings(
-) -> *mut wkhtmltopdf_object_settings {
+pub unsafe extern "C" fn wkhtmltopdf_create_object_settings() -> *mut wkhtmltopdf_object_settings {
     Box::into_raw(Box::new(wkhtmltopdf_object_settings {
         inner: PdfObject::default(),
     }))
@@ -1022,9 +1016,7 @@ pub unsafe extern "C" fn wkhtmltopdf_create_converter(
 
 /// Destroy a PDF converter and free all associated resources.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn wkhtmltopdf_destroy_converter(
-    converter: *mut wkhtmltopdf_converter,
-) {
+pub unsafe extern "C" fn wkhtmltopdf_destroy_converter(converter: *mut wkhtmltopdf_converter) {
     if !converter.is_null() {
         drop(Box::from_raw(converter));
     }
@@ -1049,7 +1041,11 @@ pub unsafe extern "C" fn wkhtmltopdf_add_object(
         None
     } else {
         let s = cstr_to_str(data);
-        if s.is_empty() { None } else { Some(s.to_owned()) }
+        if s.is_empty() {
+            None
+        } else {
+            Some(s.to_owned())
+        }
     };
     (*converter).objects.push((obj_box.inner, inline_data));
 }
@@ -1138,9 +1134,7 @@ pub unsafe extern "C" fn wkhtmltopdf_set_finished_callback(
 ///
 /// Returns 1 on success, 0 on failure.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn wkhtmltopdf_convert(
-    converter: *mut wkhtmltopdf_converter,
-) -> c_int {
+pub unsafe extern "C" fn wkhtmltopdf_convert(converter: *mut wkhtmltopdf_converter) -> c_int {
     if converter.is_null() {
         return 0;
     }
@@ -1182,9 +1176,7 @@ pub unsafe extern "C" fn wkhtmltopdf_convert(
 
 /// Return the current conversion phase (0-based index).
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn wkhtmltopdf_current_phase(
-    converter: *mut wkhtmltopdf_converter,
-) -> c_int {
+pub unsafe extern "C" fn wkhtmltopdf_current_phase(converter: *mut wkhtmltopdf_converter) -> c_int {
     if converter.is_null() {
         return -1;
     }
@@ -1193,9 +1185,7 @@ pub unsafe extern "C" fn wkhtmltopdf_current_phase(
 
 /// Return the total number of conversion phases.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn wkhtmltopdf_phase_count(
-    converter: *mut wkhtmltopdf_converter,
-) -> c_int {
+pub unsafe extern "C" fn wkhtmltopdf_phase_count(converter: *mut wkhtmltopdf_converter) -> c_int {
     if converter.is_null() {
         return 0;
     }
@@ -1321,8 +1311,8 @@ pub unsafe extern "C" fn wkhtmltoimage_version() -> *const c_char {
 
 /// Allocate a new `wkhtmltoimage_global_settings` with default values.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn wkhtmltoimage_create_global_settings(
-) -> *mut wkhtmltoimage_global_settings {
+pub unsafe extern "C" fn wkhtmltoimage_create_global_settings() -> *mut wkhtmltoimage_global_settings
+{
     Box::into_raw(Box::new(wkhtmltoimage_global_settings {
         inner: ImageGlobal::default(),
     }))
@@ -1386,7 +1376,11 @@ pub unsafe extern "C" fn wkhtmltoimage_create_converter(
         None
     } else {
         let s = cstr_to_str(data);
-        if s.is_empty() { None } else { Some(s.to_owned()) }
+        if s.is_empty() {
+            None
+        } else {
+            Some(s.to_owned())
+        }
     };
     let phase_descriptions = vec![
         CString::new("Loading page").unwrap(),
@@ -1411,9 +1405,7 @@ pub unsafe extern "C" fn wkhtmltoimage_create_converter(
 
 /// Destroy an image converter and free all associated resources.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn wkhtmltoimage_destroy_converter(
-    converter: *mut wkhtmltoimage_converter,
-) {
+pub unsafe extern "C" fn wkhtmltoimage_destroy_converter(converter: *mut wkhtmltoimage_converter) {
     if !converter.is_null() {
         drop(Box::from_raw(converter));
     }
@@ -1500,9 +1492,7 @@ pub unsafe extern "C" fn wkhtmltoimage_set_finished_callback(
 ///
 /// Returns 1 on success, 0 on failure.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn wkhtmltoimage_convert(
-    converter: *mut wkhtmltoimage_converter,
-) -> c_int {
+pub unsafe extern "C" fn wkhtmltoimage_convert(converter: *mut wkhtmltoimage_converter) -> c_int {
     if converter.is_null() {
         return 0;
     }
@@ -1883,10 +1873,7 @@ mod tests {
 
         static RESULT: AtomicI32 = AtomicI32::new(-1);
 
-        unsafe extern "C" fn finished_cb(
-            _conv: *mut wkhtmltopdf_converter,
-            val: c_int,
-        ) {
+        unsafe extern "C" fn finished_cb(_conv: *mut wkhtmltopdf_converter, val: c_int) {
             RESULT.store(val, Ordering::SeqCst);
         }
 

@@ -281,7 +281,11 @@ pub fn diff_pdf_structure(
     let compared_pages = reference.page_count.min(actual.page_count) as usize;
     let mut page_text_diffs = Vec::new();
     for i in 0..compared_pages {
-        let ref_text = reference.page_texts.get(i).map(String::as_str).unwrap_or("");
+        let ref_text = reference
+            .page_texts
+            .get(i)
+            .map(String::as_str)
+            .unwrap_or("");
         let act_text = actual.page_texts.get(i).map(String::as_str).unwrap_or("");
         if normalize_text(ref_text) != normalize_text(act_text) {
             page_text_diffs.push(PageTextDiff {

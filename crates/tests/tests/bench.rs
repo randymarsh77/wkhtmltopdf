@@ -203,11 +203,7 @@ fn find_legacy_binary() -> Option<PathBuf> {
 ///
 /// Returns `None` when the binary is not available (the caller should skip
 /// the legacy half of the comparison).
-fn benchmark_legacy(
-    binary: &Path,
-    fixture_name: &str,
-    iterations: u32,
-) -> Option<BenchResult> {
+fn benchmark_legacy(binary: &Path, fixture_name: &str, iterations: u32) -> Option<BenchResult> {
     let html_path = fixtures_dir().join(format!("{}.html", fixture_name));
     if !html_path.exists() {
         return None;
@@ -226,10 +222,7 @@ fn benchmark_legacy(
         match status {
             Ok(s) if s.success() => {}
             Ok(s) => {
-                eprintln!(
-                    "legacy wkhtmltopdf exited {} for {}",
-                    s, fixture_name
-                );
+                eprintln!("legacy wkhtmltopdf exited {} for {}", s, fixture_name);
             }
             Err(e) => {
                 eprintln!("failed to run legacy binary for {}: {}", fixture_name, e);
@@ -343,8 +336,10 @@ fn run_all_fixtures_benchmark() {
     // Header for summary table.
     // Column widths: 18 + 1 + 10 + 1 + 12 + 1 + 12 + 1 + 10 = 66
     const SUMMARY_WIDTH: usize = 66;
-    println!("\n{:<18} {:>10} {:>12} {:>12} {:>10}",
-        "Fixture", "Rust ms/pg", "Rust pgs/s", "C++ pgs/s", "Speedup");
+    println!(
+        "\n{:<18} {:>10} {:>12} {:>12} {:>10}",
+        "Fixture", "Rust ms/pg", "Rust pgs/s", "C++ pgs/s", "Speedup"
+    );
     println!("{}", "-".repeat(SUMMARY_WIDTH));
 
     for &name in fixtures {
@@ -378,8 +373,7 @@ fn run_all_fixtures_benchmark() {
 
     println!("{}", "-".repeat(SUMMARY_WIDTH));
 
-    let rust_overall_pps =
-        rust_count as f64 / rust_total.as_secs_f64().max(f64::EPSILON);
+    let rust_overall_pps = rust_count as f64 / rust_total.as_secs_f64().max(f64::EPSILON);
     let legacy_overall_pps = if legacy_count > 0 {
         format!(
             "{:.2}",
@@ -391,11 +385,7 @@ fn run_all_fixtures_benchmark() {
 
     println!(
         "{:<18} {:>10} {:>12.2} {:>12} {:>10}",
-        "OVERALL",
-        "",
-        rust_overall_pps,
-        legacy_overall_pps,
-        "",
+        "OVERALL", "", rust_overall_pps, legacy_overall_pps, "",
     );
     println!();
 }
@@ -416,10 +406,7 @@ fn bench_sanity() {
         rust.total_duration > Duration::ZERO,
         "benchmark duration must be positive"
     );
-    assert!(
-        rust.pages_per_second > 0.0,
-        "throughput must be positive"
-    );
+    assert!(rust.pages_per_second > 0.0, "throughput must be positive");
     // Verify the output is a real PDF.
     let out = output_dir().join("simple.rust.pdf");
     let bytes = std::fs::read(&out).expect("bench output written");

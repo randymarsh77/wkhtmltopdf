@@ -634,7 +634,10 @@ mod tests {
 
     #[test]
     fn print_resolution_default_is_screen() {
-        assert_eq!(PrintResolution::default(), PrintResolution::ScreenResolution);
+        assert_eq!(
+            PrintResolution::default(),
+            PrintResolution::ScreenResolution
+        );
     }
 
     #[test]
@@ -668,7 +671,12 @@ mod tests {
 
     #[test]
     fn log_level_all_variants_roundtrip() {
-        for variant in [LogLevel::Warn, LogLevel::Info, LogLevel::Error, LogLevel::None] {
+        for variant in [
+            LogLevel::Warn,
+            LogLevel::Info,
+            LogLevel::Error,
+            LogLevel::None,
+        ] {
             let json = serde_json::to_string(&variant).expect("serialize");
             let restored: LogLevel = serde_json::from_str(&json).expect("deserialize");
             assert_eq!(variant, restored);
@@ -758,18 +766,27 @@ mod tests {
 
     #[test]
     fn unit_real_can_be_constructed_with_any_unit() {
-        let ur = UnitReal { value: 2.54, unit: Unit::Centimeter };
+        let ur = UnitReal {
+            value: 2.54,
+            unit: Unit::Centimeter,
+        };
         assert!((ur.value - 2.54).abs() < f64::EPSILON);
         assert_eq!(ur.unit, Unit::Centimeter);
 
-        let ur2 = UnitReal { value: 72.0, unit: Unit::Point };
+        let ur2 = UnitReal {
+            value: 72.0,
+            unit: Unit::Point,
+        };
         assert!((ur2.value - 72.0).abs() < f64::EPSILON);
         assert_eq!(ur2.unit, Unit::Point);
     }
 
     #[test]
     fn unit_real_roundtrip() {
-        let ur = UnitReal { value: 1.5, unit: Unit::Inch };
+        let ur = UnitReal {
+            value: 1.5,
+            unit: Unit::Inch,
+        };
         let json = serde_json::to_string(&ur).expect("serialize");
         let restored: UnitReal = serde_json::from_str(&json).expect("deserialize");
         assert!((restored.value - 1.5).abs() < f64::EPSILON);
@@ -969,9 +986,15 @@ mod tests {
 
         assert!(!restored.ssl_verify_peer);
         assert!(restored.ssl_verify_host);
-        assert_eq!(restored.client_ssl_key_path.as_deref(), Some("/path/to/key.pem"));
+        assert_eq!(
+            restored.client_ssl_key_path.as_deref(),
+            Some("/path/to/key.pem")
+        );
         assert_eq!(restored.client_ssl_key_password.as_deref(), Some("keypass"));
-        assert_eq!(restored.client_ssl_crt_path.as_deref(), Some("/path/to/cert.pem"));
+        assert_eq!(
+            restored.client_ssl_crt_path.as_deref(),
+            Some("/path/to/cert.pem")
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -990,10 +1013,22 @@ mod tests {
     #[test]
     fn margin_can_be_set_with_mixed_units() {
         let m = Margin {
-            top: UnitReal { value: 20.0, unit: Unit::Millimeter },
-            bottom: UnitReal { value: 20.0, unit: Unit::Millimeter },
-            left: UnitReal { value: 1.0, unit: Unit::Inch },
-            right: UnitReal { value: 72.0, unit: Unit::Point },
+            top: UnitReal {
+                value: 20.0,
+                unit: Unit::Millimeter,
+            },
+            bottom: UnitReal {
+                value: 20.0,
+                unit: Unit::Millimeter,
+            },
+            left: UnitReal {
+                value: 1.0,
+                unit: Unit::Inch,
+            },
+            right: UnitReal {
+                value: 72.0,
+                unit: Unit::Point,
+            },
         };
         assert!((m.top.value - 20.0).abs() < f64::EPSILON);
         assert_eq!(m.left.unit, Unit::Inch);
@@ -1012,8 +1047,14 @@ mod tests {
     fn size_can_specify_custom_dimensions() {
         let size = Size {
             page_size: PageSize::Custom,
-            width: Some(UnitReal { value: 210.0, unit: Unit::Millimeter }),
-            height: Some(UnitReal { value: 297.0, unit: Unit::Millimeter }),
+            width: Some(UnitReal {
+                value: 210.0,
+                unit: Unit::Millimeter,
+            }),
+            height: Some(UnitReal {
+                value: 297.0,
+                unit: Unit::Millimeter,
+            }),
         };
         assert_eq!(size.page_size, PageSize::Custom);
         assert!(size.width.is_some());
@@ -1228,7 +1269,12 @@ mod tests {
 
     #[test]
     fn crop_settings_can_be_set() {
-        let crop = CropSettings { left: 10, top: 20, width: 100, height: 200 };
+        let crop = CropSettings {
+            left: 10,
+            top: 20,
+            width: 100,
+            height: 200,
+        };
         assert_eq!(crop.left, 10);
         assert_eq!(crop.top, 20);
         assert_eq!(crop.width, 100);
@@ -1237,7 +1283,12 @@ mod tests {
 
     #[test]
     fn crop_settings_roundtrip() {
-        let crop = CropSettings { left: 5, top: 10, width: 640, height: 480 };
+        let crop = CropSettings {
+            left: 5,
+            top: 10,
+            width: 640,
+            height: 480,
+        };
         let json = serde_json::to_string(&crop).expect("serialize");
         let restored: CropSettings = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(restored.left, 5);

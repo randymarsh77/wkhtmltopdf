@@ -330,8 +330,7 @@ mod tests {
             threshold: 0,
             ..Default::default()
         };
-        let result =
-            diff_images(&to_png(ref_img), &to_png(act_img), opts).unwrap();
+        let result = diff_images(&to_png(ref_img), &to_png(act_img), opts).unwrap();
         assert_eq!(result.different_pixels(), 50);
         assert_eq!(result.total_pixels(), 100);
         assert!((result.diff_percentage() - 50.0).abs() < f64::EPSILON);
