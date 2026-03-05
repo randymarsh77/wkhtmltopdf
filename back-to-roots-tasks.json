@@ -59,16 +59,17 @@
   {
     "id": "8",
     "description": "Replace Chrome headless screenshot, DOM query, and JavaScript evaluation calls with the corresponding Qt WebKit equivalents",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 3,
     "depends_on": [
       "7"
-    ]
+    ],
+    "last_attempt_at": 1772684502
   },
   {
     "id": "9",
     "description": "Update README.md, IMPLEMENTATION.md, and any inline code comments to reflect the WebKit/Qt stack and LGPL-3.0 license",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 4,
     "depends_on": [
       "3",
