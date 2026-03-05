@@ -37,17 +37,18 @@
   {
     "id": "6",
     "description": "Add the selected Qt WebKit Rust wrapper crate(s) to the appropriate Cargo.toml(s) with the latest compatible versions",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 2,
     "depends_on": [
       "1",
       "2"
-    ]
+    ],
+    "last_attempt_at": 1772678600
   },
   {
     "id": "7",
     "description": "Replace Chrome headless browser initialization and page-loading code with equivalent Qt WebKit API calls (QWebEngineView or WebKitWebView), preserving all existing public interfaces",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 3,
     "depends_on": [
       "5",
