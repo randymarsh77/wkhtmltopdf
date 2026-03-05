@@ -93,17 +93,18 @@
   {
     "id": "11",
     "description": "Verify the Dockerfile in action/ correctly installs Qt6 + WebKit system libraries required at runtime and update it if needed",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 4,
     "depends_on": [
       "7",
       "8"
-    ]
+    ],
+    "last_attempt_at": 1772689694
   },
   {
     "id": "12",
     "description": "Run cargo clippy --workspace and cargo fmt --check; resolve any new warnings or formatting issues",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 5,
     "depends_on": [
       "10",
