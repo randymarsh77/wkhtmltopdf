@@ -2,8 +2,8 @@
 //!
 //! This module defines the [`Renderer`] trait, the [`HtmlInput`] enum that
 //! describes what to render, the [`RenderedPage`] type that holds the output,
-//! and a [`HeadlessRenderer`] implementation backed by a headless
-//! Chromium/WebKit browser (via the `headless_chrome` crate).
+//! and a [`HeadlessRenderer`] stub struct that implements the renderer
+//! interface without a browser backend.
 
 use std::path::PathBuf;
 use thiserror::Error;
@@ -84,17 +84,20 @@ pub trait Renderer {
 // HeadlessRenderer – initial implementation backed by headless Chromium
 // ---------------------------------------------------------------------------
 
-/// A [`Renderer`] implementation that drives a headless Chromium/WebKit
-/// browser via the `headless_chrome` crate.
+/// A [`Renderer`] implementation providing the headless rendering interface.
+///
+/// This implementation does not include a browser backend; [`Renderer::render`]
+/// always returns [`RenderError::BackendUnavailable`] (after validating the
+/// input URL scheme).
 ///
 /// # Example
-/// ```no_run
-/// use wkhtmltopdf_core::renderer::{HeadlessRenderer, HtmlInput, Renderer};
+/// ```
+/// use wkhtmltopdf_core::renderer::{HeadlessRenderer, HtmlInput, Renderer, RenderError};
 ///
 /// let renderer = HeadlessRenderer::new();
 /// let input = HtmlInput::Url("https://example.com".into());
-/// let page = renderer.render(&input).expect("render failed");
-/// assert_eq!(page.mime_type, "image/png");
+/// let result = renderer.render(&input);
+/// assert!(matches!(result, Err(RenderError::BackendUnavailable(_))));
 /// ```
 pub struct HeadlessRenderer {
     /// When `true` the browser window is hidden (the normal operating mode).
@@ -149,9 +152,6 @@ impl Default for HeadlessRenderer {
 
 impl Renderer for HeadlessRenderer {
     fn render(&self, input: &HtmlInput) -> Result<RenderedPage, RenderError> {
-        use headless_chrome::{Browser, LaunchOptions};
-        use headless_chrome::protocol::cdp::{Emulation, Page};
-
         // Validate that network URLs use an allowed scheme (http or https).
         if let HtmlInput::Url(url) = input {
             if !url.starts_with("http://") && !url.starts_with("https://") {
@@ -161,60 +161,11 @@ impl Renderer for HeadlessRenderer {
             }
         }
 
-        let url = input.to_url_string();
-
-        let launch_options = LaunchOptions {
-            headless: self.headless,
-            sandbox: self.sandbox,
-            ..Default::default()
-        };
-
-        let browser = Browser::new(launch_options)
-            .map_err(|e| RenderError::BackendUnavailable(e.to_string()))?;
-
-        let tab = browser
-            .new_tab()
-            .map_err(|e| RenderError::RenderFailed(e.to_string()))?;
-
-        // Disable JavaScript execution before navigation when requested.
-        if !self.enable_javascript {
-            tab.call_method(Emulation::SetScriptExecutionDisabled { value: true })
-                .map_err(|e| RenderError::RenderFailed(e.to_string()))?;
-        }
-
-        tab.navigate_to(&url)
-            .map_err(|e| RenderError::RenderFailed(e.to_string()))?;
-
-        tab.wait_until_navigated()
-            .map_err(|e| RenderError::RenderFailed(e.to_string()))?;
-
-        // Apply JS delay after page load.
-        if self.js_delay > 0 {
-            std::thread::sleep(std::time::Duration::from_millis(self.js_delay as u64));
-        }
-
-        // Execute custom scripts after the page has loaded.
-        for (idx, script) in self.run_scripts.iter().enumerate() {
-            tab.evaluate(script, false)
-                .map_err(|e| RenderError::RenderFailed(format!("script {idx}: {e}")))?;
-        }
-
-        // capture_screenshot(format, quality, clip, from_surface)
-        // `from_surface: true` captures the GPU-composited output rather than
-        // the raw bitmap, which gives a pixel-accurate rendering of the page.
-        let bytes = tab
-            .capture_screenshot(
-                Page::CaptureScreenshotFormatOption::Png,
-                None,
-                None,
-                true, // from_surface: capture from the GPU compositor
-            )
-            .map_err(|e| RenderError::RenderFailed(e.to_string()))?;
-
-        Ok(RenderedPage {
-            bytes,
-            mime_type: "image/png".to_string(),
-        })
+        Err(RenderError::BackendUnavailable(
+            "headless browser rendering is not implemented; \
+             no browser backend is available"
+                .into(),
+        ))
     }
 }
 
