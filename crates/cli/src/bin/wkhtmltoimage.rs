@@ -161,10 +161,11 @@ fn main() {
     use wkhtmltopdf_image::ImageConverter;
     use wkhtmltopdf_settings::{CropSettings, ImageGlobal, LogLevel};
 
-    let mut settings = ImageGlobal::default();
-
-    settings.page = Some(cli.input.clone());
-    settings.output = Some(cli.output.clone());
+    let mut settings = ImageGlobal {
+        page: Some(cli.input.clone()),
+        output: Some(cli.output.clone()),
+        ..Default::default()
+    };
 
     if let Some(f) = cli.format {
         settings.format = Some(f);
@@ -190,10 +191,18 @@ fn main() {
 
     // Crop
     let mut crop = CropSettings::default();
-    if let Some(x) = cli.crop_x { crop.left = x; }
-    if let Some(y) = cli.crop_y { crop.top = y; }
-    if let Some(w) = cli.crop_w { crop.width = w; }
-    if let Some(h) = cli.crop_h { crop.height = h; }
+    if let Some(x) = cli.crop_x {
+        crop.left = x;
+    }
+    if let Some(y) = cli.crop_y {
+        crop.top = y;
+    }
+    if let Some(w) = cli.crop_w {
+        crop.width = w;
+    }
+    if let Some(h) = cli.crop_h {
+        crop.height = h;
+    }
     settings.crop = crop;
 
     // Log level
@@ -209,18 +218,32 @@ fn main() {
     }
 
     // Load settings
-    if let Some(u) = cli.username { settings.load_page.username = Some(u); }
-    if let Some(p) = cli.password { settings.load_page.password = Some(p); }
-    if let Some(ms) = cli.javascript_delay { settings.load_page.js_delay = ms; }
-    if cli.disable_javascript { settings.web.enable_javascript = false; }
+    if let Some(u) = cli.username {
+        settings.load_page.username = Some(u);
+    }
+    if let Some(p) = cli.password {
+        settings.load_page.password = Some(p);
+    }
+    if let Some(ms) = cli.javascript_delay {
+        settings.load_page.js_delay = ms;
+    }
+    if cli.disable_javascript {
+        settings.web.enable_javascript = false;
+    }
     for pair in cli.cookie.chunks(2) {
         if pair.len() == 2 {
-            settings.load_page.cookies.push((pair[0].clone(), pair[1].clone()));
+            settings
+                .load_page
+                .cookies
+                .push((pair[0].clone(), pair[1].clone()));
         }
     }
     for pair in cli.custom_header.chunks(2) {
         if pair.len() == 2 {
-            settings.load_page.custom_headers.push((pair[0].clone(), pair[1].clone()));
+            settings
+                .load_page
+                .custom_headers
+                .push((pair[0].clone(), pair[1].clone()));
         }
     }
     if let Some(ref proxy_str) = cli.proxy {
@@ -300,7 +323,13 @@ fn parse_proxy_url(url: &str) -> wkhtmltopdf_settings::Proxy {
         (Some(host_str.to_string()), None)
     };
 
-    Proxy { proxy_type, host, port, username, password }
+    Proxy {
+        proxy_type,
+        host,
+        port,
+        username,
+        password,
+    }
 }
 
 #[cfg(test)]
@@ -327,14 +356,30 @@ mod tests {
 
     #[test]
     fn width_height() {
-        let cli = parse(&["wkhtmltoimage", "--width", "800", "--height", "600", "in.html", "out.png"]);
+        let cli = parse(&[
+            "wkhtmltoimage",
+            "--width",
+            "800",
+            "--height",
+            "600",
+            "in.html",
+            "out.png",
+        ]);
         assert_eq!(cli.width, Some(800));
         assert_eq!(cli.height, Some(600));
     }
 
     #[test]
     fn quality_dpi() {
-        let cli = parse(&["wkhtmltoimage", "--quality", "80", "--dpi", "150", "in.html", "out.jpg"]);
+        let cli = parse(&[
+            "wkhtmltoimage",
+            "--quality",
+            "80",
+            "--dpi",
+            "150",
+            "in.html",
+            "out.jpg",
+        ]);
         assert_eq!(cli.quality, Some(80));
         assert_eq!(cli.dpi, Some(150));
     }
@@ -349,9 +394,16 @@ mod tests {
     fn crop_options() {
         let cli = parse(&[
             "wkhtmltoimage",
-            "--crop-x", "10", "--crop-y", "20",
-            "--crop-w", "100", "--crop-h", "200",
-            "in.html", "out.png",
+            "--crop-x",
+            "10",
+            "--crop-y",
+            "20",
+            "--crop-w",
+            "100",
+            "--crop-h",
+            "200",
+            "in.html",
+            "out.png",
         ]);
         assert_eq!(cli.crop_x, Some(10));
         assert_eq!(cli.crop_y, Some(20));
@@ -361,13 +413,21 @@ mod tests {
 
     #[test]
     fn disable_smart_width() {
-        let cli = parse(&["wkhtmltoimage", "--disable-smart-width", "in.html", "out.png"]);
+        let cli = parse(&[
+            "wkhtmltoimage",
+            "--disable-smart-width",
+            "in.html",
+            "out.png",
+        ]);
         assert!(cli.disable_smart_width);
     }
 
     #[test]
     fn invalid_format_fails() {
-        assert!(Cli::try_parse_from(["wkhtmltoimage", "--format", "gif", "in.html", "out.gif"]).is_err());
+        assert!(
+            Cli::try_parse_from(["wkhtmltoimage", "--format", "gif", "in.html", "out.gif"])
+                .is_err()
+        );
     }
 
     #[test]
@@ -377,19 +437,35 @@ mod tests {
 
     #[test]
     fn no_ssl_verify_peer_flag() {
-        let cli = parse(&["wkhtmltoimage", "--no-ssl-verify-peer", "in.html", "out.png"]);
+        let cli = parse(&[
+            "wkhtmltoimage",
+            "--no-ssl-verify-peer",
+            "in.html",
+            "out.png",
+        ]);
         assert!(cli.no_ssl_verify_peer);
     }
 
     #[test]
     fn no_ssl_verify_host_flag() {
-        let cli = parse(&["wkhtmltoimage", "--no-ssl-verify-host", "in.html", "out.png"]);
+        let cli = parse(&[
+            "wkhtmltoimage",
+            "--no-ssl-verify-host",
+            "in.html",
+            "out.png",
+        ]);
         assert!(cli.no_ssl_verify_host);
     }
 
     #[test]
     fn proxy_flag() {
-        let cli = parse(&["wkhtmltoimage", "--proxy", "http://proxy:3128", "in.html", "out.png"]);
+        let cli = parse(&[
+            "wkhtmltoimage",
+            "--proxy",
+            "http://proxy:3128",
+            "in.html",
+            "out.png",
+        ]);
         assert_eq!(cli.proxy.as_deref(), Some("http://proxy:3128"));
         let proxy = parse_proxy_url(cli.proxy.as_deref().unwrap());
         use wkhtmltopdf_settings::ProxyType;
@@ -416,7 +492,14 @@ mod tests {
 
     #[test]
     fn invalid_log_level_fails() {
-        assert!(Cli::try_parse_from(["wkhtmltoimage", "--log-level", "verbose", "in.html", "out.png"]).is_err());
+        assert!(Cli::try_parse_from([
+            "wkhtmltoimage",
+            "--log-level",
+            "verbose",
+            "in.html",
+            "out.png"
+        ])
+        .is_err());
     }
 
     // -----------------------------------------------------------------------
@@ -425,13 +508,24 @@ mod tests {
 
     #[test]
     fn disable_javascript_flag() {
-        let cli = parse(&["wkhtmltoimage", "--disable-javascript", "in.html", "out.png"]);
+        let cli = parse(&[
+            "wkhtmltoimage",
+            "--disable-javascript",
+            "in.html",
+            "out.png",
+        ]);
         assert!(cli.disable_javascript);
     }
 
     #[test]
     fn javascript_delay_option() {
-        let cli = parse(&["wkhtmltoimage", "--javascript-delay", "500", "in.html", "out.png"]);
+        let cli = parse(&[
+            "wkhtmltoimage",
+            "--javascript-delay",
+            "500",
+            "in.html",
+            "out.png",
+        ]);
         assert_eq!(cli.javascript_delay, Some(500));
     }
 
@@ -442,8 +536,13 @@ mod tests {
     #[test]
     fn username_and_password() {
         let cli = parse(&[
-            "wkhtmltoimage", "--username", "admin", "--password", "secret",
-            "in.html", "out.png",
+            "wkhtmltoimage",
+            "--username",
+            "admin",
+            "--password",
+            "secret",
+            "in.html",
+            "out.png",
         ]);
         assert_eq!(cli.username.as_deref(), Some("admin"));
         assert_eq!(cli.password.as_deref(), Some("secret"));
@@ -455,15 +554,26 @@ mod tests {
 
     #[test]
     fn cookie_option() {
-        let cli = parse(&["wkhtmltoimage", "--cookie", "session", "abc123", "in.html", "out.png"]);
+        let cli = parse(&[
+            "wkhtmltoimage",
+            "--cookie",
+            "session",
+            "abc123",
+            "in.html",
+            "out.png",
+        ]);
         assert_eq!(cli.cookie, vec!["session", "abc123"]);
     }
 
     #[test]
     fn custom_header_option() {
         let cli = parse(&[
-            "wkhtmltoimage", "--custom-header", "X-Auth", "token",
-            "in.html", "out.png",
+            "wkhtmltoimage",
+            "--custom-header",
+            "X-Auth",
+            "token",
+            "in.html",
+            "out.png",
         ]);
         assert_eq!(cli.custom_header, vec!["X-Auth", "token"]);
     }
@@ -486,7 +596,12 @@ mod tests {
 
     #[test]
     fn enable_smart_width_flag() {
-        let cli = parse(&["wkhtmltoimage", "--enable-smart-width", "in.html", "out.png"]);
+        let cli = parse(&[
+            "wkhtmltoimage",
+            "--enable-smart-width",
+            "in.html",
+            "out.png",
+        ]);
         assert!(cli.enable_smart_width);
         assert!(!cli.disable_smart_width);
     }
@@ -495,7 +610,11 @@ mod tests {
     fn smart_width_last_flag_wins() {
         // --enable-smart-width followed by --disable-smart-width: disable wins
         let cli = parse(&[
-            "wkhtmltoimage", "--enable-smart-width", "--disable-smart-width", "in.html", "out.png",
+            "wkhtmltoimage",
+            "--enable-smart-width",
+            "--disable-smart-width",
+            "in.html",
+            "out.png",
         ]);
         assert!(cli.disable_smart_width);
         assert!(!cli.enable_smart_width);

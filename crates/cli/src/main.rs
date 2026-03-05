@@ -141,7 +141,10 @@ pub struct Cli {
     pub resolve_relative_links: bool,
 
     /// Do not resolve relative external links into absolute links.
-    #[arg(long = "no-resolve-relative-links", overrides_with = "resolve_relative_links")]
+    #[arg(
+        long = "no-resolve-relative-links",
+        overrides_with = "resolve_relative_links"
+    )]
     pub no_resolve_relative_links: bool,
 
     // -----------------------------------------------------------------------
@@ -191,10 +194,7 @@ pub struct Cli {
     pub debug_javascript: bool,
 
     /// Do not show javascript debugging output \[default\].
-    #[arg(
-        long = "no-debug-javascript",
-        overrides_with = "debug_javascript"
-    )]
+    #[arg(long = "no-debug-javascript", overrides_with = "debug_javascript")]
     pub no_debug_javascript: bool,
 
     /// Set the default text encoding, for input.
@@ -202,11 +202,17 @@ pub struct Cli {
     pub encoding: Option<String>,
 
     /// Do not make links to remote web pages.
-    #[arg(long = "disable-external-links", overrides_with = "enable_external_links")]
+    #[arg(
+        long = "disable-external-links",
+        overrides_with = "enable_external_links"
+    )]
     pub disable_external_links: bool,
 
     /// Make links to remote web pages [default: enabled].
-    #[arg(long = "enable-external-links", overrides_with = "disable_external_links")]
+    #[arg(
+        long = "enable-external-links",
+        overrides_with = "disable_external_links"
+    )]
     pub enable_external_links: bool,
 
     /// Turn HTML form fields into pdf form fields.
@@ -226,11 +232,17 @@ pub struct Cli {
     pub no_images: bool,
 
     /// Do not make local links [default: enabled].
-    #[arg(long = "disable-internal-links", overrides_with = "enable_internal_links")]
+    #[arg(
+        long = "disable-internal-links",
+        overrides_with = "enable_internal_links"
+    )]
     pub disable_internal_links: bool,
 
     /// Make local links [default: enabled].
-    #[arg(long = "enable-internal-links", overrides_with = "disable_internal_links")]
+    #[arg(
+        long = "enable-internal-links",
+        overrides_with = "disable_internal_links"
+    )]
     pub enable_internal_links: bool,
 
     /// Do not allow web pages to run javascript.
@@ -254,11 +266,17 @@ pub struct Cli {
     pub load_media_error_handling: Option<String>,
 
     /// Do not allowed conversion of a local file to read in other local files, unless explicitly allowed with --allow.
-    #[arg(long = "disable-local-file-access", overrides_with = "enable_local_file_access")]
+    #[arg(
+        long = "disable-local-file-access",
+        overrides_with = "enable_local_file_access"
+    )]
     pub disable_local_file_access: bool,
 
     /// Allowed conversion of a local file to read in other local files [default: enabled].
-    #[arg(long = "enable-local-file-access", overrides_with = "disable_local_file_access")]
+    #[arg(
+        long = "enable-local-file-access",
+        overrides_with = "disable_local_file_access"
+    )]
     pub enable_local_file_access: bool,
 
     /// Minimum font size [default: none].
@@ -310,7 +328,10 @@ pub struct Cli {
     pub proxy_hostname_lookup: bool,
 
     /// Do not lookups for hostnames through the proxy \[default\].
-    #[arg(long = "no-proxy-hostname-lookup", overrides_with = "proxy_hostname_lookup")]
+    #[arg(
+        long = "no-proxy-hostname-lookup",
+        overrides_with = "proxy_hostname_lookup"
+    )]
     pub no_proxy_hostname_lookup: bool,
 
     /// Verify the SSL peer certificate [default: enabled].
@@ -334,11 +355,17 @@ pub struct Cli {
     pub run_script: Vec<String>,
 
     /// Disable the intelligent shrinking strategy used by WebKit that makes the pixel/dpi ratio non-constant.
-    #[arg(long = "disable-smart-shrinking", overrides_with = "enable_smart_shrinking")]
+    #[arg(
+        long = "disable-smart-shrinking",
+        overrides_with = "enable_smart_shrinking"
+    )]
     pub disable_smart_shrinking: bool,
 
     /// Enable the intelligent shrinking strategy used by WebKit [default: enabled].
-    #[arg(long = "enable-smart-shrinking", overrides_with = "disable_smart_shrinking")]
+    #[arg(
+        long = "enable-smart-shrinking",
+        overrides_with = "disable_smart_shrinking"
+    )]
     pub enable_smart_shrinking: bool,
 
     /// Path to the ssl client cert public key in OpenSSL PEM format.
@@ -362,11 +389,17 @@ pub struct Cli {
     pub no_stop_slow_scripts: bool,
 
     /// Disable the TOC back-link from each header.
-    #[arg(long = "disable-toc-back-links", overrides_with = "enable_toc_back_links")]
+    #[arg(
+        long = "disable-toc-back-links",
+        overrides_with = "enable_toc_back_links"
+    )]
     pub disable_toc_back_links: bool,
 
     /// Enable the TOC back-link from each header [default: enabled].
-    #[arg(long = "enable-toc-back-links", overrides_with = "disable_toc_back_links")]
+    #[arg(
+        long = "enable-toc-back-links",
+        overrides_with = "disable_toc_back_links"
+    )]
     pub enable_toc_back_links: bool,
 
     /// Specify a user style sheet, to load with every page.
@@ -640,12 +673,31 @@ fn build_global(cli: &Cli) -> wkhtmltopdf_settings::PdfGlobal {
     }
 
     // Margins  (default 10 mm each side)
-    let default_margin = || UnitReal { value: 10.0, unit: Unit::Millimeter };
+    let default_margin = || UnitReal {
+        value: 10.0,
+        unit: Unit::Millimeter,
+    };
     g.margin = Margin {
-        top: cli.margin_top.as_deref().map(parse_unit_real).unwrap_or_else(default_margin),
-        bottom: cli.margin_bottom.as_deref().map(parse_unit_real).unwrap_or_else(default_margin),
-        left: cli.margin_left.as_deref().map(parse_unit_real).unwrap_or_else(default_margin),
-        right: cli.margin_right.as_deref().map(parse_unit_real).unwrap_or_else(default_margin),
+        top: cli
+            .margin_top
+            .as_deref()
+            .map(parse_unit_real)
+            .unwrap_or_else(default_margin),
+        bottom: cli
+            .margin_bottom
+            .as_deref()
+            .map(parse_unit_real)
+            .unwrap_or_else(default_margin),
+        left: cli
+            .margin_left
+            .as_deref()
+            .map(parse_unit_real)
+            .unwrap_or_else(default_margin),
+        right: cli
+            .margin_right
+            .as_deref()
+            .map(parse_unit_real)
+            .unwrap_or_else(default_margin),
     };
 
     // Compression
@@ -692,38 +744,34 @@ fn build_global(cli: &Cli) -> wkhtmltopdf_settings::PdfGlobal {
 /// Build a [`wkhtmltopdf_settings::PdfObject`] for one input URL/file, applying all per-page CLI
 /// options (including header/footer).
 fn build_object(cli: &Cli, input: &str) -> wkhtmltopdf_settings::PdfObject {
-    use wkhtmltopdf_settings::{
-        LoadErrorHandling, PdfObject,
+    use wkhtmltopdf_settings::{LoadErrorHandling, PdfObject};
+
+    let mut obj = PdfObject {
+        page: Some(input.to_string()),
+        header: build_header_footer(
+            cli.header_left.as_deref(),
+            cli.header_center.as_deref(),
+            cli.header_right.as_deref(),
+            cli.header_html.as_deref(),
+            cli.header_font_name.as_deref(),
+            cli.header_font_size,
+            cli.header_line,
+            cli.no_header_line,
+            cli.header_spacing,
+        ),
+        footer: build_header_footer(
+            cli.footer_left.as_deref(),
+            cli.footer_center.as_deref(),
+            cli.footer_right.as_deref(),
+            cli.footer_html.as_deref(),
+            cli.footer_font_name.as_deref(),
+            cli.footer_font_size,
+            cli.footer_line,
+            cli.no_footer_line,
+            cli.footer_spacing,
+        ),
+        ..Default::default()
     };
-
-    let mut obj = PdfObject::default();
-    obj.page = Some(input.to_string());
-
-    // Header settings
-    obj.header = build_header_footer(
-        cli.header_left.as_deref(),
-        cli.header_center.as_deref(),
-        cli.header_right.as_deref(),
-        cli.header_html.as_deref(),
-        cli.header_font_name.as_deref(),
-        cli.header_font_size,
-        cli.header_line,
-        cli.no_header_line,
-        cli.header_spacing,
-    );
-
-    // Footer settings
-    obj.footer = build_header_footer(
-        cli.footer_left.as_deref(),
-        cli.footer_center.as_deref(),
-        cli.footer_right.as_deref(),
-        cli.footer_html.as_deref(),
-        cli.footer_font_name.as_deref(),
-        cli.footer_font_size,
-        cli.footer_line,
-        cli.no_footer_line,
-        cli.footer_spacing,
-    );
 
     // Web settings
     if cli.no_background {
@@ -823,15 +871,21 @@ fn build_object(cli: &Cli, input: &str) -> wkhtmltopdf_settings::PdfObject {
         obj.load.ssl_verify_host = false;
     }
     // Custom headers (pairs)
-    obj.load.custom_headers.extend(collect_pairs(&cli.custom_header, "--custom-header"));
+    obj.load
+        .custom_headers
+        .extend(collect_pairs(&cli.custom_header, "--custom-header"));
     // Cookies (pairs)
-    obj.load.cookies.extend(collect_pairs(&cli.cookie, "--cookie"));
+    obj.load
+        .cookies
+        .extend(collect_pairs(&cli.cookie, "--cookie"));
     // Run scripts
     obj.load.run_script.extend(cli.run_script.iter().cloned());
     // Allow paths
     obj.load.allowed.extend(cli.allow.iter().cloned());
     // Bypass proxy hosts
-    obj.load.bypass_proxy_for_hosts.extend(cli.bypass_proxy_for.iter().cloned());
+    obj.load
+        .bypass_proxy_for_hosts
+        .extend(cli.bypass_proxy_for.iter().cloned());
 
     // Links
     if cli.disable_external_links {
@@ -850,7 +904,8 @@ fn build_object(cli: &Cli, input: &str) -> wkhtmltopdf_settings::PdfObject {
     }
 
     // Text replacements (pairs)
-    obj.replacements.extend(collect_pairs(&cli.replace, "--replace"));
+    obj.replacements
+        .extend(collect_pairs(&cli.replace, "--replace"));
 
     // TOC settings
     if cli.disable_dotted_lines {
@@ -887,9 +942,10 @@ fn build_object(cli: &Cli, input: &str) -> wkhtmltopdf_settings::PdfObject {
 /// [`wkhtmltopdf_pdf::PdfConverter`] from the headings found in the other page objects.
 fn build_toc_object(cli: &Cli) -> wkhtmltopdf_settings::PdfObject {
     use wkhtmltopdf_settings::PdfObject;
-    let mut obj = PdfObject::default();
-    obj.is_table_of_content = true;
-    obj.page = None;
+    let mut obj = PdfObject {
+        is_table_of_content: true,
+        ..Default::default()
+    };
 
     // Apply the same TOC settings that build_object() applies.
     if cli.disable_dotted_lines {
@@ -922,6 +978,7 @@ fn build_toc_object(cli: &Cli) -> wkhtmltopdf_settings::PdfObject {
 
 /// Construct a [`wkhtmltopdf_settings::HeaderFooter`] value from the individual CLI header/footer
 /// option values.
+#[allow(clippy::too_many_arguments)]
 fn build_header_footer(
     left: Option<&str>,
     center: Option<&str>,
@@ -934,11 +991,13 @@ fn build_header_footer(
     spacing: Option<f32>,
 ) -> wkhtmltopdf_settings::HeaderFooter {
     use wkhtmltopdf_settings::HeaderFooter;
-    let mut hf = HeaderFooter::default();
-    hf.left = left.map(str::to_string);
-    hf.center = center.map(str::to_string);
-    hf.right = right.map(str::to_string);
-    hf.html_url = html_url.map(str::to_string);
+    let mut hf = HeaderFooter {
+        left: left.map(str::to_string),
+        center: center.map(str::to_string),
+        right: right.map(str::to_string),
+        html_url: html_url.map(str::to_string),
+        ..Default::default()
+    };
     if let Some(n) = font_name {
         hf.font_name = n.to_string();
     }
@@ -997,13 +1056,19 @@ fn parse_unit_real(s: &str) -> wkhtmltopdf_settings::UnitReal {
     for (suffix, unit) in suffixes {
         if let Some(num) = s.strip_suffix(suffix) {
             if let Ok(v) = num.trim().parse::<f64>() {
-                return UnitReal { value: v, unit: *unit };
+                return UnitReal {
+                    value: v,
+                    unit: *unit,
+                };
             }
         }
     }
     // No unit suffix — try plain number (assume mm).
     let v = s.parse::<f64>().unwrap_or(0.0);
-    UnitReal { value: v, unit: Unit::Millimeter }
+    UnitReal {
+        value: v,
+        unit: Unit::Millimeter,
+    }
 }
 
 /// Parse a proxy URL string (e.g., `"http://user:pass@host:8080"` or
@@ -1060,7 +1125,13 @@ fn parse_proxy_url(url: &str) -> wkhtmltopdf_settings::Proxy {
         (Some(host_str.to_string()), None)
     };
 
-    Proxy { proxy_type, host, port, username, password }
+    Proxy {
+        proxy_type,
+        host,
+        port,
+        username,
+        password,
+    }
 }
 
 /// Map a page-size string (case-insensitive) to [`wkhtmltopdf_settings::PageSize`].
@@ -1133,7 +1204,13 @@ mod tests {
 
     #[test]
     fn orientation_landscape() {
-        let cli = parse(&["wkhtmltopdf", "--orientation", "Landscape", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--orientation",
+            "Landscape",
+            "in.html",
+            "out.pdf",
+        ]);
         assert_eq!(cli.orientation.as_deref(), Some("Landscape"));
     }
 
@@ -1165,10 +1242,14 @@ mod tests {
     fn margins_short_flags() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "-T", "20mm",
-            "-B", "20mm",
-            "-L", "15mm",
-            "-R", "15mm",
+            "-T",
+            "20mm",
+            "-B",
+            "20mm",
+            "-L",
+            "15mm",
+            "-R",
+            "15mm",
             "in.html",
             "out.pdf",
         ]);
@@ -1195,19 +1276,38 @@ mod tests {
 
     #[test]
     fn title_option() {
-        let cli = parse(&["wkhtmltopdf", "--title", "My Document", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--title",
+            "My Document",
+            "in.html",
+            "out.pdf",
+        ]);
         assert_eq!(cli.title.as_deref(), Some("My Document"));
     }
 
     #[test]
     fn dump_outline() {
-        let cli = parse(&["wkhtmltopdf", "--dump-outline", "toc.xml", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--dump-outline",
+            "toc.xml",
+            "in.html",
+            "out.pdf",
+        ]);
         assert_eq!(cli.dump_outline.as_deref(), Some("toc.xml"));
     }
 
     #[test]
     fn cookie_flag() {
-        let cli = parse(&["wkhtmltopdf", "--cookie", "name", "val", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--cookie",
+            "name",
+            "val",
+            "in.html",
+            "out.pdf",
+        ]);
         assert_eq!(cli.cookie, vec!["name", "val"]);
     }
 
@@ -1215,7 +1315,9 @@ mod tests {
     fn custom_header_flag() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--custom-header", "X-Auth", "token123",
+            "--custom-header",
+            "X-Auth",
+            "token123",
             "in.html",
             "out.pdf",
         ]);
@@ -1226,7 +1328,8 @@ mod tests {
     fn load_error_handling() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--load-error-handling", "ignore",
+            "--load-error-handling",
+            "ignore",
             "in.html",
             "out.pdf",
         ]);
@@ -1243,11 +1346,15 @@ mod tests {
     fn header_and_footer_options() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--header-left", "[title]",
-            "--header-right", "[page]/[topage]",
+            "--header-left",
+            "[title]",
+            "--header-right",
+            "[page]/[topage]",
             "--header-line",
-            "--footer-center", "Page [page]",
-            "--footer-font-size", "9",
+            "--footer-center",
+            "Page [page]",
+            "--footer-font-size",
+            "9",
             "in.html",
             "out.pdf",
         ]);
@@ -1262,7 +1369,9 @@ mod tests {
     fn replace_flag() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--replace", "TITLE", "My Title",
+            "--replace",
+            "TITLE",
+            "My Title",
             "in.html",
             "out.pdf",
         ]);
@@ -1274,7 +1383,8 @@ mod tests {
         let cli = parse(&[
             "wkhtmltopdf",
             "--disable-javascript",
-            "--javascript-delay", "500",
+            "--javascript-delay",
+            "500",
             "in.html",
             "out.pdf",
         ]);
@@ -1292,8 +1402,10 @@ mod tests {
     fn image_quality_and_dpi() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--image-quality", "80",
-            "--image-dpi", "300",
+            "--image-quality",
+            "80",
+            "--image-dpi",
+            "300",
             "in.html",
             "out.pdf",
         ]);
@@ -1310,8 +1422,10 @@ mod tests {
     fn invalid_orientation_fails() {
         assert!(Cli::try_parse_from([
             "wkhtmltopdf",
-            "--orientation", "Invalid",
-            "in.html", "out.pdf"
+            "--orientation",
+            "Invalid",
+            "in.html",
+            "out.pdf"
         ])
         .is_err());
     }
@@ -1320,8 +1434,10 @@ mod tests {
     fn invalid_log_level_fails() {
         assert!(Cli::try_parse_from([
             "wkhtmltopdf",
-            "--log-level", "verbose",
-            "in.html", "out.pdf"
+            "--log-level",
+            "verbose",
+            "in.html",
+            "out.pdf"
         ])
         .is_err());
     }
@@ -1340,31 +1456,60 @@ mod tests {
 
     #[test]
     fn toc_header_text_option() {
-        let cli = parse(&["wkhtmltopdf", "--toc-header-text", "Contents", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--toc-header-text",
+            "Contents",
+            "in.html",
+            "out.pdf",
+        ]);
         assert_eq!(cli.toc_header_text.as_deref(), Some("Contents"));
     }
 
     #[test]
     fn disable_dotted_lines_flag() {
-        let cli = parse(&["wkhtmltopdf", "--disable-dotted-lines", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--disable-dotted-lines",
+            "in.html",
+            "out.pdf",
+        ]);
         assert!(cli.disable_dotted_lines);
     }
 
     #[test]
     fn xsl_style_sheet_option() {
-        let cli = parse(&["wkhtmltopdf", "--xsl-style-sheet", "toc.xsl", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--xsl-style-sheet",
+            "toc.xsl",
+            "in.html",
+            "out.pdf",
+        ]);
         assert_eq!(cli.xsl_style_sheet.as_deref(), Some("toc.xsl"));
     }
 
     #[test]
     fn dump_default_toc_xsl_flag() {
-        let cli = parse(&["wkhtmltopdf", "--dump-default-toc-xsl", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--dump-default-toc-xsl",
+            "in.html",
+            "out.pdf",
+        ]);
         assert!(cli.dump_default_toc_xsl);
     }
 
     #[test]
     fn build_toc_object_sets_is_toc() {
-        let cli = parse(&["wkhtmltopdf", "--toc", "--toc-depth", "5", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--toc",
+            "--toc-depth",
+            "5",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_toc_object(&cli);
         assert!(obj.is_table_of_content);
         assert!(obj.page.is_none());
@@ -1391,11 +1536,15 @@ mod tests {
     fn proxy_flag_parsed_into_load_settings() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--proxy", "http://user:pass@proxy.example.com:8080",
+            "--proxy",
+            "http://user:pass@proxy.example.com:8080",
             "in.html",
             "out.pdf",
         ]);
-        assert_eq!(cli.proxy.as_deref(), Some("http://user:pass@proxy.example.com:8080"));
+        assert_eq!(
+            cli.proxy.as_deref(),
+            Some("http://user:pass@proxy.example.com:8080")
+        );
         let obj = build_object(&cli, "in.html");
         use wkhtmltopdf_settings::ProxyType;
         assert!(matches!(obj.load.proxy.proxy_type, ProxyType::Http));
@@ -1549,10 +1698,7 @@ mod tests {
 
     #[test]
     fn collect_pairs_even_list() {
-        let items: Vec<String> = vec![
-            "k1".into(), "v1".into(),
-            "k2".into(), "v2".into(),
-        ];
+        let items: Vec<String> = vec!["k1".into(), "v1".into(), "k2".into(), "v2".into()];
         let pairs = collect_pairs(&items, "--flag");
         assert_eq!(pairs.len(), 2);
         assert_eq!(pairs[0], ("k1".into(), "v1".into()));
@@ -1614,7 +1760,13 @@ mod tests {
     #[test]
     fn build_global_orientation_landscape() {
         use wkhtmltopdf_settings::Orientation;
-        let cli = parse(&["wkhtmltopdf", "--orientation", "Landscape", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--orientation",
+            "Landscape",
+            "in.html",
+            "out.pdf",
+        ]);
         let g = build_global(&cli);
         assert!(matches!(g.orientation, Orientation::Landscape));
     }
@@ -1622,14 +1774,27 @@ mod tests {
     #[test]
     fn build_global_orientation_portrait() {
         use wkhtmltopdf_settings::Orientation;
-        let cli = parse(&["wkhtmltopdf", "--orientation", "Portrait", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--orientation",
+            "Portrait",
+            "in.html",
+            "out.pdf",
+        ]);
         let g = build_global(&cli);
         assert!(matches!(g.orientation, Orientation::Portrait));
     }
 
     #[test]
     fn build_global_copies_and_no_collate() {
-        let cli = parse(&["wkhtmltopdf", "--copies", "3", "--no-collate", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--copies",
+            "3",
+            "--no-collate",
+            "in.html",
+            "out.pdf",
+        ]);
         let g = build_global(&cli);
         assert_eq!(g.copies, 3);
         assert!(!g.collate);
@@ -1665,7 +1830,13 @@ mod tests {
 
     #[test]
     fn build_global_dump_outline() {
-        let cli = parse(&["wkhtmltopdf", "--dump-outline", "toc.xml", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--dump-outline",
+            "toc.xml",
+            "in.html",
+            "out.pdf",
+        ]);
         let g = build_global(&cli);
         assert_eq!(g.dump_outline.as_deref(), Some("toc.xml"));
     }
@@ -1679,21 +1850,39 @@ mod tests {
 
     #[test]
     fn build_global_title_sets_document_title() {
-        let cli = parse(&["wkhtmltopdf", "--title", "My Document", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--title",
+            "My Document",
+            "in.html",
+            "out.pdf",
+        ]);
         let g = build_global(&cli);
         assert_eq!(g.document_title.as_deref(), Some("My Document"));
     }
 
     #[test]
     fn build_global_viewport_size() {
-        let cli = parse(&["wkhtmltopdf", "--viewport-size", "1280x1024", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--viewport-size",
+            "1280x1024",
+            "in.html",
+            "out.pdf",
+        ]);
         let g = build_global(&cli);
         assert_eq!(g.viewport_size.as_deref(), Some("1280x1024"));
     }
 
     #[test]
     fn build_global_cookie_jar() {
-        let cli = parse(&["wkhtmltopdf", "--cookie-jar", "/tmp/cookies.jar", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--cookie-jar",
+            "/tmp/cookies.jar",
+            "in.html",
+            "out.pdf",
+        ]);
         let g = build_global(&cli);
         assert_eq!(g.load.cookie_jar.as_deref(), Some("/tmp/cookies.jar"));
     }
@@ -1708,8 +1897,13 @@ mod tests {
     #[test]
     fn build_global_image_quality_and_dpi() {
         let cli = parse(&[
-            "wkhtmltopdf", "--image-quality", "80", "--image-dpi", "300",
-            "in.html", "out.pdf",
+            "wkhtmltopdf",
+            "--image-quality",
+            "80",
+            "--image-dpi",
+            "300",
+            "in.html",
+            "out.pdf",
         ]);
         let g = build_global(&cli);
         assert_eq!(g.image_quality, 80);
@@ -1721,11 +1915,16 @@ mod tests {
         use wkhtmltopdf_settings::Unit;
         let cli = parse(&[
             "wkhtmltopdf",
-            "--margin-top", "20mm",
-            "--margin-bottom", "15mm",
-            "--margin-left", "1in",
-            "--margin-right", "72pt",
-            "in.html", "out.pdf",
+            "--margin-top",
+            "20mm",
+            "--margin-bottom",
+            "15mm",
+            "--margin-left",
+            "1in",
+            "--margin-right",
+            "72pt",
+            "in.html",
+            "out.pdf",
         ]);
         let g = build_global(&cli);
         assert!((g.margin.top.value - 20.0).abs() < f64::EPSILON);
@@ -1779,14 +1978,25 @@ mod tests {
 
     #[test]
     fn build_object_disable_smart_shrinking() {
-        let cli = parse(&["wkhtmltopdf", "--disable-smart-shrinking", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--disable-smart-shrinking",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert!(!obj.web.enable_intelligent_shrinking);
     }
 
     #[test]
     fn build_object_minimum_font_size() {
-        let cli = parse(&["wkhtmltopdf", "--minimum-font-size", "10", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--minimum-font-size",
+            "10",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.web.minimum_font_size, Some(10));
     }
@@ -1800,7 +2010,13 @@ mod tests {
 
     #[test]
     fn build_object_user_style_sheet() {
-        let cli = parse(&["wkhtmltopdf", "--user-style-sheet", "style.css", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--user-style-sheet",
+            "style.css",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.web.user_style_sheet.as_deref(), Some("style.css"));
     }
@@ -1816,30 +2032,51 @@ mod tests {
     fn build_object_load_error_handling_skip() {
         use wkhtmltopdf_settings::LoadErrorHandling;
         let cli = parse(&[
-            "wkhtmltopdf", "--load-error-handling", "skip", "in.html", "out.pdf",
+            "wkhtmltopdf",
+            "--load-error-handling",
+            "skip",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
-        assert!(matches!(obj.load.load_error_handling, LoadErrorHandling::Skip));
+        assert!(matches!(
+            obj.load.load_error_handling,
+            LoadErrorHandling::Skip
+        ));
     }
 
     #[test]
     fn build_object_load_error_handling_ignore() {
         use wkhtmltopdf_settings::LoadErrorHandling;
         let cli = parse(&[
-            "wkhtmltopdf", "--load-error-handling", "ignore", "in.html", "out.pdf",
+            "wkhtmltopdf",
+            "--load-error-handling",
+            "ignore",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
-        assert!(matches!(obj.load.load_error_handling, LoadErrorHandling::Ignore));
+        assert!(matches!(
+            obj.load.load_error_handling,
+            LoadErrorHandling::Ignore
+        ));
     }
 
     #[test]
     fn build_object_load_media_error_handling_abort() {
         use wkhtmltopdf_settings::LoadErrorHandling;
         let cli = parse(&[
-            "wkhtmltopdf", "--load-media-error-handling", "abort", "in.html", "out.pdf",
+            "wkhtmltopdf",
+            "--load-media-error-handling",
+            "abort",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
-        assert!(matches!(obj.load.media_load_error_handling, LoadErrorHandling::Abort));
+        assert!(matches!(
+            obj.load.media_load_error_handling,
+            LoadErrorHandling::Abort
+        ));
     }
 
     #[test]
@@ -1858,21 +2095,37 @@ mod tests {
 
     #[test]
     fn build_object_proxy_hostname_lookup() {
-        let cli = parse(&["wkhtmltopdf", "--proxy-hostname-lookup", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--proxy-hostname-lookup",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert!(obj.load.proxy_hostname_lookup);
     }
 
     #[test]
     fn build_object_disable_local_file_access() {
-        let cli = parse(&["wkhtmltopdf", "--disable-local-file-access", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--disable-local-file-access",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert!(obj.load.block_local_file_access);
     }
 
     #[test]
     fn build_object_cache_dir() {
-        let cli = parse(&["wkhtmltopdf", "--cache-dir", "/tmp/cache", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--cache-dir",
+            "/tmp/cache",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.load.cache_dir.as_deref(), Some("/tmp/cache"));
     }
@@ -1881,20 +2134,35 @@ mod tests {
     fn build_object_ssl_cert_paths() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--ssl-key-path", "/path/to/key.pem",
-            "--ssl-key-password", "keypass",
-            "--ssl-crt-path", "/path/to/cert.pem",
-            "in.html", "out.pdf",
+            "--ssl-key-path",
+            "/path/to/key.pem",
+            "--ssl-key-password",
+            "keypass",
+            "--ssl-crt-path",
+            "/path/to/cert.pem",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
-        assert_eq!(obj.load.client_ssl_key_path.as_deref(), Some("/path/to/key.pem"));
+        assert_eq!(
+            obj.load.client_ssl_key_path.as_deref(),
+            Some("/path/to/key.pem")
+        );
         assert_eq!(obj.load.client_ssl_key_password.as_deref(), Some("keypass"));
-        assert_eq!(obj.load.client_ssl_crt_path.as_deref(), Some("/path/to/cert.pem"));
+        assert_eq!(
+            obj.load.client_ssl_crt_path.as_deref(),
+            Some("/path/to/cert.pem")
+        );
     }
 
     #[test]
     fn build_object_custom_header_propagation() {
-        let cli = parse(&["wkhtmltopdf", "--custom-header-propagation", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--custom-header-propagation",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert!(obj.load.repeat_custom_headers);
     }
@@ -1902,8 +2170,13 @@ mod tests {
     #[test]
     fn build_object_username_and_password() {
         let cli = parse(&[
-            "wkhtmltopdf", "--username", "admin", "--password", "secret",
-            "in.html", "out.pdf",
+            "wkhtmltopdf",
+            "--username",
+            "admin",
+            "--password",
+            "secret",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.load.username.as_deref(), Some("admin"));
@@ -1912,7 +2185,13 @@ mod tests {
 
     #[test]
     fn build_object_javascript_delay() {
-        let cli = parse(&["wkhtmltopdf", "--javascript-delay", "500", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--javascript-delay",
+            "500",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.load.js_delay, 500);
     }
@@ -1926,7 +2205,13 @@ mod tests {
 
     #[test]
     fn build_object_window_status() {
-        let cli = parse(&["wkhtmltopdf", "--window-status", "ready", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--window-status",
+            "ready",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.load.window_status.as_deref(), Some("ready"));
     }
@@ -1935,9 +2220,14 @@ mod tests {
     fn build_object_custom_headers_as_pairs() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--custom-header", "X-Foo", "bar",
-            "--custom-header", "X-Baz", "qux",
-            "in.html", "out.pdf",
+            "--custom-header",
+            "X-Foo",
+            "bar",
+            "--custom-header",
+            "X-Baz",
+            "qux",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.load.custom_headers.len(), 2);
@@ -1949,8 +2239,11 @@ mod tests {
     fn build_object_cookies_as_pairs() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--cookie", "session", "abc123",
-            "in.html", "out.pdf",
+            "--cookie",
+            "session",
+            "abc123",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.load.cookies.len(), 1);
@@ -1961,8 +2254,10 @@ mod tests {
     fn build_object_run_script() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--run-script", "console.log('ok');",
-            "in.html", "out.pdf",
+            "--run-script",
+            "console.log('ok');",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.load.run_script.len(), 1);
@@ -1978,21 +2273,40 @@ mod tests {
 
     #[test]
     fn build_object_bypass_proxy_for() {
-        let cli = parse(&["wkhtmltopdf", "--bypass-proxy-for", "internal.host", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--bypass-proxy-for",
+            "internal.host",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
-        assert!(obj.load.bypass_proxy_for_hosts.contains(&"internal.host".to_string()));
+        assert!(obj
+            .load
+            .bypass_proxy_for_hosts
+            .contains(&"internal.host".to_string()));
     }
 
     #[test]
     fn build_object_disable_external_links() {
-        let cli = parse(&["wkhtmltopdf", "--disable-external-links", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--disable-external-links",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert!(!obj.use_external_links);
     }
 
     #[test]
     fn build_object_disable_internal_links() {
-        let cli = parse(&["wkhtmltopdf", "--disable-internal-links", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--disable-internal-links",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert!(!obj.use_local_links);
     }
@@ -2006,7 +2320,12 @@ mod tests {
 
     #[test]
     fn build_object_exclude_from_outline() {
-        let cli = parse(&["wkhtmltopdf", "--exclude-from-outline", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--exclude-from-outline",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert!(!obj.include_in_outline);
     }
@@ -2015,9 +2334,14 @@ mod tests {
     fn build_object_replace_pairs() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--replace", "FOO", "bar",
-            "--replace", "BAZ", "qux",
-            "in.html", "out.pdf",
+            "--replace",
+            "FOO",
+            "bar",
+            "--replace",
+            "BAZ",
+            "qux",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.replacements.len(), 2);
@@ -2030,12 +2354,18 @@ mod tests {
         let cli = parse(&[
             "wkhtmltopdf",
             "--disable-dotted-lines",
-            "--toc-header-text", "Index",
-            "--toc-depth", "2",
-            "--toc-level-indentation", "2em",
-            "--toc-text-size-shrink", "0.9",
-            "--xsl-style-sheet", "custom.xsl",
-            "in.html", "out.pdf",
+            "--toc-header-text",
+            "Index",
+            "--toc-depth",
+            "2",
+            "--toc-level-indentation",
+            "2em",
+            "--toc-text-size-shrink",
+            "0.9",
+            "--xsl-style-sheet",
+            "custom.xsl",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
         assert!(!obj.toc.use_dotted_lines);
@@ -2055,7 +2385,12 @@ mod tests {
 
     #[test]
     fn build_object_disable_toc_back_links() {
-        let cli = parse(&["wkhtmltopdf", "--disable-toc-back-links", "in.html", "out.pdf"]);
+        let cli = parse(&[
+            "wkhtmltopdf",
+            "--disable-toc-back-links",
+            "in.html",
+            "out.pdf",
+        ]);
         let obj = build_object(&cli, "in.html");
         assert!(!obj.toc.back_links);
     }
@@ -2064,14 +2399,21 @@ mod tests {
     fn build_object_header_settings() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--header-left", "Left",
-            "--header-center", "Center",
-            "--header-right", "Right",
-            "--header-font-name", "Times New Roman",
-            "--header-font-size", "14",
+            "--header-left",
+            "Left",
+            "--header-center",
+            "Center",
+            "--header-right",
+            "Right",
+            "--header-font-name",
+            "Times New Roman",
+            "--header-font-size",
+            "14",
             "--header-line",
-            "--header-spacing", "5",
-            "in.html", "out.pdf",
+            "--header-spacing",
+            "5",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.header.left.as_deref(), Some("Left"));
@@ -2087,10 +2429,14 @@ mod tests {
     fn build_object_footer_settings() {
         let cli = parse(&[
             "wkhtmltopdf",
-            "--footer-html", "footer.html",
-            "--footer-spacing", "3",
-            "--footer-center", "Page [page]",
-            "in.html", "out.pdf",
+            "--footer-html",
+            "footer.html",
+            "--footer-spacing",
+            "3",
+            "--footer-center",
+            "Page [page]",
+            "in.html",
+            "out.pdf",
         ]);
         let obj = build_object(&cli, "in.html");
         assert_eq!(obj.footer.html_url.as_deref(), Some("footer.html"));

@@ -395,7 +395,6 @@ fn pdf_converter_pdf_a_conformance() {
     assert!(result.unwrap().starts_with(b"%PDF-"));
 }
 
-
 // ---------------------------------------------------------------------------
 // Network / proxy settings
 // ---------------------------------------------------------------------------
@@ -434,7 +433,10 @@ fn load_page_ssl_verify_roundtrips_via_json() {
 #[test]
 fn print_resolution_default_is_screen() {
     let settings = PdfGlobal::default();
-    assert!(matches!(settings.resolution, PrintResolution::ScreenResolution));
+    assert!(matches!(
+        settings.resolution,
+        PrintResolution::ScreenResolution
+    ));
 }
 
 #[test]
@@ -526,8 +528,14 @@ fn header_footer_serializes_and_deserializes() {
 fn size_serializes_and_deserializes_with_custom_page() {
     let mut size = Size::default();
     size.page_size = PageSize::Letter;
-    size.height = Some(UnitReal { value: 279.4, unit: Unit::Millimeter });
-    size.width = Some(UnitReal { value: 215.9, unit: Unit::Millimeter });
+    size.height = Some(UnitReal {
+        value: 279.4,
+        unit: Unit::Millimeter,
+    });
+    size.width = Some(UnitReal {
+        value: 215.9,
+        unit: Unit::Millimeter,
+    });
 
     let json = serde_json::to_string(&size).expect("serialize");
     let restored: Size = serde_json::from_str(&json).expect("deserialize");
@@ -540,10 +548,22 @@ fn size_serializes_and_deserializes_with_custom_page() {
 #[test]
 fn margin_with_mixed_units_serializes_and_deserializes() {
     let margin = Margin {
-        top: UnitReal { value: 10.0, unit: Unit::Millimeter },
-        right: UnitReal { value: 1.0, unit: Unit::Inch },
-        bottom: UnitReal { value: 1.5, unit: Unit::Centimeter },
-        left: UnitReal { value: 72.0, unit: Unit::Point },
+        top: UnitReal {
+            value: 10.0,
+            unit: Unit::Millimeter,
+        },
+        right: UnitReal {
+            value: 1.0,
+            unit: Unit::Inch,
+        },
+        bottom: UnitReal {
+            value: 1.5,
+            unit: Unit::Centimeter,
+        },
+        left: UnitReal {
+            value: 72.0,
+            unit: Unit::Point,
+        },
     };
 
     let json = serde_json::to_string(&margin).expect("serialize");
@@ -591,7 +611,10 @@ fn web_settings_serializes_and_deserializes() {
     assert!(!restored.background);
     assert!(!restored.load_images);
     assert_eq!(restored.minimum_font_size, Some(14));
-    assert_eq!(restored.user_style_sheet.as_deref(), Some("/path/to/custom.css"));
+    assert_eq!(
+        restored.user_style_sheet.as_deref(),
+        Some("/path/to/custom.css")
+    );
     assert_eq!(restored.default_encoding.as_deref(), Some("UTF-8"));
 }
 
@@ -621,7 +644,12 @@ fn image_global_with_jpeg_format_and_quality_serializes() {
 #[test]
 fn image_global_with_crop_settings_serializes() {
     let mut img = ImageGlobal::default();
-    img.crop = CropSettings { left: 10, top: 20, width: 640, height: 480 };
+    img.crop = CropSettings {
+        left: 10,
+        top: 20,
+        width: 640,
+        height: 480,
+    };
 
     let json = serde_json::to_string(&img).expect("serialize");
     let restored: ImageGlobal = serde_json::from_str(&json).expect("deserialize");
@@ -673,7 +701,12 @@ fn image_converter_no_page_with_format_returns_error() {
 #[test]
 fn image_converter_no_page_with_crop_returns_error() {
     let mut settings = ImageGlobal::default();
-    settings.crop = CropSettings { left: 0, top: 0, width: 100, height: 100 };
+    settings.crop = CropSettings {
+        left: 0,
+        top: 0,
+        width: 100,
+        height: 100,
+    };
     let conv = ImageConverter::new(settings);
     assert!(conv.convert().is_err());
 }
@@ -747,10 +780,22 @@ fn pdf_converter_grayscale_color_mode() {
 fn pdf_converter_custom_margins() {
     let mut global = PdfGlobal::default();
     global.margin = Margin {
-        top: UnitReal { value: 20.0, unit: Unit::Millimeter },
-        right: UnitReal { value: 15.0, unit: Unit::Millimeter },
-        bottom: UnitReal { value: 20.0, unit: Unit::Millimeter },
-        left: UnitReal { value: 15.0, unit: Unit::Millimeter },
+        top: UnitReal {
+            value: 20.0,
+            unit: Unit::Millimeter,
+        },
+        right: UnitReal {
+            value: 15.0,
+            unit: Unit::Millimeter,
+        },
+        bottom: UnitReal {
+            value: 20.0,
+            unit: Unit::Millimeter,
+        },
+        left: UnitReal {
+            value: 15.0,
+            unit: Unit::Millimeter,
+        },
     };
     let bytes = make_pdf_with_global("<html><body><p>Custom margins</p></body></html>", global);
     assert!(bytes.starts_with(b"%PDF-"));
@@ -831,10 +876,7 @@ fn pdf_converter_with_low_image_quality() {
     let mut global = PdfGlobal::default();
     global.image_quality = 50;
     global.image_dpi = 150;
-    let bytes = make_pdf_with_global(
-        "<html><body><p>Low image quality</p></body></html>",
-        global,
-    );
+    let bytes = make_pdf_with_global("<html><body><p>Low image quality</p></body></html>", global);
     assert!(bytes.starts_with(b"%PDF-"));
 }
 
@@ -1074,7 +1116,11 @@ fn pdf_converter_object_with_zoom() {
 fn pdf_converter_object_disable_external_links() {
     use std::io::Write;
     let mut tmp = tempfile::NamedTempFile::new().expect("temp file");
-    write!(tmp, "<html><body><a href='https://example.com'>Link</a></body></html>").expect("write");
+    write!(
+        tmp,
+        "<html><body><a href='https://example.com'>Link</a></body></html>"
+    )
+    .expect("write");
     let path = tmp.path().to_string_lossy().to_string();
 
     let global = PdfGlobal::default();
@@ -1093,7 +1139,11 @@ fn pdf_converter_object_disable_external_links() {
 fn pdf_converter_object_disable_local_links() {
     use std::io::Write;
     let mut tmp = tempfile::NamedTempFile::new().expect("temp file");
-    write!(tmp, "<html><body><a href='#anchor'>Local link</a></body></html>").expect("write");
+    write!(
+        tmp,
+        "<html><body><a href='#anchor'>Local link</a></body></html>"
+    )
+    .expect("write");
     let path = tmp.path().to_string_lossy().to_string();
 
     let global = PdfGlobal::default();
@@ -1113,8 +1163,7 @@ fn pdf_converter_multiple_copies_setting() {
     let mut global = PdfGlobal::default();
     global.copies = 3;
     global.collate = true;
-    let bytes =
-        make_pdf_with_global("<html><body><p>Multiple copies</p></body></html>", global);
+    let bytes = make_pdf_with_global("<html><body><p>Multiple copies</p></body></html>", global);
     assert!(bytes.starts_with(b"%PDF-"));
 }
 
@@ -1125,10 +1174,7 @@ fn pdf_converter_full_metadata_set() {
     global.author = Some("Test Author".into());
     global.subject = Some("Integration Testing".into());
     global.pdf_a_conformance = PdfAConformance::A2b;
-    let bytes = make_pdf_with_global(
-        "<html><body><p>Full metadata</p></body></html>",
-        global,
-    );
+    let bytes = make_pdf_with_global("<html><body><p>Full metadata</p></body></html>", global);
     assert!(bytes.starts_with(b"%PDF-"));
 }
 
@@ -1167,10 +1213,22 @@ fn pdf_converter_landscape_with_margins_and_metadata() {
     let mut global = PdfGlobal::default();
     global.orientation = Orientation::Landscape;
     global.margin = Margin {
-        top: UnitReal { value: 10.0, unit: Unit::Millimeter },
-        right: UnitReal { value: 10.0, unit: Unit::Millimeter },
-        bottom: UnitReal { value: 10.0, unit: Unit::Millimeter },
-        left: UnitReal { value: 10.0, unit: Unit::Millimeter },
+        top: UnitReal {
+            value: 10.0,
+            unit: Unit::Millimeter,
+        },
+        right: UnitReal {
+            value: 10.0,
+            unit: Unit::Millimeter,
+        },
+        bottom: UnitReal {
+            value: 10.0,
+            unit: Unit::Millimeter,
+        },
+        left: UnitReal {
+            value: 10.0,
+            unit: Unit::Millimeter,
+        },
     };
     global.document_title = Some("Landscape with margins".into());
     let bytes = make_pdf_with_global(
@@ -1188,13 +1246,19 @@ fn pdf_converter_landscape_with_margins_and_metadata() {
 #[test]
 fn substitute_vars_replaces_page_with_css_counter_span() {
     let result = substitute_vars("[page]", "2024-01-01", "My Title", "http://example.com");
-    assert!(result.contains("_wk_page"), "should contain CSS counter span for [page]");
+    assert!(
+        result.contains("_wk_page"),
+        "should contain CSS counter span for [page]"
+    );
 }
 
 #[test]
 fn substitute_vars_replaces_topage_with_css_counter_span() {
     let result = substitute_vars("[toPage]", "2024-01-01", "Title", "url");
-    assert!(result.contains("_wk_topage"), "should contain CSS counter span for [toPage]");
+    assert!(
+        result.contains("_wk_topage"),
+        "should contain CSS counter span for [toPage]"
+    );
 }
 
 #[test]
@@ -1217,8 +1281,12 @@ fn substitute_vars_replaces_url() {
 
 #[test]
 fn substitute_vars_multiple_replacements_in_one_string() {
-    let result =
-        substitute_vars("Title: [title] | Date: [date] | Page [page]", "2025-01-01", "Doc", "url");
+    let result = substitute_vars(
+        "Title: [title] | Date: [date] | Page [page]",
+        "2025-01-01",
+        "Doc",
+        "url",
+    );
     assert!(result.contains("Doc"));
     assert!(result.contains("2025-01-01"));
     assert!(result.contains("_wk_page"));
@@ -1227,7 +1295,14 @@ fn substitute_vars_multiple_replacements_in_one_string() {
 #[test]
 fn build_band_html_empty_when_no_content() {
     let hf = HeaderFooter::default();
-    let result = build_band_html(&hf, true, "2024-01-01", "Title", "url", &LoadPage::default());
+    let result = build_band_html(
+        &hf,
+        true,
+        "2024-01-01",
+        "Title",
+        "url",
+        &LoadPage::default(),
+    );
     assert!(result.is_ok());
     assert!(result.unwrap().is_empty(), "no content → empty string");
 }
@@ -1236,7 +1311,14 @@ fn build_band_html_empty_when_no_content() {
 fn build_band_html_non_empty_with_left_text() {
     let mut hf = HeaderFooter::default();
     hf.left = Some("Header Left".into());
-    let result = build_band_html(&hf, true, "2024-01-01", "Title", "url", &LoadPage::default());
+    let result = build_band_html(
+        &hf,
+        true,
+        "2024-01-01",
+        "Title",
+        "url",
+        &LoadPage::default(),
+    );
     assert!(result.is_ok());
     let html = result.unwrap();
     assert!(!html.is_empty());
@@ -1249,7 +1331,14 @@ fn build_band_html_contains_font_settings() {
     hf.center = Some("Centered".into());
     hf.font_name = "Courier".into();
     hf.font_size = 9;
-    let result = build_band_html(&hf, false, "2024-01-01", "Title", "url", &LoadPage::default());
+    let result = build_band_html(
+        &hf,
+        false,
+        "2024-01-01",
+        "Title",
+        "url",
+        &LoadPage::default(),
+    );
     assert!(result.is_ok());
     let html = result.unwrap();
     assert!(html.contains("Courier"));
@@ -1260,7 +1349,14 @@ fn build_band_html_contains_font_settings() {
 fn build_band_html_contains_line_separator_for_header() {
     let mut hf = HeaderFooter::default();
     hf.line = true;
-    let result = build_band_html(&hf, true, "2024-01-01", "Title", "url", &LoadPage::default());
+    let result = build_band_html(
+        &hf,
+        true,
+        "2024-01-01",
+        "Title",
+        "url",
+        &LoadPage::default(),
+    );
     assert!(result.is_ok());
     let html = result.unwrap();
     assert!(html.contains("border-bottom"));
@@ -1270,7 +1366,14 @@ fn build_band_html_contains_line_separator_for_header() {
 fn build_band_html_contains_line_separator_for_footer() {
     let mut hf = HeaderFooter::default();
     hf.line = true;
-    let result = build_band_html(&hf, false, "2024-01-01", "Title", "url", &LoadPage::default());
+    let result = build_band_html(
+        &hf,
+        false,
+        "2024-01-01",
+        "Title",
+        "url",
+        &LoadPage::default(),
+    );
     assert!(result.is_ok());
     let html = result.unwrap();
     assert!(html.contains("border-top"));
@@ -1299,7 +1402,10 @@ fn build_band_html_replaces_title_and_url() {
 fn inject_header_footer_noop_when_both_empty() {
     let html = "<html><body><p>Content</p></body></html>";
     let result = inject_header_footer(html, "", "", 0.0, 0.0);
-    assert_eq!(result, html, "should return the input unchanged when both bands are empty");
+    assert_eq!(
+        result, html,
+        "should return the input unchanged when both bands are empty"
+    );
 }
 
 #[test]
@@ -1319,15 +1425,24 @@ fn inject_header_footer_injects_header_after_body_tag() {
 fn inject_header_footer_injects_footer() {
     let html = "<html><body><p>Content</p></body></html>";
     let result = inject_header_footer(html, "", "<div>FOOTER</div>", 0.0, 0.0);
-    assert!(result.contains("FOOTER"), "footer should appear in the output");
+    assert!(
+        result.contains("FOOTER"),
+        "footer should appear in the output"
+    );
 }
 
 #[test]
 fn inject_header_footer_adds_body_margin_style() {
     let html = "<html><body><p>Content</p></body></html>";
     let result = inject_header_footer(html, "<div>HEADER</div>", "<div>FOOTER</div>", 5.0, 5.0);
-    assert!(result.contains("margin-top"), "body top margin should be injected");
-    assert!(result.contains("margin-bottom"), "body bottom margin should be injected");
+    assert!(
+        result.contains("margin-top"),
+        "body top margin should be injected"
+    );
+    assert!(
+        result.contains("margin-bottom"),
+        "body bottom margin should be injected"
+    );
 }
 
 #[test]
@@ -1379,7 +1494,10 @@ fn inject_heading_anchors_adds_id_to_headings() {
     let html = "<html><body><h1>Title</h1></body></html>";
     let headings = extract_headings(html, 1);
     let result = inject_heading_anchors(html, &headings, 1);
-    assert!(result.contains("id="), "anchors should be injected into heading tags");
+    assert!(
+        result.contains("id="),
+        "anchors should be injected into heading tags"
+    );
 }
 
 #[test]
@@ -1389,7 +1507,10 @@ fn generate_toc_html_contains_caption_text() {
     let mut toc = TableOfContent::default();
     toc.caption_text = "My Contents".into();
     let toc_html = generate_toc_html(&headings, &toc);
-    assert!(toc_html.contains("My Contents"), "TOC should contain the caption text");
+    assert!(
+        toc_html.contains("My Contents"),
+        "TOC should contain the caption text"
+    );
 }
 
 #[test]
@@ -1409,7 +1530,10 @@ fn generate_toc_html_with_forward_links_contains_anchors() {
     let mut toc = TableOfContent::default();
     toc.forward_links = true;
     let toc_html = generate_toc_html(&headings, &toc);
-    assert!(toc_html.contains("href"), "forward links should produce anchor href");
+    assert!(
+        toc_html.contains("href"),
+        "forward links should produce anchor href"
+    );
 }
 
 #[test]
@@ -1495,7 +1619,7 @@ fn visual_diff_produces_valid_png_diff_image() {
 #[test]
 fn visual_diff_size_mismatch_returns_error_by_default() {
     let ref_png = make_solid_png(0, 0, 0); // 8×8
-    // Build a 4×4 PNG manually.
+                                           // Build a 4×4 PNG manually.
     use image::{DynamicImage, ImageFormat, Rgba, RgbaImage};
     use std::io::Cursor;
     let small = DynamicImage::ImageRgba8({
@@ -1517,7 +1641,7 @@ fn visual_diff_size_mismatch_returns_error_by_default() {
 #[test]
 fn visual_diff_allow_size_mismatch_compares_overlap() {
     let ref_png = make_solid_png(0, 0, 0); // 8×8 black
-    // 4×4 black image
+                                           // 4×4 black image
     use image::{DynamicImage, ImageFormat, Rgba, RgbaImage};
     use std::io::Cursor;
     let small = DynamicImage::ImageRgba8({

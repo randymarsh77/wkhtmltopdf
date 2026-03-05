@@ -101,11 +101,7 @@ fn fixtures_dir() -> PathBuf {
 /// caller can skip the test gracefully.
 fn try_render_fixture(name: &str) -> Option<Vec<u8>> {
     let html_path = fixtures_dir().join(format!("{}.html", name));
-    assert!(
-        html_path.exists(),
-        "fixture not found: {:?}",
-        html_path
-    );
+    assert!(html_path.exists(), "fixture not found: {:?}", html_path);
 
     let mut settings = ImageGlobal::default();
     settings.page = Some(html_path.to_string_lossy().to_string());
@@ -117,13 +113,8 @@ fn try_render_fixture(name: &str) -> Option<Vec<u8>> {
         // Qt WebKit backend cannot be located or initialised.  Treat this as
         // a graceful skip so the suite stays green in environments without
         // Qt WebKit (e.g. plain Rust CI without Qt installed).
-        Err(ConvertError::Render(ref msg))
-            if msg.contains("browser backend unavailable") =>
-        {
-            eprintln!(
-                "SKIP '{}': headless browser unavailable – {}",
-                name, msg
-            );
+        Err(ConvertError::Render(ref msg)) if msg.contains("browser backend unavailable") => {
+            eprintln!("SKIP '{}': headless browser unavailable – {}", name, msg);
             None
         }
         Err(e) => panic!("ImageConverter failed for fixture '{}': {}", name, e),
@@ -165,7 +156,11 @@ fn run_visual_fixture(name: &str) {
         });
         println!(
             "Reference {} for '{}': {}",
-            if update_refs() { "updated" } else { "generated" },
+            if update_refs() {
+                "updated"
+            } else {
+                "generated"
+            },
             name,
             ref_path.display()
         );

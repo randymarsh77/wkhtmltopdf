@@ -14,9 +14,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use wkhtmltopdf_core::Converter as _;
 use wkhtmltopdf_pdf::PdfConverter;
 use wkhtmltopdf_settings::{PdfGlobal, PdfObject};
-use wkhtmltopdf_core::Converter as _;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -126,8 +126,12 @@ fn render_with_legacy(binary: &Path, html_path: &Path, out_path: &Path) -> bool 
         Ok(_) => {}
     }
 
-    let bytes = fs::read(&tmp_out_path)
-        .unwrap_or_else(|e| panic!("failed to read legacy output from {:?}: {}", tmp_out_path, e));
+    let bytes = fs::read(&tmp_out_path).unwrap_or_else(|e| {
+        panic!(
+            "failed to read legacy output from {:?}: {}",
+            tmp_out_path, e
+        )
+    });
 
     assert!(
         bytes.starts_with(b"%PDF-"),
@@ -152,11 +156,7 @@ fn render_with_legacy(binary: &Path, html_path: &Path, out_path: &Path) -> bool 
 fn run_fixture(name: &str) {
     let fixtures = fixtures_dir();
     let html_path = fixtures.join(format!("{}.html", name));
-    assert!(
-        html_path.exists(),
-        "fixture not found: {:?}",
-        html_path
-    );
+    assert!(html_path.exists(), "fixture not found: {:?}", html_path);
 
     let out = output_dir();
 
@@ -172,7 +172,10 @@ fn run_fixture(name: &str) {
             println!("Legacy output written to: {}", legacy_out.display());
         }
     } else {
-        println!("wkhtmltopdf binary not found – skipping legacy render for '{}'", name);
+        println!(
+            "wkhtmltopdf binary not found – skipping legacy render for '{}'",
+            name
+        );
     }
 }
 
@@ -262,11 +265,7 @@ fn regression_edge_cases() {
 use wkhtmltopdf_diff::pdf_diff::{diff_pdf_structure, extract_pdf_structure};
 
 /// Build a PDF from an inline HTML string with optional metadata.
-fn pdf_from_html(
-    html: &str,
-    title: Option<&str>,
-    author: Option<&str>,
-) -> Vec<u8> {
+fn pdf_from_html(html: &str, title: Option<&str>, author: Option<&str>) -> Vec<u8> {
     use std::io::Write;
 
     let mut tmp = tempfile::NamedTempFile::new().expect("temp file");
@@ -304,7 +303,10 @@ fn pdf_structural_diff_same_document_is_identical() {
 fn pdf_structural_diff_extracts_correct_page_count() {
     let bytes = pdf_from_html("<html><body><p>Single page</p></body></html>", None, None);
     let s = extract_pdf_structure(&bytes).expect("extract structure");
-    assert!(s.page_count >= 1, "single-page HTML must produce at least one PDF page");
+    assert!(
+        s.page_count >= 1,
+        "single-page HTML must produce at least one PDF page"
+    );
     assert_eq!(
         s.page_texts.len(),
         s.page_count as usize,
@@ -344,8 +346,16 @@ fn pdf_structural_diff_reads_author_metadata() {
 
 #[test]
 fn pdf_structural_diff_detects_title_change() {
-    let ref_bytes = pdf_from_html("<html><body><p>text</p></body></html>", Some("Old Title"), None);
-    let act_bytes = pdf_from_html("<html><body><p>text</p></body></html>", Some("New Title"), None);
+    let ref_bytes = pdf_from_html(
+        "<html><body><p>text</p></body></html>",
+        Some("Old Title"),
+        None,
+    );
+    let act_bytes = pdf_from_html(
+        "<html><body><p>text</p></body></html>",
+        Some("New Title"),
+        None,
+    );
 
     let reference = extract_pdf_structure(&ref_bytes).expect("extract reference");
     let actual = extract_pdf_structure(&act_bytes).expect("extract actual");
