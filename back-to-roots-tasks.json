@@ -82,17 +82,18 @@
   {
     "id": "10",
     "description": "Run the full build and test suite (cargo build --workspace && cargo test --workspace) and fix any compilation or test failures introduced by the browser engine swap",
-    "status": "inprogress",
+    "status": "completed",
     "phase": 4,
     "depends_on": [
       "7",
       "8"
-    ]
+    ],
+    "last_attempt_at": 1772688459
   },
   {
     "id": "11",
     "description": "Verify the Dockerfile in action/ correctly installs Qt6 + WebKit system libraries required at runtime and update it if needed",
-    "status": "pending",
+    "status": "inprogress",
     "phase": 4,
     "depends_on": [
       "7",
