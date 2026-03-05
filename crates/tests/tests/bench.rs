@@ -24,7 +24,6 @@
 //! | `BENCH_ITERATIONS`    | Number of renders per fixture (default: 5)     |
 //! | `WKHTMLTOPDF_BINARY`  | Override path to the legacy `wkhtmltopdf` binary |
 
-use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant};

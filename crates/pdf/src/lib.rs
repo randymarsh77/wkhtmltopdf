@@ -1143,9 +1143,9 @@ fn escape_xml_attr(s: &str) -> String {
         .replace('\'', "&apos;")
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
-    use wkhtmltopdf_settings::{UnitReal, Unit, PageSize, Orientation};
 
     #[test]
     fn pdf_converter_new_has_no_objects() {
