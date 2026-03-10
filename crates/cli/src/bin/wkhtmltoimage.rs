@@ -12,6 +12,13 @@ use clap::Parser;
 )]
 pub struct Cli {
     // -----------------------------------------------------------------------
+    // Backend selection
+    // -----------------------------------------------------------------------
+    /// Rendering backend: webkit (default, native WebKit), chrome (headless Chrome), or printpdf (pure Rust).
+    #[arg(long, value_name = "backend", value_parser = ["webkit", "chrome", "printpdf"], default_value = "webkit")]
+    pub backend: String,
+
+    // -----------------------------------------------------------------------
     // Output format
     // -----------------------------------------------------------------------
     /// Output format: png, jpg, jpeg, bmp, svg [default: png].
@@ -159,7 +166,7 @@ fn main() {
 
     use wkhtmltopdf_core::Converter;
     use wkhtmltopdf_image::ImageConverter;
-    use wkhtmltopdf_settings::{CropSettings, ImageGlobal, LogLevel};
+    use wkhtmltopdf_settings::{CropSettings, ImageGlobal, LogLevel, RenderBackend};
 
     let mut settings = ImageGlobal {
         page: Some(cli.input.clone()),
@@ -256,7 +263,13 @@ fn main() {
         settings.load_page.ssl_verify_host = false;
     }
 
-    let converter = ImageConverter::new(settings);
+    let backend = match cli.backend.as_str() {
+        "chrome" => RenderBackend::Chrome,
+        "printpdf" => RenderBackend::Printpdf,
+        _ => RenderBackend::Webkit,
+    };
+
+    let converter = ImageConverter::with_backend(settings, backend);
     let bytes = match converter.convert() {
         Ok(b) => b,
         Err(e) => {

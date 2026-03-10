@@ -15,7 +15,8 @@ use std::io::Cursor;
 use image::{DynamicImage, ImageFormat, ImageReader};
 use thiserror::Error;
 use wkhtmltopdf_core::{ConvertError, Converter, HeadlessRenderer, HtmlInput, Renderer};
-use wkhtmltopdf_settings::ImageGlobal;
+use wkhtmltopdf_core::ChromeRenderer;
+use wkhtmltopdf_settings::{ImageGlobal, RenderBackend};
 
 // ---------------------------------------------------------------------------
 // Public error type
@@ -35,12 +36,21 @@ pub enum ImageError {
 /// Converts an HTML page to a raster image.
 pub struct ImageConverter {
     settings: ImageGlobal,
+    backend: RenderBackend,
 }
 
 impl ImageConverter {
     /// Create a new `ImageConverter` with the given settings.
     pub fn new(settings: ImageGlobal) -> Self {
-        Self { settings }
+        Self {
+            settings,
+            backend: RenderBackend::default(),
+        }
+    }
+
+    /// Create a new `ImageConverter` that uses the specified rendering backend.
+    pub fn with_backend(settings: ImageGlobal, backend: RenderBackend) -> Self {
+        Self { settings, backend }
     }
 
     /// Return the image settings.
@@ -70,15 +80,39 @@ impl Converter for ImageConverter {
 
         // Render the HTML to a PNG screenshot via the headless browser,
         // passing through the JavaScript settings from the global config.
-        let renderer = HeadlessRenderer::with_js_settings(
-            self.settings.web.enable_javascript,
-            self.settings.load_page.js_delay,
-            self.settings.load_page.run_script.clone(),
-        );
         let input = parse_input(page_src);
-        let rendered = renderer
-            .render(&input)
-            .map_err(|e| ConvertError::Render(e.to_string()))?;
+        let rendered = match self.backend {
+            RenderBackend::Chrome => {
+                let mut renderer = ChromeRenderer::new();
+                renderer.js_delay = self.settings.load_page.js_delay;
+                renderer
+                    .render(&input)
+                    .map_err(|e| ConvertError::Render(e.to_string()))?
+            }
+            RenderBackend::Webkit => {
+                let mut renderer = wkhtmltopdf_core::WebkitRenderer::new();
+                renderer.js_delay = self.settings.load_page.js_delay;
+                if let Some(w) = self.settings.screen_width {
+                    renderer.viewport_width = w;
+                }
+                if let Some(h) = self.settings.screen_height {
+                    renderer.viewport_height = h;
+                }
+                renderer
+                    .render(&input)
+                    .map_err(|e| ConvertError::Render(e.to_string()))?
+            }
+            RenderBackend::Printpdf => {
+                let renderer = HeadlessRenderer::with_js_settings(
+                    self.settings.web.enable_javascript,
+                    self.settings.load_page.js_delay,
+                    self.settings.load_page.run_script.clone(),
+                );
+                renderer
+                    .render(&input)
+                    .map_err(|e| ConvertError::Render(e.to_string()))?
+            }
+        };
 
         // Decode the PNG bytes returned by the renderer.
         let img = decode_image(&rendered.bytes)?;

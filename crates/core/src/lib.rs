@@ -6,7 +6,11 @@
 //! the [`renderer::HeadlessRenderer`] implementation.
 
 pub mod renderer;
+pub mod chrome;
+pub mod webkit;
 pub use renderer::{HeadlessRenderer, HtmlInput, RenderError, RenderedPage, Renderer};
+pub use chrome::{ChromeRenderer, ChromePdfOptions, chrome_print_to_pdf};
+pub use webkit::{WebkitPdfOptions, WebkitRenderer, webkit_print_to_pdf};
 
 #[cfg(feature = "qt-webkit")]
 pub(crate) mod qt_webkit;

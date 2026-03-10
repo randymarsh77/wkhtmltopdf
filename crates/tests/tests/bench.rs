@@ -152,7 +152,13 @@ fn benchmark_rust(fixture_name: &str, iterations: u32) -> BenchResult {
     for _ in 0..iterations {
         let mut global = PdfGlobal::default();
         global.document_title = Some(fixture_name.to_string());
-        let mut converter = PdfConverter::new(global);
+        // Use printpdf backend for benchmarks – WebKit requires the main
+        // thread (NSApplication on macOS) which isn't available in test
+        // worker threads.
+        let mut converter = PdfConverter::with_backend(
+            global,
+            wkhtmltopdf_settings::RenderBackend::Printpdf,
+        );
         let mut obj = PdfObject::default();
         obj.page = Some(html_path.to_string_lossy().to_string());
         converter.add_object(obj);

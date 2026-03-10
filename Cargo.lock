@@ -1537,6 +1537,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "pkg-config"
+version = "0.3.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
+
+[[package]]
 name = "png"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2884,9 +2890,12 @@ dependencies = [
 name = "wkhtmltopdf-core"
 version = "0.13.0"
 dependencies = [
+ "cc",
  "cxx-qt",
  "cxx-qt-build",
  "cxx-qt-lib",
+ "pkg-config",
+ "tempfile",
  "thiserror 2.0.18",
 ]
 

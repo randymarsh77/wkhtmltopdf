@@ -20,6 +20,18 @@ pub enum LogLevel {
     None,
 }
 
+/// Rendering backend selection.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum RenderBackend {
+    /// Use the built-in pure-Rust printpdf renderer (fast, limited CSS).
+    #[default]
+    Printpdf,
+    /// Use a headless Chrome/Chromium browser for high-fidelity rendering.
+    Chrome,
+    /// Use the native WebKit engine (JavaScriptCore + WebKit).
+    Webkit,
+}
+
 /// Page orientation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum Orientation {

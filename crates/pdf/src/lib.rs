@@ -44,6 +44,7 @@ pub enum PdfError {
 pub struct PdfConverter {
     global: PdfGlobal,
     objects: Vec<PdfObject>,
+    backend: wkhtmltopdf_settings::RenderBackend,
 }
 
 impl PdfConverter {
@@ -52,6 +53,16 @@ impl PdfConverter {
         Self {
             global,
             objects: Vec::new(),
+            backend: wkhtmltopdf_settings::RenderBackend::default(),
+        }
+    }
+
+    /// Create a new `PdfConverter` that uses Chrome headless for rendering.
+    pub fn with_backend(global: PdfGlobal, backend: wkhtmltopdf_settings::RenderBackend) -> Self {
+        Self {
+            global,
+            objects: Vec::new(),
+            backend,
         }
     }
 
@@ -63,6 +74,201 @@ impl PdfConverter {
     /// Return the global settings.
     pub fn global(&self) -> &PdfGlobal {
         &self.global
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Chrome headless backend
+// ---------------------------------------------------------------------------
+
+impl PdfConverter {
+    /// Render all page objects using Chrome's `--print-to-pdf` and merge them.
+    fn convert_chrome(&self) -> Result<Vec<u8>, ConvertError> {
+        use wkhtmltopdf_core::{ChromePdfOptions, HtmlInput, chrome_print_to_pdf};
+
+        let (page_w_mm, page_h_mm) = page_dimensions_mm(&self.global);
+        let margin_top_mm = unit_real_to_mm(&self.global.margin.top);
+        let margin_bottom_mm = unit_real_to_mm(&self.global.margin.bottom);
+        let margin_left_mm = unit_real_to_mm(&self.global.margin.left);
+        let margin_right_mm = unit_real_to_mm(&self.global.margin.right);
+
+        // Convert mm → inches for Chrome (1 inch = 25.4 mm).
+        let mm_to_in = |mm: f32| mm as f64 / 25.4;
+
+        let opts = ChromePdfOptions {
+            page_width_inches: mm_to_in(page_w_mm),
+            page_height_inches: mm_to_in(page_h_mm),
+            margin_top_inches: mm_to_in(margin_top_mm),
+            margin_bottom_inches: mm_to_in(margin_bottom_mm),
+            margin_left_inches: mm_to_in(margin_left_mm),
+            margin_right_inches: mm_to_in(margin_right_mm),
+            print_background: true,
+            landscape: matches!(self.global.orientation, Orientation::Landscape),
+            js_delay: self
+                .objects
+                .first()
+                .map(|o| o.load.js_delay)
+                .unwrap_or(200),
+            no_sandbox: false,
+            generate_tagged_pdf: false,
+        };
+
+        let mut pdf_parts: Vec<Vec<u8>> = Vec::new();
+
+        for object in &self.objects {
+            // Skip TOC objects for Chrome backend (Chrome renders real HTML).
+            if object.is_table_of_content {
+                continue;
+            }
+
+            let page_src = match &object.page {
+                Some(p) => p.clone(),
+                None => continue,
+            };
+
+            let input = if page_src.starts_with("http://") || page_src.starts_with("https://") {
+                HtmlInput::Url(page_src)
+            } else {
+                HtmlInput::File(page_src.into())
+            };
+
+            let pdf_bytes = chrome_print_to_pdf(&input, &opts)
+                .map_err(|e| ConvertError::Render(e.to_string()))?;
+
+            pdf_parts.push(pdf_bytes);
+        }
+
+        if pdf_parts.is_empty() {
+            return Err(ConvertError::Render(
+                "no pages to convert: add at least one PdfObject with a page URL".into(),
+            ));
+        }
+
+        // If there's only one part, return it directly.
+        if pdf_parts.len() == 1 {
+            return Ok(pdf_parts.into_iter().next().unwrap());
+        }
+
+        // Merge multiple PDFs using lopdf.
+        let mut base_doc = lopdf::Document::load_mem(&pdf_parts[0]).map_err(|e| {
+            ConvertError::Render(format!("failed to parse Chrome PDF output: {e}"))
+        })?;
+
+        for part in &pdf_parts[1..] {
+            let other = lopdf::Document::load_mem(part).map_err(|e| {
+                ConvertError::Render(format!("failed to parse Chrome PDF output: {e}"))
+            })?;
+            // Merge pages from `other` into `base_doc`.
+            let other_pages: Vec<lopdf::ObjectId> = other
+                .page_iter()
+                .collect();
+            for &page_id in &other_pages {
+                if let Ok(page_obj) = other.get_object(page_id) {
+                    base_doc.add_object(page_obj.clone());
+                }
+            }
+        }
+
+        let mut buf: Vec<u8> = Vec::new();
+        base_doc
+            .save_to(&mut std::io::Cursor::new(&mut buf))
+            .map_err(|e| {
+                ConvertError::Render(format!("failed to save merged Chrome PDF: {e}"))
+            })?;
+
+        Ok(buf)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// WebKit native backend
+// ---------------------------------------------------------------------------
+
+impl PdfConverter {
+    /// Render all page objects using the native WebKit engine.
+    fn convert_webkit(&self) -> Result<Vec<u8>, ConvertError> {
+        use wkhtmltopdf_core::{HtmlInput, WebkitPdfOptions, webkit_print_to_pdf};
+
+        let (page_w_mm, page_h_mm) = page_dimensions_mm(&self.global);
+        let margin_top_mm = unit_real_to_mm(&self.global.margin.top);
+        let margin_bottom_mm = unit_real_to_mm(&self.global.margin.bottom);
+        let margin_left_mm = unit_real_to_mm(&self.global.margin.left);
+        let margin_right_mm = unit_real_to_mm(&self.global.margin.right);
+
+        let opts = WebkitPdfOptions {
+            page_width_mm: page_w_mm as f64,
+            page_height_mm: page_h_mm as f64,
+            margin_top_mm: margin_top_mm as f64,
+            margin_bottom_mm: margin_bottom_mm as f64,
+            margin_left_mm: margin_left_mm as f64,
+            margin_right_mm: margin_right_mm as f64,
+            print_backgrounds: true,
+            js_delay_ms: self
+                .objects
+                .first()
+                .map(|o| o.load.js_delay)
+                .unwrap_or(200),
+        };
+
+        let mut pdf_parts: Vec<Vec<u8>> = Vec::new();
+
+        for object in &self.objects {
+            if object.is_table_of_content {
+                continue;
+            }
+
+            let page_src = match &object.page {
+                Some(p) => p.clone(),
+                None => continue,
+            };
+
+            let input = if page_src.starts_with("http://") || page_src.starts_with("https://") {
+                HtmlInput::Url(page_src)
+            } else {
+                HtmlInput::File(page_src.into())
+            };
+
+            let pdf_bytes = webkit_print_to_pdf(&input, &opts)
+                .map_err(|e| ConvertError::Render(e.to_string()))?;
+
+            pdf_parts.push(pdf_bytes);
+        }
+
+        if pdf_parts.is_empty() {
+            return Err(ConvertError::Render(
+                "no pages to convert: add at least one PdfObject with a page URL".into(),
+            ));
+        }
+
+        if pdf_parts.len() == 1 {
+            return Ok(pdf_parts.into_iter().next().unwrap());
+        }
+
+        // Merge multiple PDFs using lopdf.
+        let mut base_doc = lopdf::Document::load_mem(&pdf_parts[0]).map_err(|e| {
+            ConvertError::Render(format!("failed to parse WebKit PDF output: {e}"))
+        })?;
+
+        for part in &pdf_parts[1..] {
+            let other = lopdf::Document::load_mem(part).map_err(|e| {
+                ConvertError::Render(format!("failed to parse WebKit PDF output: {e}"))
+            })?;
+            let other_pages: Vec<lopdf::ObjectId> = other.page_iter().collect();
+            for &page_id in &other_pages {
+                if let Ok(page_obj) = other.get_object(page_id) {
+                    base_doc.add_object(page_obj.clone());
+                }
+            }
+        }
+
+        let mut buf: Vec<u8> = Vec::new();
+        base_doc
+            .save_to(&mut std::io::Cursor::new(&mut buf))
+            .map_err(|e| {
+                ConvertError::Render(format!("failed to save merged WebKit PDF: {e}"))
+            })?;
+
+        Ok(buf)
     }
 }
 
@@ -80,6 +286,20 @@ impl Converter for PdfConverter {
     /// The resulting pages are assembled into a single document with the
     /// settings from [`PdfGlobal`].
     fn convert(&self) -> Result<Vec<u8>, ConvertError> {
+        // -----------------------------------------------------------------------
+        // Browser-based backends: delegate PDF generation to an external engine.
+        // -----------------------------------------------------------------------
+        if self.backend == wkhtmltopdf_settings::RenderBackend::Chrome {
+            return self.convert_chrome();
+        }
+        if self.backend == wkhtmltopdf_settings::RenderBackend::Webkit {
+            return self.convert_webkit();
+        }
+
+        // -----------------------------------------------------------------------
+        // printpdf backend: pure-Rust HTML→PDF rendering
+        // -----------------------------------------------------------------------
+
         // Determine page dimensions in mm, accounting for orientation.
         let (page_w, page_h) = page_dimensions_mm(&self.global);
 

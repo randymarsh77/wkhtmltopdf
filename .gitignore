@@ -28,3 +28,6 @@ moc_*.*
 
 # Rust build artifacts
 target/
+
+# Nix
+.direnv/

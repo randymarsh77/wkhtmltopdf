@@ -20,6 +20,10 @@ pub struct Cli {
     // -----------------------------------------------------------------------
     // Global options
     // -----------------------------------------------------------------------
+    /// Rendering backend: webkit (default, native WebKit), chrome (headless Chrome), or printpdf (pure Rust).
+    #[arg(long, value_name = "backend", value_parser = ["webkit", "chrome", "printpdf"], default_value = "webkit")]
+    pub backend: String,
+
     /// Collate when printing multiple copies (default: enabled).
     #[arg(long, overrides_with = "no_collate")]
     pub collate: bool,
@@ -575,8 +579,15 @@ fn main() {
     // Build global settings from CLI flags.
     let global = build_global(&cli);
 
+    // Select rendering backend.
+    let backend = match cli.backend.as_str() {
+        "chrome" => wkhtmltopdf_settings::RenderBackend::Chrome,
+        "printpdf" => wkhtmltopdf_settings::RenderBackend::Printpdf,
+        _ => wkhtmltopdf_settings::RenderBackend::Webkit,
+    };
+
     // Build the converter and add one PdfObject per input.
-    let mut converter = wkhtmltopdf_pdf::PdfConverter::new(global);
+    let mut converter = wkhtmltopdf_pdf::PdfConverter::with_backend(global, backend);
 
     // If --toc was specified, prepend a TOC page object before the first input.
     if cli.toc {
