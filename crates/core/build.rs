@@ -6,17 +6,23 @@ fn main() {
     // (plus cmake) must be installed on the build host for this to succeed.
     #[cfg(feature = "qt-webkit")]
     {
-        cxx_qt_build::CxxQtBuilder::new()
-            // C++ source file that implements render_url() via QWebEngineView.
-            .file("src/webkit_renderer.cpp")
-            // Add the crate-local include directory so that the C++ compiler
-            // can find "wkhtmltopdf/webkit_renderer.h".
-            .cc_builder(|cc| {
-                cc.include("include");
-            })
-            // Link against the Qt WebEngineWidgets module.
-            .qt_module("WebEngineWidgets")
-            .build();
+        // SAFETY: we only add an include path to the cc::Build; no ABI or
+        // linkage invariants are violated.
+        unsafe {
+            cxx_qt_build::CxxQtBuilder::new()
+                // Rust source file containing the #[cxx_qt::bridge] module.
+                .file("src/qt_webkit.rs")
+                // C++ source file that implements render_url() via QWebEngineView.
+                .cpp_file("src/webkit_renderer.cpp")
+                // Add the crate-local include directory so that the C++ compiler
+                // can find "wkhtmltopdf/webkit_renderer.h".
+                .cc_builder(|cc| {
+                    cc.include("include");
+                })
+                // Link against the Qt WebEngineWidgets module.
+                .qt_module("WebEngineWidgets")
+                .build();
+        }
     }
 
     // ── Native WebKit rendering backend ──────────────────────────────────

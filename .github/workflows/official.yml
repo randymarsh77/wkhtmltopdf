@@ -93,6 +93,34 @@ jobs:
       - name: audit
         run: cargo audit
 
+  ci-qt-webkit:
+    name: CI (Qt WebKit)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: checkout source
+        uses: actions/checkout@v4
+      - name: install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config \
+            libssl-dev \
+            ca-certificates \
+            cmake \
+            qt6-webengine-dev \
+            qt6-base-dev \
+            libgl-dev
+      - name: install clippy
+        run: rustup component add clippy
+      - name: build
+        run: cargo build --features qt-webkit
+      - name: test
+        run: cargo test --features qt-webkit
+      - name: clippy
+        run: cargo clippy --features qt-webkit -- -D warnings
+
   ci-ubuntu-25:
     name: CI (Ubuntu 25)
     runs-on: ubuntu-latest
