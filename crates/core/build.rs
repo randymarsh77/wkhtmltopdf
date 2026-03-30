@@ -20,6 +20,7 @@ fn main() {
                     cc.include("include");
                 })
                 // Link against the Qt WebEngineWidgets module.
+                .qt_module("Widgets")
                 .qt_module("WebEngineWidgets")
                 .build();
         }
