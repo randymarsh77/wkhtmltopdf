@@ -19,7 +19,11 @@ fn main() {
                 .cc_builder(|cc| {
                     cc.include("include");
                 })
-                // Link against the Qt WebEngineWidgets module.
+                // Link against required Qt modules:
+                // - Gui: QImage, QPixmap
+                // - Widgets: QApplication
+                // - WebEngineWidgets: QWebEngineView, QWebEnginePage, etc.
+                .qt_module("Gui")
                 .qt_module("Widgets")
                 .qt_module("WebEngineWidgets")
                 .build();
