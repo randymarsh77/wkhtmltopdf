@@ -1,3 +1,9 @@
-ralphs = []
 state_branch = "wreck-it-state"
 state_root = ".wreck-it"
+
+[[ralphs]]
+backend = "copilot_cli"
+command = "unstuck"
+name = "unstuck"
+state_file = ".unstuck-state.json"
+task_file = "unstuck-tasks.json"
