@@ -31,6 +31,6 @@ namespace wkhtmltopdf {
 ///                             not available.
 rust::Vec<uint8_t> render_url(rust::Str url, bool js_enabled,
                                uint32_t js_delay_ms,
-                               rust::Slice<rust::Str> run_scripts);
+                               rust::Slice<const rust::Str> run_scripts);
 
 } // namespace wkhtmltopdf
