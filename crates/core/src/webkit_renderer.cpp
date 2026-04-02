@@ -36,7 +36,7 @@ namespace wkhtmltopdf {
 
 rust::Vec<uint8_t> render_url(rust::Str url, bool js_enabled,
                                uint32_t js_delay_ms,
-                               rust::Slice<rust::Str> run_scripts) {
+                               rust::Slice<const rust::Str> run_scripts) {
     // Ensure a QApplication exists for the Qt event loop.  If the calling
     // process already created one we reuse it; otherwise we own one for the
     // duration of this call.
