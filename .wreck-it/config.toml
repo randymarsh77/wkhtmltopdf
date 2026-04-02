@@ -1,7 +1,3 @@
+ralphs = []
 state_branch = "wreck-it-state"
 state_root = ".wreck-it"
-
-[[ralphs]]
-name = "back-to-roots"
-task_file = "back-to-roots-tasks.json"
-state_file = ".back-to-roots-state.json"
