@@ -22,9 +22,11 @@ fn main() {
                 // Link against required Qt modules:
                 // - Gui: QImage, QPixmap
                 // - Widgets: QApplication
-                // - WebEngineWidgets: QWebEngineView, QWebEnginePage, etc.
+                // - WebEngineCore: QWebEnginePage, QWebEngineSettings
+                // - WebEngineWidgets: QWebEngineView
                 .qt_module("Gui")
                 .qt_module("Widgets")
+                .qt_module("WebEngineCore")
                 .qt_module("WebEngineWidgets")
                 .build();
         }
